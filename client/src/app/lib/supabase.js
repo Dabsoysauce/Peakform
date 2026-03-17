@@ -6,7 +6,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function uploadProfilePicture(file, userId) {
-  const path = `${userId}/avatar`;
+  const path = `${userId}-avatar`;
 
   const { error } = await supabase.storage
     .from('profile-pictures')
@@ -22,7 +22,7 @@ export async function uploadProfilePicture(file, userId) {
 }
 
 export async function deleteProfilePicture(userId) {
-  const path = `${userId}/avatar`;
+  const path = `${userId}-avatar`;
   const { error } = await supabase.storage
     .from('profile-pictures')
     .remove([path]);
