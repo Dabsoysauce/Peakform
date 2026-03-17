@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
-import { uploadProfilePicture } from '../../lib/supabase';
+import { uploadProfilePicture, deleteProfilePicture } from '../../lib/supabase';
 
 const PRIMARY_GOALS = [
   'Make Varsity',
@@ -59,23 +59,28 @@ export default function AthleteProfilePage() {
   async function handlePhotoChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Photo must be under 5MB');
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024) { setError('Photo must be under 5MB'); return; }
     setPhotoUploading(true);
     setError('');
     try {
       const userId = localStorage.getItem('userId');
       const url = await uploadProfilePicture(file, userId);
       setPhotoPreview(url);
-      await apiFetch('/athlete-profile', {
-        method: 'PUT',
-        body: JSON.stringify({ photo_url: url }),
-      });
-    } catch {
-      setError('Failed to upload photo');
-    }
+      await apiFetch('/athlete-profile', { method: 'PUT', body: JSON.stringify({ photo_url: url }) });
+    } catch { setError('Failed to upload photo'); }
+    setPhotoUploading(false);
+  }
+
+  async function handleRemovePhoto() {
+    if (!confirm('Remove your profile picture?')) return;
+    setPhotoUploading(true);
+    setError('');
+    try {
+      const userId = localStorage.getItem('userId');
+      await deleteProfilePicture(userId);
+      setPhotoPreview(null);
+      await apiFetch('/athlete-profile', { method: 'PUT', body: JSON.stringify({ photo_url: '__remove__' }) });
+    } catch { setError('Failed to remove photo'); }
     setPhotoUploading(false);
   }
 
@@ -171,6 +176,11 @@ export default function AthleteProfilePage() {
               </span>
             )}
             <p className="text-xs text-gray-500 mt-1">Click photo to change</p>
+            {photoPreview && (
+              <button type="button" onClick={handleRemovePhoto} className="text-xs text-red-400 hover:underline mt-0.5">
+                Remove photo
+              </button>
+            )}
           </div>
           {profile.weight_lbs && profile.height_inches && (
             <div className="ml-auto text-right hidden sm:block">

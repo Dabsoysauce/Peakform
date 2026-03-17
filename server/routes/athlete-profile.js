@@ -42,7 +42,7 @@ router.put('/', authMiddleware, async (req, res) => {
           height_inches = COALESCE($6, height_inches),
           primary_goal = COALESCE($7, primary_goal),
           bio = COALESCE($8, bio),
-          photo_url = COALESCE($9, photo_url)
+          photo_url = CASE WHEN $9::text = '__remove__' THEN NULL ELSE COALESCE($9, photo_url) END
         WHERE user_id = $10
         RETURNING *`,
         [first_name, last_name, gym_id || null, age, weight_lbs, height_inches, primary_goal, bio, photo_url || null, req.user.id]

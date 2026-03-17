@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
-import { uploadProfilePicture } from '../../lib/supabase';
+import { uploadProfilePicture, deleteProfilePicture } from '../../lib/supabase';
 
 const SPECIALTIES = [
   'Varsity Head Coach',
@@ -70,6 +70,19 @@ export default function TrainerProfilePage() {
     setPhotoUploading(false);
   }
 
+  async function handleRemovePhoto() {
+    if (!confirm('Remove your profile picture?')) return;
+    setPhotoUploading(true);
+    setError('');
+    try {
+      const userId = localStorage.getItem('userId');
+      await deleteProfilePicture(userId);
+      setPhotoPreview(null);
+      await apiFetch('/trainer-profile', { method: 'PUT', body: JSON.stringify({ photo_url: '__remove__' }) });
+    } catch { setError('Failed to remove photo'); }
+    setPhotoUploading(false);
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
@@ -131,6 +144,11 @@ export default function TrainerProfilePage() {
             {profile.specialty && <p className="text-sm mt-0.5" style={{ color: '#2563eb' }}>{profile.specialty}</p>}
             {profile.gym_name && <p className="text-sm text-gray-400">🏀 {profile.gym_name}</p>}
             <p className="text-xs text-gray-500 mt-1">Click photo to change</p>
+            {photoPreview && (
+              <button type="button" onClick={handleRemovePhoto} className="text-xs text-red-400 hover:underline mt-0.5">
+                Remove photo
+              </button>
+            )}
           </div>
         </div>
       )}
