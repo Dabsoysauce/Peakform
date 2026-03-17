@@ -44,8 +44,8 @@ export default function RegisterPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
         <Link href="/" className="flex items-center gap-1">
-          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
-          <span className="text-xl font-black text-white">FORM</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>ATHLETE</span>
+          <span className="text-xl font-black text-white">EDGE</span>
         </Link>
       </nav>
 
@@ -56,7 +56,7 @@ export default function RegisterPage() {
             style={{ backgroundColor: '#1e1e30' }}
           >
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-black text-white mb-2">Join PeakForm</h1>
+              <h1 className="text-3xl font-black text-white mb-2">Join Athlete Edge</h1>
               <p className="text-gray-400">Create your free account today</p>
             </div>
 

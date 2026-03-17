@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'PeakForm — Train Smarter. Peak Harder.',
-  description: 'Fitness tracking platform for gym athletes and personal trainers',
+  title: 'Athlete Edge — Train Smarter. Gain the Edge.',
+  description: 'Sports platform for high school basketball players and coaches',
 };
 
 export default function RootLayout({ children }) {

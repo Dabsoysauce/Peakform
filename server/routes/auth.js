@@ -16,16 +16,16 @@ function generateCode() {
 
 async function sendVerificationEmail(email, code) {
   await resend.emails.send({
-    from: 'PeakForm <onboarding@resend.dev>',
+    from: 'Athlete Edge <onboarding@resend.dev>',
     to: email,
-    subject: 'Your PeakForm verification code',
+    subject: 'Your Athlete Edge verification code',
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;color:#fff;border-radius:16px;">
-        <h1 style="color:#2563eb;margin-bottom:8px;">PEAKFORM</h1>
+        <h1 style="color:#2563eb;margin-bottom:8px;">ATHLETE EDGE</h1>
         <h2 style="margin-bottom:16px;">Verify your email</h2>
         <p style="color:#9ca3af;margin-bottom:24px;">Enter this code to complete your registration:</p>
         <div style="background:#1e1e30;border:1px solid #374151;border-radius:12px;padding:24px;text-align:center;letter-spacing:12px;font-size:36px;font-weight:900;color:#fff;margin-bottom:24px;">${code}</div>
-        <p style="color:#6b7280;font-size:13px;">This code expires in 15 minutes. If you didn't sign up for PeakForm, ignore this email.</p>
+        <p style="color:#6b7280;font-size:13px;">This code expires in 15 minutes. If you didn't sign up for Athlete Edge, ignore this email.</p>
       </div>
     `,
   });
@@ -145,7 +145,12 @@ router.post('/register', async (req, res) => {
       await pool.query('INSERT INTO trainer_profiles (user_id, first_name) VALUES ($1, $2)', [user.id, email.split('@')[0]]);
     }
 
-    await sendVerificationEmail(email.toLowerCase(), code);
+    try {
+      await sendVerificationEmail(email.toLowerCase(), code);
+    } catch (emailErr) {
+      console.error('Email send failed:', emailErr);
+      // Don't block registration, but surface the error
+    }
     res.status(201).json({ pendingVerification: true, email: email.toLowerCase() });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already registered' });

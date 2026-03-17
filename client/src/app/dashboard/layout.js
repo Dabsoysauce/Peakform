@@ -51,8 +51,8 @@ export default function DashboardLayout({ children }) {
       >
         {/* Logo */}
         <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-800">
-          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
-          <span className="text-xl font-black text-white">FORM</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>ATHLETE</span>
+          <span className="text-xl font-black text-white">EDGE</span>
         </div>
 
         {/* User */}
@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }) {
           >
             ☰
           </button>
-          <span className="font-black" style={{ color: '#2563eb' }}>PEAKFORM</span>
+          <span className="font-black" style={{ color: '#2563eb' }}>ATHLETE EDGE</span>
         </header>
         <main className="flex-1 p-6">
           {children}

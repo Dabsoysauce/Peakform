@@ -30,8 +30,8 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
-          <span className="text-2xl font-black text-white">FORM</span>
+          <span className="text-2xl font-black" style={{ color: '#2563eb' }}>ATHLETE</span>
+          <span className="text-2xl font-black text-white">EDGE</span>
         </div>
         <div className="flex items-center gap-4">
           <Link
@@ -65,10 +65,10 @@ export default function LandingPage() {
         </div>
         <h1 className="text-6xl font-black text-white mb-6 leading-tight">
           Train Smarter.<br />
-          <span style={{ color: '#2563eb' }}>Peak Harder.</span>
+          <span style={{ color: '#2563eb' }}>Gain the Edge.</span>
         </h1>
         <p className="text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed">
-          PeakForm is the all-in-one platform for high school basketball players and coaches.
+          Athlete Edge is the all-in-one platform for high school basketball players and coaches.
           Track workouts, hit PRs, upload film, and stay connected with your team — all in one place.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -131,7 +131,7 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="text-center py-24 px-6">
-        <h2 className="text-4xl font-black text-white mb-4">Ready to Hit Your <span style={{ color: '#2563eb' }}>Peak?</span></h2>
+        <h2 className="text-4xl font-black text-white mb-4">Ready to Gain Your <span style={{ color: '#2563eb' }}>Edge?</span></h2>
         <p className="text-gray-400 mb-8 text-lg">Join players and coaches already training smarter.</p>
         <Link
           href="/register"
@@ -145,10 +145,10 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-gray-800 px-6 py-8 text-center text-gray-600 text-sm">
         <div className="flex justify-center items-center gap-2 mb-2">
-          <span className="font-black" style={{ color: '#2563eb' }}>PEAK</span>
-          <span className="font-black text-white">FORM</span>
+          <span className="font-black" style={{ color: '#2563eb' }}>ATHLETE</span>
+          <span className="font-black text-white">EDGE</span>
         </div>
-        <p>© 2026 PeakForm. Built for ballers, by ballers.</p>
+        <p>© 2026 Athlete Edge. Built for ballers, by ballers.</p>
       </footer>
     </div>
   );

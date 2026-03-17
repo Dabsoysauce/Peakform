@@ -7,7 +7,7 @@ export default function AIAssistant() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Hi! I'm your PeakForm assistant. Ask me anything about navigating the app — like \"how do I log a workout?\" or \"where's my film?\"" }
+    { role: 'assistant', content: "Hi! I'm your Athlete Edge assistant. Ask me anything about navigating the app — like \"how do I log a workout?\" or \"where's my film?\"" }
   ]);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -81,7 +81,7 @@ export default function AIAssistant() {
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm" style={{ backgroundColor: '#2563eb' }}>
                 ✦
               </div>
-              <span className="text-sm font-bold text-white">PeakForm Assistant</span>
+              <span className="text-sm font-bold text-white">Athlete Edge Assistant</span>
             </div>
             <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
           </div>
@@ -141,7 +141,7 @@ export default function AIAssistant() {
         onClick={() => setOpen((v) => !v)}
         className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform"
         style={{ backgroundColor: '#2563eb' }}
-        title="PeakForm Assistant"
+        title="Athlete Edge Assistant"
       >
         {open ? (
           <span className="text-xl">×</span>

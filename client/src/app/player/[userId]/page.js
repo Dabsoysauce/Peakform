@@ -79,7 +79,7 @@ export default function PublicPlayerProfilePage() {
       {/* Header bar */}
       <div className="border-b border-gray-800" style={{ backgroundColor: '#1e1e30' }}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
-          <span className="text-xl font-black text-white">PeakForm</span>
+          <span className="text-xl font-black text-white">Athlete Edge</span>
           <span className="text-gray-600">·</span>
           <span className="text-gray-400 text-sm">Player Profile</span>
         </div>

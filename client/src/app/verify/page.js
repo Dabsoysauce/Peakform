@@ -75,8 +75,8 @@ function VerifyHandler() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0f0f1a' }}>
       <nav className="flex items-center px-6 py-4 border-b border-gray-800">
         <Link href="/" className="flex items-center gap-1">
-          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
-          <span className="text-xl font-black text-white">FORM</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>ATHLETE</span>
+          <span className="text-xl font-black text-white">EDGE</span>
         </Link>
       </nav>
 

@@ -53,7 +53,7 @@ app.use('/api/gyms', gymsRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/ai', aiRoutes);
 
-app.get('/api/health', (req, res) => res.json({ ok: true, service: 'PeakForm API' }));
+app.get('/api/health', (req, res) => res.json({ ok: true, service: 'Athlete Edge API' }));
 
 const PORT = process.env.PORT || 4000;
-httpServer.listen(PORT, () => console.log(`PeakForm API running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Athlete Edge API running on port ${PORT}`));

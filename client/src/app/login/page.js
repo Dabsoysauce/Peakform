@@ -49,8 +49,8 @@ export default function LoginPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
         <Link href="/" className="flex items-center gap-1">
-          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
-          <span className="text-xl font-black text-white">FORM</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>ATHLETE</span>
+          <span className="text-xl font-black text-white">EDGE</span>
         </Link>
       </nav>
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
           >
             <div className="text-center mb-8">
               <h1 className="text-3xl font-black text-white mb-2">Welcome Back</h1>
-              <p className="text-gray-400">Sign in to your PeakForm account</p>
+              <p className="text-gray-400">Sign in to your Athlete Edge account</p>
             </div>
 
             {error && (
