@@ -94,10 +94,10 @@ export default function DashboardOverview() {
   const recentWorkouts = workouts.slice(0, 3);
 
   const statsCards = [
-    { label: 'Total Workouts', value: workouts.length, icon: '🏋️', color: '#2563eb' },
-    { label: 'Active Goals', value: activeGoals.length, icon: '🎯', color: '#4ade80' },
-    { label: 'This Week', value: `${thisWeekSessions.length} sessions`, icon: '📅', color: '#60a5fa' },
-    { label: 'Goals Hit', value: goals.filter((g) => g.achieved).length, icon: '🏆', color: '#fbbf24' },
+    { label: 'Total Workouts', value: workouts.length, icon: '🏋️', color: '#2563eb', href: '/dashboard/workouts' },
+    { label: 'Active Goals', value: activeGoals.length, icon: '🎯', color: '#4ade80', href: '/dashboard/goals' },
+    { label: 'This Week', value: `${thisWeekSessions.length} sessions`, icon: '📅', color: '#60a5fa', href: '/dashboard/workouts' },
+    { label: 'Goals Hit', value: goals.filter((g) => g.achieved).length, icon: '🏆', color: '#fbbf24', href: '/dashboard/goals' },
   ];
 
   return (
@@ -114,15 +114,16 @@ export default function DashboardOverview() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statsCards.map((s) => (
-          <div
+          <a
             key={s.label}
-            className="rounded-xl p-5 border border-gray-800"
+            href={s.href}
+            className="rounded-xl p-5 border border-gray-800 hover:border-blue-600 hover:scale-[1.02] transition-all cursor-pointer block"
             style={{ backgroundColor: '#1e1e30' }}
           >
             <div className="text-2xl mb-2">{s.icon}</div>
             <div className="text-2xl font-black text-white">{loading ? '–' : s.value}</div>
             <div className="text-sm text-gray-400 mt-1">{s.label}</div>
-          </div>
+          </a>
         ))}
       </div>
 
