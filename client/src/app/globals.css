@@ -21,7 +21,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e85d26;
+  background: #2563eb;
   border-radius: 3px;
 }
 
@@ -30,7 +30,7 @@ body {
 }
 
 .btn-primary {
-  @apply bg-primary hover:bg-orange-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors;
+  @apply bg-primary hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors;
 }
 
 .btn-secondary {

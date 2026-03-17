@@ -94,7 +94,7 @@ export default function DashboardOverview() {
   const recentWorkouts = workouts.slice(0, 3);
 
   const statsCards = [
-    { label: 'Total Workouts', value: workouts.length, icon: '🏋️', color: '#e85d26' },
+    { label: 'Total Workouts', value: workouts.length, icon: '🏋️', color: '#2563eb' },
     { label: 'Active Goals', value: activeGoals.length, icon: '🎯', color: '#4ade80' },
     { label: 'This Week', value: `${thisWeekSessions.length} sessions`, icon: '📅', color: '#60a5fa' },
     { label: 'Goals Hit', value: goals.filter((g) => g.achieved).length, icon: '🏆', color: '#fbbf24' },
@@ -106,7 +106,7 @@ export default function DashboardOverview() {
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">
           {getGreeting()},{' '}
-          <span style={{ color: '#e85d26' }} className="capitalize">{userName}</span>!
+          <span style={{ color: '#2563eb' }} className="capitalize">{userName}</span>!
         </h1>
         <p className="text-gray-400 mt-1">Here's your training overview</p>
       </div>
@@ -147,9 +147,9 @@ export default function DashboardOverview() {
                 <Line
                   type="monotone"
                   dataKey="sessions"
-                  stroke="#e85d26"
+                  stroke="#2563eb"
                   strokeWidth={2.5}
-                  dot={{ fill: '#e85d26', r: 4 }}
+                  dot={{ fill: '#2563eb', r: 4 }}
                   activeDot={{ r: 6 }}
                 />
               </LineChart>
@@ -173,7 +173,7 @@ export default function DashboardOverview() {
                 <div key={g.id} className="flex items-start gap-3">
                   <div
                     className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
-                    style={{ backgroundColor: '#e85d26' }}
+                    style={{ backgroundColor: '#2563eb' }}
                   />
                   <div>
                     <div className="text-sm font-medium text-white">{g.title}</div>
@@ -199,7 +199,7 @@ export default function DashboardOverview() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white">Recent Workouts</h2>
-            <a href="/dashboard/workouts" className="text-sm hover:underline" style={{ color: '#e85d26' }}>
+            <a href="/dashboard/workouts" className="text-sm hover:underline" style={{ color: '#2563eb' }}>
               View all
             </a>
           </div>
@@ -245,14 +245,14 @@ export default function DashboardOverview() {
               onChange={(e) => setJoinKey(e.target.value.toUpperCase())}
               placeholder="8-character join code"
               maxLength={8}
-              className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 uppercase tracking-widest font-mono"
+              className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 uppercase tracking-widest font-mono"
               style={{ backgroundColor: '#16213e' }}
             />
             <button
               type="submit"
               disabled={joinLoading}
               className="w-full py-3 rounded-lg font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: '#e85d26' }}
+              style={{ backgroundColor: '#2563eb' }}
             >
               {joinLoading ? 'Joining...' : 'Join Team'}
             </button>

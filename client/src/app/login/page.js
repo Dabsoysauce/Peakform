@@ -45,7 +45,7 @@ export default function LoginPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
         <Link href="/" className="flex items-center gap-1">
-          <span className="text-xl font-black" style={{ color: '#e85d26' }}>PEAK</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
           <span className="text-xl font-black text-white">FORM</span>
         </Link>
       </nav>
@@ -76,7 +76,7 @@ export default function LoginPage() {
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -88,7 +88,7 @@ export default function LoginPage() {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full py-3 rounded-lg font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: '#e85d26' }}
+                style={{ backgroundColor: '#2563eb' }}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -104,7 +104,7 @@ export default function LoginPage() {
 
             <p className="text-center text-gray-500 mt-6 text-sm">
               Don't have an account?{' '}
-              <Link href="/register" className="font-semibold hover:underline" style={{ color: '#e85d26' }}>
+              <Link href="/register" className="font-semibold hover:underline" style={{ color: '#2563eb' }}>
                 Create one
               </Link>
             </p>

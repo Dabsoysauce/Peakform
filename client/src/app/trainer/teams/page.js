@@ -131,12 +131,12 @@ export default function TrainerTeamsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black text-white">My Teams</h1>
-          <p className="text-gray-400 mt-1">Create and manage your athlete groups</p>
+          <p className="text-gray-400 mt-1">Create and manage your player groups</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
           className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90"
-          style={{ backgroundColor: '#e85d26' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           + Create Team
         </button>
@@ -155,7 +155,7 @@ export default function TrainerTeamsPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             Create First Team
           </button>
@@ -167,8 +167,8 @@ export default function TrainerTeamsPage() {
             {teams.map((t) => (
               <div
                 key={t.id}
-                className={`rounded-xl border p-5 cursor-pointer transition-all hover:border-orange-700 ${
-                  selectedTeam?.id === t.id ? 'border-orange-600' : 'border-gray-800'
+                className={`rounded-xl border p-5 cursor-pointer transition-all hover:border-blue-600 ${
+                  selectedTeam?.id === t.id ? 'border-blue-600' : 'border-gray-800'
                 }`}
                 style={{
                   backgroundColor: selectedTeam?.id === t.id ? 'rgba(232,93,38,0.1)' : '#1e1e30',
@@ -187,13 +187,13 @@ export default function TrainerTeamsPage() {
                   )}
                 </div>
                 <div className="text-xs text-gray-500 mb-3">
-                  {t.member_count} athlete{t.member_count !== 1 ? 's' : ''}
+                  {t.member_count} player{t.member_count !== 1 ? 's' : ''}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">Join key:</span>
                   <span
                     className="text-xs font-mono font-bold px-2 py-0.5 rounded border tracking-wider"
-                    style={{ borderColor: '#e85d26', color: '#e85d26', backgroundColor: 'rgba(232,93,38,0.1)' }}
+                    style={{ borderColor: '#2563eb', color: '#2563eb', backgroundColor: 'rgba(232,93,38,0.1)' }}
                   >
                     {t.join_key}
                   </span>
@@ -241,7 +241,7 @@ export default function TrainerTeamsPage() {
                             <div
                               className="px-4 py-2.5 rounded-2xl text-sm break-words"
                               style={isOwn
-                                ? { backgroundColor: '#e85d26', color: 'white', borderBottomRightRadius: '4px' }
+                                ? { backgroundColor: '#2563eb', color: 'white', borderBottomRightRadius: '4px' }
                                 : { backgroundColor: '#16213e', color: '#e5e7eb', borderBottomLeftRadius: '4px' }
                               }
                             >
@@ -264,14 +264,14 @@ export default function TrainerTeamsPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={selectedTeam.coach_only ? 'Broadcast to your athletes...' : 'Type a message...'}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                     style={{ backgroundColor: '#16213e' }}
                   />
                   <button
                     type="submit"
                     disabled={sending || !input.trim()}
                     className="px-5 py-2.5 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: '#e85d26' }}
+                    style={{ backgroundColor: '#2563eb' }}
                   >
                     Send
                   </button>
@@ -288,13 +288,13 @@ export default function TrainerTeamsPage() {
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {members.length === 0 ? (
-                    <div className="text-xs text-gray-500 text-center pt-4">No athletes yet</div>
+                    <div className="text-xs text-gray-500 text-center pt-4">No players yet</div>
                   ) : (
                     members.map((m) => (
                       <div key={m.id} className="flex items-center gap-2">
                         <div
                           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                          style={{ backgroundColor: '#e85d26' }}
+                          style={{ backgroundColor: '#2563eb' }}
                         >
                           {(m.first_name || m.email).charAt(0).toUpperCase()}
                         </div>
@@ -331,7 +331,7 @@ export default function TrainerTeamsPage() {
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 placeholder="e.g. Morning Powerlifters"
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -343,15 +343,15 @@ export default function TrainerTeamsPage() {
               <div
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors`}
                 style={{
-                  borderColor: createForm.coach_only ? '#e85d26' : '#4b5563',
-                  backgroundColor: createForm.coach_only ? '#e85d26' : 'transparent',
+                  borderColor: createForm.coach_only ? '#2563eb' : '#4b5563',
+                  backgroundColor: createForm.coach_only ? '#2563eb' : 'transparent',
                 }}
               >
                 {createForm.coach_only && <span className="text-white text-xs">✓</span>}
               </div>
               <div>
                 <div className="text-sm font-medium text-white">Broadcast Only Mode</div>
-                <div className="text-xs text-gray-500">Only you can post messages. Athletes can read.</div>
+                <div className="text-xs text-gray-500">Only you can post messages. Players can read.</div>
               </div>
             </div>
             <div className="flex gap-3 pt-2">
@@ -366,7 +366,7 @@ export default function TrainerTeamsPage() {
                 type="submit"
                 disabled={createLoading}
                 className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                style={{ backgroundColor: '#e85d26' }}
+                style={{ backgroundColor: '#2563eb' }}
               >
                 {createLoading ? 'Creating...' : 'Create Team'}
               </button>

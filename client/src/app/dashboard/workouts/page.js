@@ -161,7 +161,7 @@ export default function WorkoutsPage() {
         <button
           onClick={() => setShowModal(true)}
           className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#e85d26' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           + Log Workout
         </button>
@@ -181,7 +181,7 @@ export default function WorkoutsPage() {
           <button
             onClick={() => setShowModal(true)}
             className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             Log First Workout
           </button>
@@ -200,7 +200,7 @@ export default function WorkoutsPage() {
                     onClick={() => handleExpand(s)}
                     className="text-left"
                   >
-                    <div className="text-sm font-bold text-white hover:text-orange-400 transition-colors">
+                    <div className="text-sm font-bold text-white hover:text-blue-400 transition-colors">
                       {s.session_name || 'Unnamed Session'}
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">
@@ -283,7 +283,7 @@ export default function WorkoutsPage() {
                   value={sessionForm.session_name}
                   onChange={(e) => setSessionForm({ ...sessionForm, session_name: e.target.value })}
                   placeholder="e.g. Push Day, Leg Day"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -294,7 +294,7 @@ export default function WorkoutsPage() {
                   value={sessionForm.session_date}
                   onChange={(e) => setSessionForm({ ...sessionForm, session_date: e.target.value })}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e', colorScheme: 'dark' }}
                 />
               </div>
@@ -306,7 +306,7 @@ export default function WorkoutsPage() {
                   onChange={(e) => setSessionForm({ ...sessionForm, duration_minutes: e.target.value })}
                   placeholder="60"
                   min="1"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -317,7 +317,7 @@ export default function WorkoutsPage() {
                   onChange={(e) => setSessionForm({ ...sessionForm, notes: e.target.value })}
                   placeholder="How did the session go?"
                   rows={3}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -327,7 +327,7 @@ export default function WorkoutsPage() {
                   type="submit"
                   disabled={sessionLoading}
                   className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                  style={{ backgroundColor: '#e85d26' }}
+                  style={{ backgroundColor: '#2563eb' }}
                 >
                   {sessionLoading ? 'Creating...' : 'Create Session'}
                 </button>
@@ -377,7 +377,7 @@ export default function WorkoutsPage() {
                   onChange={(e) => setExerciseForm({ ...exerciseForm, exercise_name: e.target.value })}
                   placeholder="Exercise name *"
                   required
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e' }}
                 />
                 <div className="grid grid-cols-2 gap-3">
@@ -387,7 +387,7 @@ export default function WorkoutsPage() {
                     onChange={(e) => setExerciseForm({ ...exerciseForm, sets: e.target.value })}
                     placeholder="Sets"
                     min="1"
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                     style={{ backgroundColor: '#16213e' }}
                   />
                   <input
@@ -396,7 +396,7 @@ export default function WorkoutsPage() {
                     onChange={(e) => setExerciseForm({ ...exerciseForm, reps: e.target.value })}
                     placeholder="Reps"
                     min="1"
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                     style={{ backgroundColor: '#16213e' }}
                   />
                   <input
@@ -406,7 +406,7 @@ export default function WorkoutsPage() {
                     placeholder="Weight (lbs)"
                     step="0.5"
                     min="0"
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                     style={{ backgroundColor: '#16213e' }}
                   />
                   <input
@@ -417,7 +417,7 @@ export default function WorkoutsPage() {
                     step="0.5"
                     min="1"
                     max="10"
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                     style={{ backgroundColor: '#16213e' }}
                   />
                 </div>
@@ -426,7 +426,7 @@ export default function WorkoutsPage() {
                   value={exerciseForm.notes}
                   onChange={(e) => setExerciseForm({ ...exerciseForm, notes: e.target.value })}
                   placeholder="Notes (optional)"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e' }}
                 />
                 <div className="flex gap-3 pt-1">
@@ -434,7 +434,7 @@ export default function WorkoutsPage() {
                     type="submit"
                     disabled={exerciseLoading}
                     className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50 hover:opacity-90"
-                    style={{ backgroundColor: '#e85d26' }}
+                    style={{ backgroundColor: '#2563eb' }}
                   >
                     {exerciseLoading ? 'Adding...' : '+ Add Exercise'}
                   </button>

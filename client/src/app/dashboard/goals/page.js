@@ -3,14 +3,15 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
 
 const METRICS = [
+  { value: 'vertical_jump', label: 'Vertical Jump (inches)' },
+  { value: 'sprint_40', label: '40-Yard Dash (seconds)' },
   { value: 'bench_press_max', label: 'Bench Press Max (lbs)' },
   { value: 'squat_max', label: 'Squat Max (lbs)' },
-  { value: 'deadlift_max', label: 'Deadlift Max (lbs)' },
   { value: 'total_weekly_sessions', label: 'Weekly Sessions (count)' },
   { value: 'bodyweight', label: 'Bodyweight (lbs)' },
   { value: 'mile_time', label: 'Mile Time (minutes)' },
-  { value: 'overhead_press_max', label: 'Overhead Press Max (lbs)' },
   { value: 'pull_ups', label: 'Max Pull-ups (count)' },
+  { value: 'free_throws', label: 'Free Throw % (percent)' },
 ];
 
 const COMPARISONS = [
@@ -157,7 +158,7 @@ export default function GoalsPage() {
           <button
             onClick={openCreate}
             className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             + New Goal
           </button>
@@ -173,11 +174,11 @@ export default function GoalsPage() {
         >
           <div className="text-5xl mb-4">🎯</div>
           <h3 className="text-xl font-bold text-white mb-2">No goals yet</h3>
-          <p className="text-gray-400 mb-6">Set your first fitness goal and start chasing it.</p>
+          <p className="text-gray-400 mb-6">Set your first basketball goal and start chasing it.</p>
           <button
             onClick={openCreate}
             className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             Set First Goal
           </button>
@@ -192,7 +193,7 @@ export default function GoalsPage() {
                 {activeGoals.map((g) => (
                   <div
                     key={g.id}
-                    className="rounded-xl p-5 border border-gray-800 hover:border-orange-800 transition-colors"
+                    className="rounded-xl p-5 border border-gray-800 hover:border-blue-600 transition-colors"
                     style={{ backgroundColor: '#1e1e30' }}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -218,7 +219,7 @@ export default function GoalsPage() {
                     <div className="flex items-center gap-2">
                       <span
                         className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold"
-                        style={{ backgroundColor: 'rgba(232,93,38,0.15)', color: '#e85d26' }}
+                        style={{ backgroundColor: 'rgba(232,93,38,0.15)', color: '#2563eb' }}
                       >
                         {g.comparison === 'gte' ? '≥' : g.comparison === 'lte' ? '≤' : '='} {g.target_value}
                       </span>
@@ -290,7 +291,7 @@ export default function GoalsPage() {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="e.g. 315 lbs Bench Press"
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -300,7 +301,7 @@ export default function GoalsPage() {
                 value={form.metric}
                 onChange={(e) => setForm({ ...form, metric: e.target.value })}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               >
                 {METRICS.map((m) => (
@@ -318,7 +319,7 @@ export default function GoalsPage() {
                   placeholder="315"
                   required
                   step="0.01"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -328,7 +329,7 @@ export default function GoalsPage() {
                   type="date"
                   value={form.deadline}
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
                   style={{ backgroundColor: '#16213e', colorScheme: 'dark' }}
                 />
               </div>
@@ -339,7 +340,7 @@ export default function GoalsPage() {
                 value={form.comparison}
                 onChange={(e) => setForm({ ...form, comparison: e.target.value })}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               >
                 {COMPARISONS.map((c) => (
@@ -355,7 +356,7 @@ export default function GoalsPage() {
                 type="submit"
                 disabled={formLoading}
                 className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                style={{ backgroundColor: '#e85d26' }}
+                style={{ backgroundColor: '#2563eb' }}
               >
                 {formLoading ? 'Saving...' : editGoal ? 'Update Goal' : 'Set Goal'}
               </button>

@@ -96,7 +96,7 @@ export default function MediaPage() {
         <button
           onClick={() => setShowModal(true)}
           className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#e85d26' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           + Add Media
         </button>
@@ -115,7 +115,7 @@ export default function MediaPage() {
           <button
             onClick={() => setShowModal(true)}
             className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             Upload First Video
           </button>
@@ -127,7 +127,7 @@ export default function MediaPage() {
             return (
               <div
                 key={m.id}
-                className="rounded-xl border border-gray-800 overflow-hidden hover:border-orange-800 transition-colors"
+                className="rounded-xl border border-gray-800 overflow-hidden hover:border-blue-600 transition-colors"
                 style={{ backgroundColor: '#1e1e30' }}
               >
                 {/* Thumbnail / Embed */}
@@ -149,7 +149,7 @@ export default function MediaPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs hover:underline"
-                        style={{ color: '#e85d26' }}
+                        style={{ color: '#2563eb' }}
                       >
                         Open Link ↗
                       </a>
@@ -195,7 +195,7 @@ export default function MediaPage() {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="e.g. Squat Form Check - 225lbs"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -207,7 +207,7 @@ export default function MediaPage() {
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
                 placeholder="https://youtube.com/watch?v=... or direct link"
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
               <p className="text-xs text-gray-500 mt-1">YouTube links will be embedded automatically</p>
@@ -219,7 +219,7 @@ export default function MediaPage() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Notes about this video..."
                 rows={3}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -228,7 +228,7 @@ export default function MediaPage() {
               <select
                 value={form.media_type}
                 onChange={(e) => setForm({ ...form, media_type: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               >
                 <option value="video">Video</option>
@@ -247,7 +247,7 @@ export default function MediaPage() {
                 type="submit"
                 disabled={formLoading}
                 className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                style={{ backgroundColor: '#e85d26' }}
+                style={{ backgroundColor: '#2563eb' }}
               >
                 {formLoading ? 'Uploading...' : 'Add Media'}
               </button>

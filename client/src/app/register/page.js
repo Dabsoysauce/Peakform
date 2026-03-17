@@ -49,7 +49,7 @@ export default function RegisterPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
         <Link href="/" className="flex items-center gap-1">
-          <span className="text-xl font-black" style={{ color: '#e85d26' }}>PEAK</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
           <span className="text-xl font-black text-white">FORM</span>
         </Link>
       </nav>
@@ -83,12 +83,12 @@ export default function RegisterPage() {
                       onClick={() => setForm({ ...form, role: r })}
                       className="py-3 px-4 rounded-lg border font-semibold capitalize transition-all"
                       style={{
-                        borderColor: form.role === r ? '#e85d26' : '#374151',
+                        borderColor: form.role === r ? '#2563eb' : '#374151',
                         backgroundColor: form.role === r ? 'rgba(232,93,38,0.15)' : '#16213e',
-                        color: form.role === r ? '#e85d26' : '#9ca3af',
+                        color: form.role === r ? '#2563eb' : '#9ca3af',
                       }}
                     >
-                      {r === 'athlete' ? '🏋️ Athlete' : '💪 Trainer'}
+                      {r === 'athlete' ? '🏀 Player' : '📋 Coach'}
                     </button>
                   ))}
                 </div>
@@ -102,7 +102,7 @@ export default function RegisterPage() {
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -114,7 +114,7 @@ export default function RegisterPage() {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="Min. 6 characters"
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
                   style={{ backgroundColor: '#16213e' }}
                 />
               </div>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full py-3 rounded-lg font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: '#e85d26' }}
+                style={{ backgroundColor: '#2563eb' }}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
@@ -130,7 +130,7 @@ export default function RegisterPage() {
 
             <p className="text-center text-gray-500 mt-6 text-sm">
               Already have an account?{' '}
-              <Link href="/login" className="font-semibold hover:underline" style={{ color: '#e85d26' }}>
+              <Link href="/login" className="font-semibold hover:underline" style={{ color: '#2563eb' }}>
                 Sign in
               </Link>
             </p>

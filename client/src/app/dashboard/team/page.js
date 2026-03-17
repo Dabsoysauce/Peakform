@@ -136,7 +136,7 @@ export default function TeamPage() {
                   >
                     <div
                       className="text-sm font-semibold truncate"
-                      style={{ color: selectedTeam?.id === t.id ? '#e85d26' : 'white' }}
+                      style={{ color: selectedTeam?.id === t.id ? '#2563eb' : 'white' }}
                     >
                       {t.name}
                     </div>
@@ -199,14 +199,14 @@ export default function TeamPage() {
                               <span className="text-xs text-gray-500 mb-1 ml-1">
                                 {msg.sender_name}
                                 {msg.sender_role === 'trainer' && (
-                                  <span className="ml-1 text-orange-400">(Trainer)</span>
+                                  <span className="ml-1 text-blue-400">(Coach)</span>
                                 )}
                               </span>
                             )}
                             <div
                               className="px-4 py-2.5 rounded-2xl text-sm break-words"
                               style={isOwn
-                                ? { backgroundColor: '#e85d26', color: 'white', borderBottomRightRadius: '4px' }
+                                ? { backgroundColor: '#2563eb', color: 'white', borderBottomRightRadius: '4px' }
                                 : { backgroundColor: '#16213e', color: '#e5e7eb', borderBottomLeftRadius: '4px' }
                               }
                             >
@@ -231,14 +231,14 @@ export default function TeamPage() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Type a message..."
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                       style={{ backgroundColor: '#16213e' }}
                     />
                     <button
                       type="submit"
                       disabled={sending || !input.trim()}
                       className="px-5 py-2.5 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50"
-                      style={{ backgroundColor: '#e85d26' }}
+                      style={{ backgroundColor: '#2563eb' }}
                     >
                       Send
                     </button>

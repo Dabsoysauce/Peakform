@@ -44,8 +44,8 @@ export default function TrainerAthletesPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Browse Athletes</h1>
-        <p className="text-gray-400 mt-1">Search by name, gym, or goal</p>
+        <h1 className="text-3xl font-black text-white">Browse Players</h1>
+        <p className="text-gray-400 mt-1">Search by name, school, or goal</p>
       </div>
 
       {/* Search */}
@@ -54,15 +54,15 @@ export default function TrainerAthletesPage() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, gym, email..."
-          className="flex-1 px-4 py-3 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+          placeholder="Search by name, school, email..."
+          className="flex-1 px-4 py-3 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
           style={{ backgroundColor: '#1e1e30' }}
         />
         <button
           type="submit"
           disabled={loading}
           className="px-6 py-3 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: '#e85d26' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           {loading ? 'Searching...' : 'Search'}
         </button>
@@ -83,25 +83,25 @@ export default function TrainerAthletesPage() {
           {loading ? (
             <div className="text-gray-400 text-center py-12">Searching...</div>
           ) : !searched ? (
-            <div className="text-gray-500 text-center py-12">Search for athletes above</div>
+            <div className="text-gray-500 text-center py-12">Search for players above</div>
           ) : athletes.length === 0 ? (
             <div
               className="rounded-xl p-12 border border-gray-800 text-center"
               style={{ backgroundColor: '#1e1e30' }}
             >
               <div className="text-4xl mb-4">🔍</div>
-              <h3 className="text-lg font-bold text-white mb-2">No athletes found</h3>
+              <h3 className="text-lg font-bold text-white mb-2">No players found</h3>
               <p className="text-gray-400">Try a different search term</p>
             </div>
           ) : (
             <div>
-              <p className="text-sm text-gray-500 mb-4">{athletes.length} athlete{athletes.length !== 1 ? 's' : ''} found</p>
+              <p className="text-sm text-gray-500 mb-4">{athletes.length} player{athletes.length !== 1 ? 's' : ''} found</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {athletes.map((a) => (
                   <div
                     key={a.id}
-                    className={`rounded-xl p-5 border cursor-pointer transition-all hover:border-orange-700 ${
-                      selectedAthlete?.id === a.id ? 'border-orange-600' : 'border-gray-800'
+                    className={`rounded-xl p-5 border cursor-pointer transition-all hover:border-blue-600 ${
+                      selectedAthlete?.id === a.id ? 'border-blue-600' : 'border-gray-800'
                     }`}
                     style={{
                       backgroundColor: selectedAthlete?.id === a.id ? 'rgba(232,93,38,0.08)' : '#1e1e30',
@@ -111,7 +111,7 @@ export default function TrainerAthletesPage() {
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                        style={{ backgroundColor: '#e85d26' }}
+                        style={{ backgroundColor: '#2563eb' }}
                       >
                         {(a.first_name || a.email).charAt(0).toUpperCase()}
                       </div>
@@ -127,7 +127,7 @@ export default function TrainerAthletesPage() {
                     {a.primary_goal && (
                       <span
                         className="inline-block text-xs px-2.5 py-0.5 rounded-full"
-                        style={{ backgroundColor: 'rgba(232,93,38,0.15)', color: '#e85d26' }}
+                        style={{ backgroundColor: 'rgba(232,93,38,0.15)', color: '#2563eb' }}
                       >
                         {a.primary_goal}
                       </span>
@@ -151,7 +151,7 @@ export default function TrainerAthletesPage() {
             <div className="flex items-center gap-3 mb-4">
               <div
                 className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-black text-white"
-                style={{ backgroundColor: '#e85d26' }}
+                style={{ backgroundColor: '#2563eb' }}
               >
                 {(selectedAthlete.first_name || selectedAthlete.email).charAt(0).toUpperCase()}
               </div>

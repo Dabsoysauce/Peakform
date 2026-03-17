@@ -5,9 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
   { label: 'Overview', href: '/dashboard', icon: '📊' },
-  { label: 'Workouts', href: '/dashboard/workouts', icon: '🏋️' },
+  { label: 'Workouts', href: '/dashboard/workouts', icon: '🏀' },
   { label: 'Goals', href: '/dashboard/goals', icon: '🎯' },
-  { label: 'Media', href: '/dashboard/media', icon: '🎬' },
+  { label: 'Film Room', href: '/dashboard/media', icon: '🎬' },
   { label: 'Team', href: '/dashboard/team', icon: '💬' },
   { label: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }) {
       >
         {/* Logo */}
         <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-800">
-          <span className="text-xl font-black" style={{ color: '#e85d26' }}>PEAK</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
           <span className="text-xl font-black text-white">FORM</span>
         </div>
 
@@ -58,13 +58,13 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
-              style={{ backgroundColor: '#e85d26' }}
+              style={{ backgroundColor: '#2563eb' }}
             >
               {userName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="text-sm font-semibold text-white capitalize">{userName}</div>
-              <div className="text-xs text-gray-500">Athlete</div>
+              <div className="text-xs text-gray-500">Player</div>
             </div>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default function DashboardLayout({ children }) {
                     ? 'text-white'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
-                style={active ? { backgroundColor: 'rgba(232,93,38,0.2)', color: '#e85d26' } : {}}
+                style={active ? { backgroundColor: 'rgba(232,93,38,0.2)', color: '#2563eb' } : {}}
               >
                 <span className="text-lg">{item.icon}</span>
                 {item.label}
@@ -122,7 +122,7 @@ export default function DashboardLayout({ children }) {
           >
             ☰
           </button>
-          <span className="font-black" style={{ color: '#e85d26' }}>PEAKFORM</span>
+          <span className="font-black" style={{ color: '#2563eb' }}>PEAKFORM</span>
         </header>
         <main className="flex-1 p-6">
           {children}

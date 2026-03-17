@@ -3,18 +3,18 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
 
 const SPECIALTIES = [
-  'Powerlifting',
-  'Bodybuilding',
-  'Olympic Weightlifting',
-  'CrossFit',
+  'Varsity Head Coach',
+  'JV Coach',
+  'Strength & Conditioning',
+  'Skills Coach',
+  'Shooting Coach',
+  'Point Guard Development',
+  'Post Player Development',
+  'Defense Specialist',
   'Sports Performance',
-  'Weight Loss',
-  'Muscle Building',
-  'Endurance Training',
-  'Rehabilitation',
-  'Youth Athletics',
-  'Senior Fitness',
+  'Athletic Development',
   'Nutrition Coaching',
+  'Rehabilitation',
   'General Fitness',
 ];
 
@@ -83,7 +83,7 @@ export default function TrainerProfilePage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white">Trainer Profile</h1>
+        <h1 className="text-3xl font-black text-white">Coach Profile</h1>
         <p className="text-gray-400 mt-1">Showcase your credentials and expertise</p>
       </div>
 
@@ -95,7 +95,7 @@ export default function TrainerProfilePage() {
         >
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white flex-shrink-0"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             {(profile.first_name || localStorage.getItem('email') || 'T').charAt(0).toUpperCase()}
           </div>
@@ -106,7 +106,7 @@ export default function TrainerProfilePage() {
                 : profile.first_name || 'Set your name'}
             </h2>
             {profile.specialty && (
-              <p className="text-sm mt-0.5" style={{ color: '#e85d26' }}>{profile.specialty}</p>
+              <p className="text-sm mt-0.5" style={{ color: '#2563eb' }}>{profile.specialty}</p>
             )}
             {profile.gym_name && (
               <p className="text-sm text-gray-400">🏢 {profile.gym_name}</p>
@@ -138,7 +138,7 @@ export default function TrainerProfilePage() {
                 value={form.first_name}
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })}
                 placeholder="Alex"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -149,7 +149,7 @@ export default function TrainerProfilePage() {
                 value={form.last_name}
                 onChange={(e) => setForm({ ...form, last_name: e.target.value })}
                 placeholder="Johnson"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -166,7 +166,7 @@ export default function TrainerProfilePage() {
             <select
               value={form.specialty}
               onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
               style={{ backgroundColor: '#16213e' }}
             >
               <option value="">Select your specialty...</option>
@@ -182,7 +182,7 @@ export default function TrainerProfilePage() {
               value={form.certifications}
               onChange={(e) => setForm({ ...form, certifications: e.target.value })}
               placeholder="NASM-CPT, CSCS, Precision Nutrition..."
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               style={{ backgroundColor: '#16213e' }}
             />
           </div>
@@ -191,9 +191,9 @@ export default function TrainerProfilePage() {
             <textarea
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              placeholder="Tell athletes about your training philosophy, experience, and approach..."
+              placeholder="Tell players about your coaching philosophy, experience, and system..."
               rows={5}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
               style={{ backgroundColor: '#16213e' }}
             />
           </div>
@@ -211,7 +211,7 @@ export default function TrainerProfilePage() {
               value={form.gym_id}
               onChange={(e) => setForm({ ...form, gym_id: e.target.value })}
               placeholder="Enter gym UUID or leave blank"
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               style={{ backgroundColor: '#16213e' }}
             />
             {profile?.gym_name && (
@@ -224,7 +224,7 @@ export default function TrainerProfilePage() {
           type="submit"
           disabled={saving}
           className="w-full py-3 rounded-lg font-bold text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-          style={{ backgroundColor: '#e85d26' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           {saving ? 'Saving...' : 'Save Profile'}
         </button>

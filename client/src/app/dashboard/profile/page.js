@@ -3,15 +3,15 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
 
 const PRIMARY_GOALS = [
-  'Build Muscle',
-  'Lose Fat',
+  'Make Varsity',
+  'Improve Athleticism',
   'Increase Strength',
-  'Improve Endurance',
-  'Athletic Performance',
-  'Powerlifting',
-  'Bodybuilding',
-  'General Fitness',
+  'Improve Speed & Quickness',
+  'Increase Vertical Jump',
+  'Improve Conditioning',
   'Injury Recovery',
+  'Get a Scholarship',
+  'General Fitness',
 ];
 
 export default function AthleteProfilePage() {
@@ -148,7 +148,7 @@ export default function AthleteProfilePage() {
         >
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white flex-shrink-0"
-            style={{ backgroundColor: '#e85d26' }}
+            style={{ backgroundColor: '#2563eb' }}
           >
             {(profile.first_name || localStorage.getItem('email') || 'A').charAt(0).toUpperCase()}
           </div>
@@ -162,7 +162,7 @@ export default function AthleteProfilePage() {
             {profile.primary_goal && (
               <span
                 className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: 'rgba(232,93,38,0.15)', color: '#e85d26' }}
+                style={{ backgroundColor: 'rgba(232,93,38,0.15)', color: '#2563eb' }}
               >
                 {profile.primary_goal}
               </span>
@@ -201,7 +201,7 @@ export default function AthleteProfilePage() {
                 value={form.first_name}
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })}
                 placeholder="John"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -212,7 +212,7 @@ export default function AthleteProfilePage() {
                 value={form.last_name}
                 onChange={(e) => setForm({ ...form, last_name: e.target.value })}
                 placeholder="Smith"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -227,7 +227,7 @@ export default function AthleteProfilePage() {
                 placeholder="25"
                 min="13"
                 max="100"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -240,7 +240,7 @@ export default function AthleteProfilePage() {
                 placeholder="185"
                 step="0.1"
                 min="50"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -253,7 +253,7 @@ export default function AthleteProfilePage() {
                 placeholder="70"
                 min="48"
                 max="96"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
@@ -270,7 +270,7 @@ export default function AthleteProfilePage() {
             <select
               value={form.primary_goal}
               onChange={(e) => setForm({ ...form, primary_goal: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
               style={{ backgroundColor: '#16213e' }}
             >
               <option value="">Select a goal...</option>
@@ -286,7 +286,7 @@ export default function AthleteProfilePage() {
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
               placeholder="Tell your trainer about your training background, injuries, goals..."
               rows={4}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
               style={{ backgroundColor: '#16213e' }}
             />
           </div>
@@ -304,7 +304,7 @@ export default function AthleteProfilePage() {
               value={form.gym_id}
               onChange={(e) => setForm({ ...form, gym_id: e.target.value })}
               placeholder="Enter gym UUID or leave blank"
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               style={{ backgroundColor: '#16213e' }}
             />
             {profile?.gym_name && (
@@ -317,7 +317,7 @@ export default function AthleteProfilePage() {
           type="submit"
           disabled={saving}
           className="w-full py-3 rounded-lg font-bold text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-          style={{ backgroundColor: '#e85d26' }}
+          style={{ backgroundColor: '#2563eb' }}
         >
           {saving ? 'Saving...' : 'Save Profile'}
         </button>

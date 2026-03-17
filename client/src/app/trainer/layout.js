@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 const navItems = [
   { label: 'Overview', href: '/trainer', icon: '📊' },
   { label: 'My Teams', href: '/trainer/teams', icon: '👥' },
-  { label: 'Athletes', href: '/trainer/athletes', icon: '🏋️' },
+  { label: 'Players', href: '/trainer/athletes', icon: '🏀' },
   { label: 'Profile', href: '/trainer/profile', icon: '👤' },
 ];
 
@@ -47,13 +47,13 @@ export default function TrainerLayout({ children }) {
       >
         {/* Logo */}
         <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-800">
-          <span className="text-xl font-black" style={{ color: '#e85d26' }}>PEAK</span>
+          <span className="text-xl font-black" style={{ color: '#2563eb' }}>PEAK</span>
           <span className="text-xl font-black text-white">FORM</span>
           <span
             className="ml-1 text-xs px-2 py-0.5 rounded-full font-bold"
-            style={{ backgroundColor: 'rgba(232,93,38,0.2)', color: '#e85d26' }}
+            style={{ backgroundColor: 'rgba(232,93,38,0.2)', color: '#2563eb' }}
           >
-            TRAINER
+            COACH
           </span>
         </div>
 
@@ -62,13 +62,13 @@ export default function TrainerLayout({ children }) {
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
-              style={{ backgroundColor: '#e85d26' }}
+              style={{ backgroundColor: '#2563eb' }}
             >
               {userName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="text-sm font-semibold text-white capitalize">{userName}</div>
-              <div className="text-xs text-gray-500">Personal Trainer</div>
+              <div className="text-xs text-gray-500">Coach</div>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function TrainerLayout({ children }) {
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm ${
                   active ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
-                style={active ? { backgroundColor: 'rgba(232,93,38,0.2)', color: '#e85d26' } : {}}
+                style={active ? { backgroundColor: 'rgba(232,93,38,0.2)', color: '#2563eb' } : {}}
               >
                 <span className="text-lg">{item.icon}</span>
                 {item.label}
@@ -119,7 +119,7 @@ export default function TrainerLayout({ children }) {
         {/* Mobile header */}
         <header className="flex items-center gap-4 px-4 py-3 border-b border-gray-800 md:hidden" style={{ backgroundColor: '#1a1a2e' }}>
           <button onClick={() => setSidebarOpen(true)} className="text-gray-400 hover:text-white">☰</button>
-          <span className="font-black" style={{ color: '#e85d26' }}>PEAKFORM</span>
+          <span className="font-black" style={{ color: '#2563eb' }}>PEAKFORM</span>
         </header>
         <main className="flex-1 p-6">
           {children}
