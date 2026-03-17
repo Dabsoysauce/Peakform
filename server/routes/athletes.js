@@ -4,13 +4,42 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET public player profile + media (no auth required)
+router.get('/:userId/public', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const profileResult = await pool.query(
+      `SELECT u.id as user_id, u.email,
+              ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio,
+              ap.weight_lbs, ap.height_inches, ap.photo_url,
+              g.name as gym_name, g.city as gym_city, g.state as gym_state
+       FROM users u
+       JOIN athlete_profiles ap ON ap.user_id = u.id
+       LEFT JOIN gyms g ON g.id = ap.gym_id
+       WHERE u.id = $1 AND u.role = 'athlete'`,
+      [userId]
+    );
+    if (!profileResult.rows[0]) return res.status(404).json({ error: 'Player not found' });
+
+    const mediaResult = await pool.query(
+      'SELECT * FROM media WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+
+    res.json({ profile: profileResult.rows[0], media: mediaResult.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch player profile' });
+  }
+});
+
 // GET search athletes
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const { gym, search } = req.query;
     let query = `
-      SELECT u.id, u.email,
-             ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio,
+      SELECT u.id, u.id as user_id, u.email,
+             ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio, ap.photo_url,
              g.name as gym_name, g.city as gym_city, g.state as gym_state
       FROM users u
       JOIN athlete_profiles ap ON ap.user_id = u.id

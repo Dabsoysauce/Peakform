@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { apiFetch } from '../../lib/api';
 
 function isYouTube(url) {
@@ -183,10 +184,12 @@ export default function TrainerAthletesPage() {
           >
             <div className="flex items-center gap-3 mb-4">
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-black text-white"
+                className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-xl font-black text-white flex-shrink-0"
                 style={{ backgroundColor: '#2563eb' }}
               >
-                {(selectedAthlete.first_name || selectedAthlete.email).charAt(0).toUpperCase()}
+                {selectedAthlete.photo_url
+                  ? <img src={selectedAthlete.photo_url} alt="" className="w-full h-full object-cover" />
+                  : (selectedAthlete.first_name || selectedAthlete.email).charAt(0).toUpperCase()}
               </div>
               <div>
                 <h3 className="font-black text-white">
@@ -198,7 +201,7 @@ export default function TrainerAthletesPage() {
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 mb-5">
               {selectedAthlete.gym_name && (
                 <div>
                   <div className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">Gym</div>
@@ -224,57 +227,34 @@ export default function TrainerAthletesPage() {
               {selectedAthlete.bio && (
                 <div>
                   <div className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">Bio</div>
-                  <div className="text-sm text-gray-300 leading-relaxed">{selectedAthlete.bio}</div>
+                  <div className="text-sm text-gray-300 leading-relaxed line-clamp-3">{selectedAthlete.bio}</div>
                 </div>
               )}
             </div>
 
-            {/* Film section */}
-            <div className="mt-5 border-t border-gray-700 pt-4">
-              <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Film Room</div>
+            {/* Film count */}
+            <div className="border-t border-gray-700 pt-4 mb-4">
               {mediaLoading ? (
-                <div className="text-xs text-gray-500 text-center py-4">Loading film...</div>
-              ) : playerMedia.length === 0 ? (
-                <div className="text-xs text-gray-500 text-center py-4">No film uploaded yet</div>
+                <p className="text-xs text-gray-500">Loading film...</p>
               ) : (
-                <div className="space-y-3">
-                  {playerMedia.map((m) => {
-                    const embedUrl = isYouTube(m.url) ? getYouTubeEmbed(m.url) : null;
-                    const isVideo = isSupabaseVideo(m.url);
-                    const isImage = isSupabaseImage(m.url);
-                    return (
-                      <div key={m.id} className="rounded-lg overflow-hidden border border-gray-700">
-                        <div className="aspect-video bg-gray-900 flex items-center justify-center relative overflow-hidden">
-                          {embedUrl ? (
-                            <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                          ) : isVideo ? (
-                            <video src={m.url} controls className="w-full h-full object-contain" />
-                          ) : isImage ? (
-                            <img src={m.url} alt={m.title} className="w-full h-full object-cover" />
-                          ) : m.thumbnail_url ? (
-                            <img src={m.thumbnail_url} alt={m.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="flex flex-col items-center gap-1 text-gray-600">
-                              <span className="text-2xl">🎬</span>
-                              <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: '#2563eb' }}>Open ↗</a>
-                            </div>
-                          )}
-                        </div>
-                        <div className="px-3 py-2">
-                          <p className="text-xs font-medium text-white truncate">{m.title || 'Untitled'}</p>
-                          {m.description && <p className="text-xs text-gray-500 truncate">{m.description}</p>}
-                          <p className="text-xs text-gray-600 mt-0.5">{new Date(m.created_at).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <p className="text-xs text-gray-400">
+                  🎬 {playerMedia.length} clip{playerMedia.length !== 1 ? 's' : ''} in Film Room
+                </p>
               )}
             </div>
 
+            <Link
+              href={`/player/${selectedAthlete.user_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-2.5 rounded-lg font-bold text-white text-sm text-center hover:opacity-90 transition-opacity mb-2"
+              style={{ backgroundColor: '#2563eb' }}
+            >
+              Open Profile ↗
+            </Link>
             <button
               onClick={() => { setSelectedAthlete(null); setPlayerMedia([]); }}
-              className="mt-5 w-full py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white text-sm"
+              className="w-full py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white text-sm"
             >
               Close
             </button>
