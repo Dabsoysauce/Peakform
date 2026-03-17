@@ -59,4 +59,81 @@ router.post('/chat', authMiddleware, async (req, res) => {
   }
 });
 
+const FILM_ANALYSIS_PROMPT = `You are an elite basketball performance analyst and coach with deep expertise in player development, biomechanics, and game film analysis. A player or coach has submitted film for analysis.
+
+Analyze the image and provide structured feedback in this exact format:
+
+**What's Happening**
+One sentence describing the scene/action captured.
+
+**Technique Assessment**
+Analyze the player's form, footwork, body positioning, and mechanics visible in the frame. Be specific about what you observe.
+
+**Strengths**
+2-3 bullet points on what the player is doing well.
+
+**Areas to Improve**
+2-3 specific, actionable coaching points with corrections.
+
+**Coaching Note**
+One key drill or focus point the player should work on based on this film.
+
+Use proper basketball terminology. Be direct, specific, and constructive. If the image is too blurry, too distant, or doesn't clearly show basketball action, say so and give whatever feedback you can.`;
+
+router.post('/analyze-film', authMiddleware, async (req, res) => {
+  try {
+    const { media_url, base64_frame, title, description } = req.body;
+
+    if (!media_url && !base64_frame) {
+      return res.status(400).json({ error: 'media_url or base64_frame is required' });
+    }
+
+    let imageSource;
+
+    if (base64_frame) {
+      imageSource = {
+        type: 'base64',
+        media_type: 'image/jpeg',
+        data: base64_frame,
+      };
+    } else {
+      // Fetch the image from Supabase and convert to base64 to avoid CORS issues
+      const imgRes = await fetch(media_url);
+      if (!imgRes.ok) return res.status(400).json({ error: 'Could not fetch image' });
+      const buffer = await imgRes.arrayBuffer();
+      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+      imageSource = {
+        type: 'base64',
+        media_type: contentType.split(';')[0],
+        data: Buffer.from(buffer).toString('base64'),
+      };
+    }
+
+    const userText = [
+      title ? `Film title: "${title}"` : null,
+      description ? `Player's note: "${description}"` : null,
+    ].filter(Boolean).join('\n') || 'Please analyze this basketball film.';
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 800,
+      system: FILM_ANALYSIS_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: imageSource },
+            { type: 'text', text: userText },
+          ],
+        },
+      ],
+    });
+
+    res.json({ analysis: response.content[0].text });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Film analysis failed' });
+  }
+});
+
 module.exports = router;

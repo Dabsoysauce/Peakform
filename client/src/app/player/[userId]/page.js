@@ -2,6 +2,106 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+function AnalysisModal({ media, onClose }) {
+  const [analysis, setAnalysis] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => { analyzeFilm(); }, []);
+
+  function isVideo(url) {
+    return url && url.includes('supabase') && (url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') || url.includes('.avi'));
+  }
+
+  async function extractVideoFrame(videoUrl) {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.crossOrigin = 'anonymous';
+      video.src = videoUrl;
+      video.currentTime = 2;
+      video.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 360;
+          canvas.getContext('2d').drawImage(video, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+        } catch { reject(new Error('Canvas failed')); }
+      };
+      video.onerror = () => reject(new Error('Video load failed'));
+      video.load();
+    });
+  }
+
+  async function analyzeFilm() {
+    setLoading(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('token');
+      let body;
+      if (isVideo(media.url)) {
+        const base64_frame = await extractVideoFrame(media.url);
+        body = { base64_frame, title: media.title, description: media.description };
+      } else {
+        body = { media_url: media.url, title: media.title, description: media.description };
+      }
+      const res = await fetch(`${API_BASE}/ai/analyze-film`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Analysis failed'); return; }
+      setAnalysis(data.analysis);
+    } catch { setError('Analysis failed. Try again.'); }
+    setLoading(false);
+  }
+
+  function renderAnalysis(text) {
+    return text.split('\n').map((line, i) => {
+      if (line.startsWith('**') && line.endsWith('**'))
+        return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-4 mb-1">{line.replace(/\*\*/g, '')}</h3>;
+      if (line.startsWith('- ') || line.startsWith('• '))
+        return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{line.slice(2)}</li>;
+      if (line.trim() === '') return null;
+      return <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>;
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80">
+      <div className="w-full max-w-xl rounded-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700 flex-shrink-0">
+          <div>
+            <h2 className="text-lg font-black text-white">AI Film Analysis</h2>
+            <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{media.title || 'Untitled'}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+              <p className="text-gray-400 text-sm">Analyzing film...</p>
+            </div>
+          ) : error ? (
+            <div className="px-4 py-3 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>
+          ) : (
+            <div className="space-y-1">{renderAnalysis(analysis)}</div>
+          )}
+        </div>
+        {!loading && !error && (
+          <div className="px-6 py-4 border-t border-gray-700 flex-shrink-0">
+            <button onClick={analyzeFilm} className="text-xs text-blue-400 hover:underline">Re-analyze ↺</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 function isYouTube(url) {
@@ -32,6 +132,7 @@ export default function PublicPlayerProfilePage() {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [analyzingMedia, setAnalyzingMedia] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -76,6 +177,7 @@ export default function PublicPlayerProfilePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0f0f1a' }}>
+      {analyzingMedia && <AnalysisModal media={analyzingMedia} onClose={() => setAnalyzingMedia(null)} />}
       {/* Header bar */}
       <div className="border-b border-gray-800" style={{ backgroundColor: '#1e1e30' }}>
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-3">
@@ -200,7 +302,18 @@ export default function PublicPlayerProfilePage() {
                     <div className="p-4">
                       <h3 className="font-bold text-white text-sm mb-1 truncate">{m.title || 'Untitled'}</h3>
                       {m.description && <p className="text-xs text-gray-400 mb-2 line-clamp-2">{m.description}</p>}
-                      <span className="text-xs text-gray-600">{new Date(m.created_at).toLocaleDateString()}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">{new Date(m.created_at).toLocaleDateString()}</span>
+                        {(isSupabaseImage(m.url) || isSupabaseVideo(m.url)) && (
+                          <button
+                            onClick={() => setAnalyzingMedia(m)}
+                            className="text-xs px-2.5 py-1 rounded border font-medium hover:opacity-80"
+                            style={{ borderColor: '#2563eb', color: '#2563eb' }}
+                          >
+                            🤖 Analyze
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
