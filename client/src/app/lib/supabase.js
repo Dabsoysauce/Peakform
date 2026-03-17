@@ -6,12 +6,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function uploadProfilePicture(file, userId) {
-  // Always use fixed path so re-uploads overwrite the old file
   const path = `${userId}/avatar`;
+
+  // Delete existing file first (ignore errors if it doesn't exist)
+  await supabase.storage.from('profile-pictures').remove([path]);
 
   const { error } = await supabase.storage
     .from('profile-pictures')
-    .upload(path, file, { upsert: true, contentType: file.type });
+    .upload(path, file, { contentType: file.type });
 
   if (error) throw error;
 
@@ -19,7 +21,7 @@ export async function uploadProfilePicture(file, userId) {
     .from('profile-pictures')
     .getPublicUrl(path);
 
-  // Add cache-busting so the browser shows the new photo immediately
+  // Cache-bust so browser shows new photo immediately
   return `${data.publicUrl}?t=${Date.now()}`;
 }
 
