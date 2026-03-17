@@ -22,7 +22,7 @@ export default function SchoolSearch({ value, onChange }) {
   }, []);
 
   useEffect(() => {
-    if (query.length < 2) { setResults([]); setOpen(false); return; }
+    if (query.length < 3) { setResults([]); setOpen(false); return; }
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
@@ -34,7 +34,7 @@ export default function SchoolSearch({ value, onChange }) {
         }
       } catch {}
       setLoading(false);
-    }, 300);
+    }, 600);
     return () => clearTimeout(timer);
   }, [query]);
 
