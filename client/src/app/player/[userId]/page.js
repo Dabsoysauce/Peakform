@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -25,7 +25,10 @@ function heightDisplay(inches) {
 
 export default function PublicPlayerProfilePage() {
   const { userId } = useParams();
+  const router = useRouter();
   const [profile, setProfile] = useState(null);
+  const myRole = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+  const myUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -138,6 +141,22 @@ export default function PublicPlayerProfilePage() {
           {profile.bio && (
             <div className="mt-6 pt-6 border-t border-gray-700">
               <p className="text-gray-300 leading-relaxed">{profile.bio}</p>
+            </div>
+          )}
+
+          {/* Message button — only show to logged-in users who aren't the profile owner */}
+          {myUserId && myUserId !== userId && (
+            <div className="mt-6 pt-6 border-t border-gray-700 flex gap-3">
+              <button
+                onClick={() => {
+                  const dest = myRole === 'trainer' ? '/trainer/messages' : '/dashboard/messages';
+                  router.push(`${dest}?with=${userId}&name=${encodeURIComponent(fullName)}`);
+                }}
+                className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity text-sm"
+                style={{ backgroundColor: '#2563eb' }}
+              >
+                💬 Send Message
+              </button>
             </div>
           )}
         </div>

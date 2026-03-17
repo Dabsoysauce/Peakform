@@ -7,6 +7,7 @@ const navItems = [
   { label: 'Overview', href: '/trainer', icon: '📊' },
   { label: 'My Teams', href: '/trainer/teams', icon: '👥' },
   { label: 'Players', href: '/trainer/athletes', icon: '🏀' },
+  { label: 'Messages', href: '/trainer/messages', icon: '💬' },
   { label: 'Profile', href: '/trainer/profile', icon: '👤' },
 ];
 

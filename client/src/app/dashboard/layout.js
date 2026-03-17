@@ -8,7 +8,8 @@ const navItems = [
   { label: 'Workouts', href: '/dashboard/workouts', icon: '🏀' },
   { label: 'Goals', href: '/dashboard/goals', icon: '🎯' },
   { label: 'Film Room', href: '/dashboard/media', icon: '🎬' },
-  { label: 'Team', href: '/dashboard/team', icon: '💬' },
+  { label: 'Messages', href: '/dashboard/messages', icon: '💬' },
+  { label: 'Team', href: '/dashboard/team', icon: '👥' },
   { label: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
 

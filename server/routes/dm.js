@@ -1,0 +1,121 @@
+const express = require('express');
+const pool = require('../config/db');
+const { authMiddleware } = require('../middleware/auth');
+
+const router = express.Router();
+
+// GET all conversations for current user (with last message + unread count)
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        partner_id,
+        partner_email,
+        partner_name,
+        partner_photo,
+        partner_role,
+        last_content,
+        last_at,
+        unread_count
+       FROM (
+         SELECT
+           CASE WHEN dm.sender_id = $1 THEN dm.recipient_id ELSE dm.sender_id END AS partner_id,
+           CASE WHEN dm.sender_id = $1 THEN ru.email ELSE su.email END AS partner_email,
+           CASE
+             WHEN dm.sender_id = $1 THEN COALESCE(rap.first_name || ' ' || rap.last_name, rtp.first_name || ' ' || rtp.last_name, ru.email)
+             ELSE COALESCE(sap.first_name || ' ' || sap.last_name, stp.first_name || ' ' || stp.last_name, su.email)
+           END AS partner_name,
+           CASE WHEN dm.sender_id = $1 THEN rap.photo_url ELSE sap.photo_url END AS partner_photo,
+           CASE WHEN dm.sender_id = $1 THEN ru.role ELSE su.role END AS partner_role,
+           dm.content AS last_content,
+           dm.created_at AS last_at,
+           COUNT(*) FILTER (WHERE dm.recipient_id = $1 AND dm.read = false) OVER (
+             PARTITION BY CASE WHEN dm.sender_id = $1 THEN dm.recipient_id ELSE dm.sender_id END
+           ) AS unread_count,
+           ROW_NUMBER() OVER (
+             PARTITION BY CASE WHEN dm.sender_id = $1 THEN dm.recipient_id ELSE dm.sender_id END
+             ORDER BY dm.created_at DESC
+           ) AS rn
+         FROM direct_messages dm
+         JOIN users su ON su.id = dm.sender_id
+         JOIN users ru ON ru.id = dm.recipient_id
+         LEFT JOIN athlete_profiles sap ON sap.user_id = dm.sender_id
+         LEFT JOIN trainer_profiles stp ON stp.user_id = dm.sender_id
+         LEFT JOIN athlete_profiles rap ON rap.user_id = dm.recipient_id
+         LEFT JOIN trainer_profiles rtp ON rtp.user_id = dm.recipient_id
+         WHERE dm.sender_id = $1 OR dm.recipient_id = $1
+       ) t
+       WHERE rn = 1
+       ORDER BY last_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+});
+
+// GET messages with a specific user
+router.get('/:userId', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      `SELECT dm.*,
+              COALESCE(sap.first_name || ' ' || sap.last_name, stp.first_name || ' ' || stp.last_name, su.email) AS sender_name,
+              COALESCE(sap.photo_url, stp.photo_url) AS sender_photo
+       FROM direct_messages dm
+       JOIN users su ON su.id = dm.sender_id
+       LEFT JOIN athlete_profiles sap ON sap.user_id = dm.sender_id
+       LEFT JOIN trainer_profiles stp ON stp.user_id = dm.sender_id
+       WHERE (dm.sender_id = $1 AND dm.recipient_id = $2)
+          OR (dm.sender_id = $2 AND dm.recipient_id = $1)
+       ORDER BY dm.created_at ASC`,
+      [req.user.id, userId]
+    );
+    // Mark incoming as read
+    await pool.query(
+      'UPDATE direct_messages SET read = true WHERE sender_id = $1 AND recipient_id = $2 AND read = false',
+      [userId, req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// POST send a DM
+router.post('/:userId', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ error: 'content is required' });
+
+    const recipient = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (!recipient.rows[0]) return res.status(404).json({ error: 'User not found' });
+
+    const result = await pool.query(
+      'INSERT INTO direct_messages (sender_id, recipient_id, content) VALUES ($1, $2, $3) RETURNING *',
+      [req.user.id, userId, content.trim()]
+    );
+    const msg = result.rows[0];
+
+    const senderInfo = await pool.query(
+      `SELECT COALESCE(ap.first_name || ' ' || ap.last_name, tp.first_name || ' ' || tp.last_name, u.email) AS sender_name,
+              COALESCE(ap.photo_url, tp.photo_url) AS sender_photo
+       FROM users u
+       LEFT JOIN athlete_profiles ap ON ap.user_id = u.id
+       LEFT JOIN trainer_profiles tp ON tp.user_id = u.id
+       WHERE u.id = $1`,
+      [req.user.id]
+    );
+
+    res.status(201).json({ ...msg, ...senderInfo.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+module.exports = router;

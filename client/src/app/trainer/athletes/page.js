@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '../../lib/api';
 
 function isYouTube(url) {
@@ -19,6 +20,7 @@ function isSupabaseImage(url) {
 }
 
 export default function TrainerAthletesPage() {
+  const router = useRouter();
   const [athletes, setAthletes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -243,12 +245,23 @@ export default function TrainerAthletesPage() {
               )}
             </div>
 
+            <button
+              onClick={() => {
+                const name = selectedAthlete.first_name
+                  ? `${selectedAthlete.first_name} ${selectedAthlete.last_name || ''}`.trim()
+                  : selectedAthlete.email;
+                router.push(`/trainer/messages?with=${selectedAthlete.user_id}&name=${encodeURIComponent(name)}`);
+              }}
+              className="w-full py-2.5 rounded-lg font-bold text-white text-sm hover:opacity-90 transition-opacity mb-2"
+              style={{ backgroundColor: '#2563eb' }}
+            >
+              💬 Message
+            </button>
             <Link
               href={`/player/${selectedAthlete.user_id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full py-2.5 rounded-lg font-bold text-white text-sm text-center hover:opacity-90 transition-opacity mb-2"
-              style={{ backgroundColor: '#2563eb' }}
+              className="block w-full py-2.5 rounded-lg font-bold text-sm text-center hover:opacity-90 transition-opacity mb-2 border border-gray-600 text-gray-300"
             >
               Open Profile ↗
             </Link>
