@@ -1,16 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
-
-const defaultForm = { title: '', description: '', url: '', media_type: 'video' };
+import { uploadMediaFile, deleteMediaFile } from '../../lib/supabase';
 
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <div
-        className="w-full max-w-md rounded-2xl border border-gray-700 p-6"
-        style={{ backgroundColor: '#1e1e30' }}
-      >
+      <div className="w-full max-w-lg rounded-2xl border border-gray-700 p-6" style={{ backgroundColor: '#1e1e30' }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-white">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
@@ -31,18 +27,34 @@ function getYouTubeEmbed(url) {
   return null;
 }
 
+function isSupabaseVideo(url) {
+  return url && url.includes('supabase') && (
+    url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') || url.includes('.avi')
+  );
+}
+
+function isSupabaseImage(url) {
+  return url && url.includes('supabase') && (
+    url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.gif') || url.includes('.webp')
+  );
+}
+
 export default function MediaPage() {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState(defaultForm);
-  const [formLoading, setFormLoading] = useState(false);
+  const [uploadMode, setUploadMode] = useState('file'); // 'file' or 'url'
+  const [form, setForm] = useState({ title: '', description: '', url: '', media_type: 'video' });
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [formError, setFormError] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(null);
+  const fileInputRef = useRef(null);
+  const dropRef = useRef(null);
 
-  useEffect(() => {
-    loadMedia();
-  }, []);
+  useEffect(() => { loadMedia(); }, []);
 
   async function loadMedia() {
     setLoading(true);
@@ -53,35 +65,79 @@ export default function MediaPage() {
     setLoading(false);
   }
 
+  function handleFileSelect(selected) {
+    if (!selected) return;
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (selected.size > maxSize) { setFormError('File must be under 100MB'); return; }
+    setFile(selected);
+    setFormError('');
+    const isVideo = selected.type.startsWith('video/');
+    setForm((f) => ({ ...f, media_type: isVideo ? 'video' : 'image' }));
+    if (!isVideo) {
+      const reader = new FileReader();
+      reader.onload = (e) => setFilePreview(e.target.result);
+      reader.readAsDataURL(selected);
+    } else {
+      setFilePreview(null);
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) handleFileSelect(dropped);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setFormError('');
-    setFormLoading(true);
+    setUploading(true);
+
     try {
+      let url = form.url;
+      let media_type = form.media_type;
+
+      if (uploadMode === 'file') {
+        if (!file) { setFormError('Please select a file'); setUploading(false); return; }
+        setUploadProgress('Uploading...');
+        const userId = localStorage.getItem('userId');
+        url = await uploadMediaFile(file, userId);
+        media_type = file.type.startsWith('video/') ? 'video' : 'image';
+      }
+
       const res = await apiFetch('/media', {
         method: 'POST',
-        body: JSON.stringify(form),
+        body: JSON.stringify({ title: form.title, description: form.description, url, media_type }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setFormError(data.error || 'Failed to upload media');
-        return;
-      }
+      if (!res.ok) { setFormError(data.error || 'Failed to save'); setUploading(false); return; }
+
       setShowModal(false);
-      setForm(defaultForm);
+      resetModal();
       loadMedia();
-    } catch {
-      setFormError('Network error');
-    }
-    setFormLoading(false);
+    } catch { setFormError('Upload failed. Try again.'); }
+    setUploading(false);
+    setUploadProgress('');
   }
 
-  async function handleDelete(id) {
+  function resetModal() {
+    setForm({ title: '', description: '', url: '', media_type: 'video' });
+    setFile(null);
+    setFilePreview(null);
+    setFormError('');
+    setUploadProgress('');
+  }
+
+  async function handleDelete(m) {
     if (!confirm('Delete this media?')) return;
-    setDeleteLoading(id);
+    setDeleteLoading(m.id);
     try {
-      await apiFetch(`/media/${id}`, { method: 'DELETE' });
-      setMedia((prev) => prev.filter((m) => m.id !== id));
+      await apiFetch(`/media/${m.id}`, { method: 'DELETE' });
+      // Also delete from Supabase storage if it's a stored file
+      if (m.url && m.url.includes('supabase')) {
+        await deleteMediaFile(m.url).catch(() => {});
+      }
+      setMedia((prev) => prev.filter((x) => x.id !== m.id));
     } catch {}
     setDeleteLoading(null);
   }
@@ -90,87 +146,59 @@ export default function MediaPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-black text-white">Form Film</h1>
-          <p className="text-gray-400 mt-1">Upload and organize your training videos</p>
+          <h1 className="text-3xl font-black text-white">Film Room</h1>
+          <p className="text-gray-400 mt-1">Upload and organize your game & practice film</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setShowModal(true); resetModal(); }}
           className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
           style={{ backgroundColor: '#2563eb' }}
         >
-          + Add Media
+          + Add Film
         </button>
       </div>
 
       {loading ? (
-        <div className="text-gray-400 text-center py-12">Loading media...</div>
+        <div className="text-gray-400 text-center py-12">Loading...</div>
       ) : media.length === 0 ? (
-        <div
-          className="rounded-xl p-12 border border-gray-800 text-center"
-          style={{ backgroundColor: '#1e1e30' }}
-        >
+        <div className="rounded-xl p-12 border border-gray-800 text-center" style={{ backgroundColor: '#1e1e30' }}>
           <div className="text-5xl mb-4">🎬</div>
-          <h3 className="text-xl font-bold text-white mb-2">No videos yet</h3>
-          <p className="text-gray-400 mb-6">Upload your form videos to share with your trainer and track technique.</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-            style={{ backgroundColor: '#2563eb' }}
-          >
-            Upload First Video
+          <h3 className="text-xl font-bold text-white mb-2">No film yet</h3>
+          <p className="text-gray-400 mb-6">Upload game film, practice clips, or highlight reels.</p>
+          <button onClick={() => { setShowModal(true); resetModal(); }} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
+            Upload First Clip
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {media.map((m) => {
             const embedUrl = isYouTube(m.url) ? getYouTubeEmbed(m.url) : null;
+            const isVideo = isSupabaseVideo(m.url);
+            const isImage = isSupabaseImage(m.url);
             return (
-              <div
-                key={m.id}
-                className="rounded-xl border border-gray-800 overflow-hidden hover:border-blue-600 transition-colors"
-                style={{ backgroundColor: '#1e1e30' }}
-              >
-                {/* Thumbnail / Embed */}
+              <div key={m.id} className="rounded-xl border border-gray-800 overflow-hidden hover:border-blue-600 transition-colors" style={{ backgroundColor: '#1e1e30' }}>
                 <div className="aspect-video bg-gray-900 flex items-center justify-center relative overflow-hidden">
                   {embedUrl ? (
-                    <iframe
-                      src={embedUrl}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                    <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                  ) : isVideo ? (
+                    <video src={m.url} controls className="w-full h-full object-contain" />
+                  ) : isImage ? (
+                    <img src={m.url} alt={m.title} className="w-full h-full object-cover" />
                   ) : m.thumbnail_url ? (
                     <img src={m.thumbnail_url} alt={m.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-gray-600">
                       <span className="text-4xl">🎬</span>
-                      <a
-                        href={m.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs hover:underline"
-                        style={{ color: '#2563eb' }}
-                      >
-                        Open Link ↗
-                      </a>
+                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: '#2563eb' }}>Open Link ↗</a>
                     </div>
                   )}
                 </div>
-
                 <div className="p-4">
                   <h3 className="font-bold text-white text-sm mb-1 truncate">{m.title || 'Untitled'}</h3>
-                  {m.description && (
-                    <p className="text-xs text-gray-400 mb-2 line-clamp-2">{m.description}</p>
-                  )}
+                  {m.description && <p className="text-xs text-gray-400 mb-2 line-clamp-2">{m.description}</p>}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">
-                      {new Date(m.created_at).toLocaleDateString()}
-                    </span>
-                    <button
-                      onClick={() => handleDelete(m.id)}
-                      disabled={deleteLoading === m.id}
-                      className="text-xs px-2.5 py-1 rounded border border-red-900 text-red-400 hover:bg-red-900/20 disabled:opacity-50"
-                    >
+                    <span className="text-xs text-gray-600">{new Date(m.created_at).toLocaleDateString()}</span>
+                    <button onClick={() => handleDelete(m)} disabled={deleteLoading === m.id} className="text-xs px-2.5 py-1 rounded border border-red-900 text-red-400 hover:bg-red-900/20 disabled:opacity-50">
                       Delete
                     </button>
                   </div>
@@ -181,75 +209,105 @@ export default function MediaPage() {
         </div>
       )}
 
-      {/* Upload Modal */}
       {showModal && (
-        <Modal title="Add Media" onClose={() => { setShowModal(false); setForm(defaultForm); setFormError(''); }}>
+        <Modal title="Add Film" onClose={() => { setShowModal(false); resetModal(); }}>
+          {/* Tabs */}
+          <div className="flex gap-2 mb-5">
+            {['file', 'url'].map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => { setUploadMode(mode); resetModal(); }}
+                className="flex-1 py-2 rounded-lg font-semibold text-sm transition-all"
+                style={{
+                  backgroundColor: uploadMode === mode ? '#2563eb' : '#16213e',
+                  color: uploadMode === mode ? 'white' : '#9ca3af',
+                  border: `1px solid ${uploadMode === mode ? '#2563eb' : '#374151'}`,
+                }}
+              >
+                {mode === 'file' ? '📁 Upload File' : '🔗 Paste URL'}
+              </button>
+            ))}
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {formError && (
-              <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{formError}</div>
+            {formError && <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{formError}</div>}
+
+            {uploadMode === 'file' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">File *</label>
+                <div
+                  ref={dropRef}
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                  style={{ backgroundColor: '#16213e' }}
+                >
+                  {file ? (
+                    <div>
+                      {filePreview
+                        ? <img src={filePreview} alt="preview" className="w-full h-32 object-contain mb-2 rounded" />
+                        : <div className="text-4xl mb-2">🎬</div>
+                      }
+                      <p className="text-sm text-white font-medium">{file.name}</p>
+                      <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-4xl mb-2">📁</div>
+                      <p className="text-sm text-gray-400">Drop file here or click to browse</p>
+                      <p className="text-xs text-gray-600 mt-1">MP4, MOV, JPG, PNG · Max 100MB</p>
+                    </div>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="video/*,image/*" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">URL *</label>
+                <input
+                  type="url"
+                  value={form.url}
+                  onChange={(e) => setForm({ ...form, url: e.target.value })}
+                  placeholder="https://youtube.com/watch?v=... or direct link"
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  style={{ backgroundColor: '#16213e' }}
+                />
+                <p className="text-xs text-gray-500 mt-1">YouTube links embed automatically</p>
+              </div>
             )}
+
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Squat Form Check - 225lbs"
+                placeholder="e.g. Shooting Form - Practice 3/17"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 style={{ backgroundColor: '#16213e' }}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Video URL *</label>
-              <input
-                type="url"
-                value={form.url}
-                onChange={(e) => setForm({ ...form, url: e.target.value })}
-                placeholder="https://youtube.com/watch?v=... or direct link"
-                required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                style={{ backgroundColor: '#16213e' }}
-              />
-              <p className="text-xs text-gray-500 mt-1">YouTube links will be embedded automatically</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Notes about this video..."
-                rows={3}
+                placeholder="Notes about this clip..."
+                rows={2}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
-              <select
-                value={form.media_type}
-                onChange={(e) => setForm({ ...form, media_type: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500"
-                style={{ backgroundColor: '#16213e' }}
-              >
-                <option value="video">Video</option>
-                <option value="image">Image</option>
-              </select>
-            </div>
+
             <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => { setShowModal(false); setForm(defaultForm); setFormError(''); }}
-                className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white"
-              >
+              <button type="button" onClick={() => { setShowModal(false); resetModal(); }} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">
                 Cancel
               </button>
-              <button
-                type="submit"
-                disabled={formLoading}
-                className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                style={{ backgroundColor: '#2563eb' }}
-              >
-                {formLoading ? 'Uploading...' : 'Add Media'}
+              <button type="submit" disabled={uploading} className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50" style={{ backgroundColor: '#2563eb' }}>
+                {uploading ? (uploadProgress || 'Uploading...') : 'Add Film'}
               </button>
             </div>
           </form>

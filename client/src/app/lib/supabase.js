@@ -28,3 +28,28 @@ export async function deleteProfilePicture(userId) {
     .remove([path]);
   if (error) throw error;
 }
+
+export async function uploadMediaFile(file, userId) {
+  const ext = file.name.split('.').pop();
+  const path = `${userId}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('game-film')
+    .upload(path, file, { contentType: file.type });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from('game-film')
+    .getPublicUrl(path);
+
+  return data.publicUrl;
+}
+
+export async function deleteMediaFile(url) {
+  // Extract path from public URL
+  const parts = url.split('/game-film/');
+  if (parts.length < 2) return;
+  const path = parts[1].split('?')[0];
+  await supabase.storage.from('game-film').remove([path]);
+}
