@@ -4,6 +4,69 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET searchable contacts for current user
+// Athletes: teammates + coaches of their teams
+// Trainers: athletes in their teams
+router.get('/contacts', authMiddleware, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const search = q ? `%${q}%` : '%';
+
+    let result;
+    if (req.user.role === 'trainer') {
+      result = await pool.query(
+        `SELECT DISTINCT u.id as user_id, u.email, u.role,
+                COALESCE(ap.first_name || ' ' || ap.last_name, u.email) AS name,
+                ap.photo_url
+         FROM team_members tm
+         JOIN teams t ON t.id = tm.team_id AND t.trainer_id = $1
+         JOIN users u ON u.id = tm.user_id
+         LEFT JOIN athlete_profiles ap ON ap.user_id = u.id
+         WHERE u.id != $1
+           AND (LOWER(ap.first_name) LIKE LOWER($2)
+             OR LOWER(ap.last_name) LIKE LOWER($2)
+             OR LOWER(u.email) LIKE LOWER($2)
+             OR LOWER(ap.first_name || ' ' || ap.last_name) LIKE LOWER($2))
+         ORDER BY name
+         LIMIT 20`,
+        [req.user.id, search]
+      );
+    } else {
+      // Athletes: teammates + coaches of their teams
+      result = await pool.query(
+        `SELECT DISTINCT u.id as user_id, u.email, u.role,
+                COALESCE(ap.first_name || ' ' || ap.last_name, tp.first_name || ' ' || tp.last_name, u.email) AS name,
+                COALESCE(ap.photo_url, tp.photo_url) AS photo_url
+         FROM team_members my_tm
+         JOIN teams t ON t.id = my_tm.team_id AND my_tm.user_id = $1
+         JOIN (
+           SELECT tm2.user_id, tm2.team_id FROM team_members tm2
+           UNION
+           SELECT t2.trainer_id, t2.id FROM teams t2
+         ) others ON others.team_id = t.id
+         JOIN users u ON u.id = others.user_id
+         LEFT JOIN athlete_profiles ap ON ap.user_id = u.id
+         LEFT JOIN trainer_profiles tp ON tp.user_id = u.id
+         WHERE u.id != $1
+           AND (LOWER(ap.first_name) LIKE LOWER($2)
+             OR LOWER(ap.last_name) LIKE LOWER($2)
+             OR LOWER(tp.first_name) LIKE LOWER($2)
+             OR LOWER(tp.last_name) LIKE LOWER($2)
+             OR LOWER(u.email) LIKE LOWER($2)
+             OR LOWER(COALESCE(ap.first_name, '') || ' ' || COALESCE(ap.last_name, '')) LIKE LOWER($2)
+             OR LOWER(COALESCE(tp.first_name, '') || ' ' || COALESCE(tp.last_name, '')) LIKE LOWER($2))
+         ORDER BY name
+         LIMIT 20`,
+        [req.user.id, search]
+      );
+    }
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to search contacts' });
+  }
+});
+
 // GET all conversations for current user (with last message + unread count)
 router.get('/', authMiddleware, async (req, res) => {
   try {
