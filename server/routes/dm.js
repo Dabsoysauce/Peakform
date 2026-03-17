@@ -152,15 +152,15 @@ router.get('/:userId', authMiddleware, async (req, res) => {
 router.post('/:userId', authMiddleware, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { content } = req.body;
-    if (!content || !content.trim()) return res.status(400).json({ error: 'content is required' });
+    const { content, media_url, media_type } = req.body;
+    if ((!content || !content.trim()) && !media_url) return res.status(400).json({ error: 'content or media_url is required' });
 
     const recipient = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
     if (!recipient.rows[0]) return res.status(404).json({ error: 'User not found' });
 
     const result = await pool.query(
-      'INSERT INTO direct_messages (sender_id, recipient_id, content) VALUES ($1, $2, $3) RETURNING *',
-      [req.user.id, userId, content.trim()]
+      'INSERT INTO direct_messages (sender_id, recipient_id, content, media_url, media_type) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [req.user.id, userId, content?.trim() || '', media_url || null, media_type || null]
     );
     const msg = result.rows[0];
 

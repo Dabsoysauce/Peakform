@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { apiFetch } from '../lib/api';
+import { uploadDMMedia } from '../lib/supabase';
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
@@ -76,6 +77,28 @@ function NewMessageModal({ onClose, onSelect }) {
   );
 }
 
+function MediaBubble({ url, media_type }) {
+  if (media_type === 'video') {
+    return (
+      <video
+        src={url}
+        controls
+        className="rounded-xl max-w-xs max-h-48 mt-1"
+        style={{ display: 'block' }}
+      />
+    );
+  }
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      <img
+        src={url}
+        alt="attachment"
+        className="rounded-xl max-w-xs max-h-48 mt-1 object-cover cursor-pointer hover:opacity-90"
+      />
+    </a>
+  );
+}
+
 export default function MessagesPage() {
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState([]);
@@ -87,8 +110,12 @@ export default function MessagesPage() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [showNewMsg, setShowNewMsg] = useState(false);
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [attachPreview, setAttachPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
+  const fileInputRef = useRef(null);
   const myUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
 
   useEffect(() => {
@@ -148,16 +175,49 @@ export default function MessagesPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  function handleFileSelect(file) {
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) { alert('File must be under 50MB'); return; }
+    setAttachedFile(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setAttachPreview({ type: 'image', src: e.target.result });
+      reader.readAsDataURL(file);
+    } else {
+      setAttachPreview({ type: 'video', name: file.name });
+    }
+  }
+
+  function clearAttachment() {
+    setAttachedFile(null);
+    setAttachPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   async function handleSend(e) {
     e.preventDefault();
-    if (!input.trim() || !activeId) return;
+    if ((!input.trim() && !attachedFile) || !activeId) return;
     setSending(true);
-    const content = input.trim();
-    setInput('');
+
     try {
+      let media_url = null;
+      let media_type = null;
+
+      if (attachedFile) {
+        setUploading(true);
+        const result = await uploadDMMedia(attachedFile, myUserId);
+        media_url = result.url;
+        media_type = result.media_type;
+        setUploading(false);
+        clearAttachment();
+      }
+
+      const content = input.trim();
+      setInput('');
+
       const res = await apiFetch(`/dm/${activeId}`, {
         method: 'POST',
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, media_url, media_type }),
       });
       if (res.ok) {
         const msg = await res.json();
@@ -165,7 +225,9 @@ export default function MessagesPage() {
         socketRef.current?.emit('send_dm', { recipientId: activeId, message: msg });
         loadConversations();
       }
-    } catch {}
+    } catch {
+      setUploading(false);
+    }
     setSending(false);
   }
 
@@ -181,6 +243,8 @@ export default function MessagesPage() {
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
+
+  const isBusy = sending || uploading;
 
   return (
     <>
@@ -240,7 +304,9 @@ export default function MessagesPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">{c.last_content}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {c.last_content || (c.last_media_url ? '📎 Attachment' : '')}
+                      </p>
                     </div>
                   </div>
                 </button>
@@ -274,17 +340,23 @@ export default function MessagesPage() {
                     <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div className="max-w-xs lg:max-w-md">
                         {!isMine && <p className="text-xs text-gray-500 mb-1 ml-1">{m.sender_name}</p>}
-                        <div
-                          className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                          style={{
-                            backgroundColor: isMine ? '#2563eb' : '#16213e',
-                            color: isMine ? 'white' : '#e5e7eb',
-                            borderBottomRightRadius: isMine ? 4 : undefined,
-                            borderBottomLeftRadius: !isMine ? 4 : undefined,
-                          }}
-                        >
-                          {m.content}
-                        </div>
+                        {m.media_url && (
+                          <MediaBubble url={m.media_url} media_type={m.media_type} />
+                        )}
+                        {m.content && (
+                          <div
+                            className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                            style={{
+                              backgroundColor: isMine ? '#2563eb' : '#16213e',
+                              color: isMine ? 'white' : '#e5e7eb',
+                              borderBottomRightRadius: isMine ? 4 : undefined,
+                              borderBottomLeftRadius: !isMine ? 4 : undefined,
+                              marginTop: m.media_url ? 4 : 0,
+                            }}
+                          >
+                            {m.content}
+                          </div>
+                        )}
                         <p className={`text-xs text-gray-600 mt-1 ${isMine ? 'text-right mr-1' : 'ml-1'}`}>
                           {formatTime(m.created_at)}
                         </p>
@@ -296,22 +368,60 @@ export default function MessagesPage() {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={handleSend} className="px-6 py-4 border-t border-gray-800 flex gap-3">
+            {/* Attachment preview */}
+            {attachPreview && (
+              <div className="px-6 pt-3 flex items-center gap-3">
+                <div className="relative inline-block">
+                  {attachPreview.type === 'image' ? (
+                    <img src={attachPreview.src} alt="preview" className="h-20 rounded-xl object-cover" />
+                  ) : (
+                    <div className="h-20 px-4 rounded-xl flex items-center gap-2 text-sm text-gray-300" style={{ backgroundColor: '#16213e' }}>
+                      🎬 {attachPreview.name}
+                    </div>
+                  )}
+                  <button
+                    onClick={clearAttachment}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-600 hover:bg-gray-500 text-white text-xs flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Input */}
+            <form onSubmit={handleSend} className="px-6 py-4 border-t border-gray-800 flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={(e) => handleFileSelect(e.target.files[0])}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-gray-400 hover:text-white transition-colors flex-shrink-0 text-xl"
+                title="Attach image or video"
+              >
+                📎
+              </button>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+                placeholder={uploading ? 'Uploading...' : 'Type a message...'}
+                disabled={uploading}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
                 style={{ backgroundColor: '#16213e' }}
               />
               <button
                 type="submit"
-                disabled={sending || !input.trim()}
-                className="px-5 py-2.5 rounded-xl font-bold text-white disabled:opacity-50 hover:opacity-90 transition-opacity text-sm"
+                disabled={isBusy || (!input.trim() && !attachedFile)}
+                className="px-5 py-2.5 rounded-xl font-bold text-white disabled:opacity-50 hover:opacity-90 transition-opacity text-sm flex-shrink-0"
                 style={{ backgroundColor: '#2563eb' }}
               >
-                Send
+                {uploading ? '...' : 'Send'}
               </button>
             </form>
           </div>

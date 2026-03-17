@@ -46,6 +46,23 @@ export async function uploadMediaFile(file, userId) {
   return data.publicUrl;
 }
 
+export async function uploadDMMedia(file, userId) {
+  const ext = file.name.split('.').pop();
+  const path = `${userId}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('dm-media')
+    .upload(path, file, { contentType: file.type });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from('dm-media')
+    .getPublicUrl(path);
+
+  return { url: data.publicUrl, media_type: file.type.startsWith('video/') ? 'video' : 'image' };
+}
+
 export async function deleteMediaFile(url) {
   // Extract path from public URL
   const parts = url.split('/game-film/');
