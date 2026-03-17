@@ -21,10 +21,6 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (data.pendingVerification) {
-          router.push(`/verify?email=${encodeURIComponent(data.email)}`);
-          return;
-        }
         setError(data.error || 'Login failed');
         return;
       }
