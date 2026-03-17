@@ -23,7 +23,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.put('/', authMiddleware, async (req, res) => {
   try {
-    const { first_name, last_name, gym_id, specialty, certifications, bio } = req.body;
+    const { first_name, last_name, gym_id, specialty, certifications, bio, photo_url } = req.body;
 
     const existing = await pool.query(
       'SELECT id FROM trainer_profiles WHERE user_id = $1',
@@ -39,16 +39,17 @@ router.put('/', authMiddleware, async (req, res) => {
           gym_id = $3,
           specialty = COALESCE($4, specialty),
           certifications = COALESCE($5, certifications),
-          bio = COALESCE($6, bio)
-        WHERE user_id = $7
+          bio = COALESCE($6, bio),
+          photo_url = COALESCE($7, photo_url)
+        WHERE user_id = $8
         RETURNING *`,
-        [first_name, last_name, gym_id || null, specialty, certifications, bio, req.user.id]
+        [first_name, last_name, gym_id || null, specialty, certifications, bio, photo_url || null, req.user.id]
       );
     } else {
       result = await pool.query(
-        `INSERT INTO trainer_profiles (user_id, first_name, last_name, gym_id, specialty, certifications, bio)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [req.user.id, first_name, last_name, gym_id || null, specialty, certifications, bio]
+        `INSERT INTO trainer_profiles (user_id, first_name, last_name, gym_id, specialty, certifications, bio, photo_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [req.user.id, first_name, last_name, gym_id || null, specialty, certifications, bio, photo_url || null]
       );
     }
 
