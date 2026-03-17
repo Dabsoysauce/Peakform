@@ -20,7 +20,7 @@ const setupSocket = require('./socket/index');
 const app = express();
 const httpServer = createServer(app);
 
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = ['http://localhost:3000', 'https://peakformnow.vercel.app'];
 
 const io = new Server(httpServer, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true },
