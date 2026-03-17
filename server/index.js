@@ -19,6 +19,9 @@ const dmRoutes = require('./routes/dm');
 const aiRoutes = require('./routes/ai');
 const setupSocket = require('./socket/index');
 
+const session = require('express-session');
+const passport = require('passport');
+
 const app = express();
 const httpServer = createServer(app);
 
@@ -33,6 +36,8 @@ setupSocket(io);
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+app.use(session({ secret: process.env.JWT_SECRET || 'secret', resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
