@@ -61,7 +61,7 @@ export default function AthleteProfilePage() {
     if (!q || q.length < 2) return;
     setGymLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/athletes?gym=${encodeURIComponent(q)}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/athletes?gym=${encodeURIComponent(q)}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       // We'll use a gym-specific endpoint via the athletes route or a simple local search
@@ -104,7 +104,7 @@ export default function AthleteProfilePage() {
   async function createGym(e) {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:4000/api/gyms', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/gyms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

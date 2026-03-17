@@ -42,7 +42,7 @@ export default function TrainerTeamsPage() {
   useEffect(() => {
     loadTeams();
 
-    socketRef.current = io('http://localhost:4000', {
+    socketRef.current = io(process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000', {
       transports: ['websocket', 'polling'],
     });
 
