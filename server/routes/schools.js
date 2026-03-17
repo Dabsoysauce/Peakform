@@ -6,7 +6,7 @@ router.get('/', async (req, res) => {
     const { q } = req.query;
     if (!q || q.trim().length < 2) return res.json([]);
 
-    const url = `https://educationdata.urban.org/api/v1/schools/ccd/directory/?school_name=${encodeURIComponent(q.trim())}&school_level=3&per_page=10&fields=school_name,city_location,state_location`;
+    const url = `https://educationdata.urban.org/api/v1/schools/ccd/directory/2021/?school_name=${encodeURIComponent(q.trim())}&school_level=3&per_page=10&fields=school_name,city_location,state_location`;
 
     const response = await fetch(url);
     const data = await response.json();
