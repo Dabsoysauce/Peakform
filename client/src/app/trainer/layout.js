@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import AIAssistant from '../components/AIAssistant';
 
 const navItems = [
   { label: 'Overview', href: '/trainer', icon: '📊' },
@@ -126,6 +127,7 @@ export default function TrainerLayout({ children }) {
           {children}
         </main>
       </div>
+      <AIAssistant />
     </div>
   );
 }

@@ -7,6 +7,7 @@
     "db:setup": "psql $DATABASE_URL -f schema.sql"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.79.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
