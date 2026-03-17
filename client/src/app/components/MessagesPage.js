@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { apiFetch } from '../lib/api';
 import { uploadDMMedia } from '../lib/supabase';
 import { io } from 'socket.io-client';
@@ -101,9 +101,11 @@ function MediaBubble({ url, media_type }) {
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [activeName, setActiveName] = useState('');
+  const [activeRole, setActiveRole] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -151,14 +153,16 @@ export default function MessagesPage() {
   useEffect(() => {
     const withId = searchParams.get('with');
     const withName = searchParams.get('name');
+    const withRole = searchParams.get('role');
     if (withId && withId !== activeId) {
-      openConversation(withId, withName || withId);
+      openConversation(withId, withName || withId, withRole);
     }
   }, [searchParams]);
 
-  async function openConversation(partnerId, partnerName) {
+  async function openConversation(partnerId, partnerName, partnerRole) {
     setActiveId(partnerId);
     setActiveName(partnerName);
+    setActiveRole(partnerRole || null);
     setLoadingMsgs(true);
     setMessages([]);
     try {
@@ -233,7 +237,7 @@ export default function MessagesPage() {
 
   function handleContactSelect(contact) {
     setShowNewMsg(false);
-    openConversation(contact.user_id, contact.name);
+    openConversation(contact.user_id, contact.name, contact.role);
   }
 
   function formatTime(ts) {
@@ -283,7 +287,7 @@ export default function MessagesPage() {
               conversations.map((c) => (
                 <button
                   key={c.partner_id}
-                  onClick={() => openConversation(c.partner_id, c.partner_name)}
+                  onClick={() => openConversation(c.partner_id, c.partner_name, c.partner_role)}
                   className={`w-full text-left px-5 py-4 border-b border-gray-800 hover:bg-white/5 transition-colors ${activeId === c.partner_id ? 'bg-white/5' : ''}`}
                 >
                   <div className="flex items-center gap-3">
@@ -319,13 +323,22 @@ export default function MessagesPage() {
         {activeId ? (
           <div className="flex-1 flex flex-col">
             <div className="px-6 py-4 border-b border-gray-800 flex items-center gap-3">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                style={{ backgroundColor: '#2563eb' }}
+              <button
+                onClick={() => {
+                  const myRole = localStorage.getItem('role');
+                  const dest = activeRole === 'trainer' ? `/coach/${activeId}` : `/player/${activeId}`;
+                  router.push(dest);
+                }}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
-                {activeName.charAt(0).toUpperCase()}
-              </div>
-              <span className="font-bold text-white">{activeName}</span>
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                  style={{ backgroundColor: '#2563eb' }}
+                >
+                  {activeName.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-bold text-white hover:underline">{activeName}</span>
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">

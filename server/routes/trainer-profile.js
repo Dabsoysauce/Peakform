@@ -4,6 +4,24 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET public coach profile (no auth required)
+router.get('/:userId/public', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT tp.first_name, tp.last_name, tp.specialty, tp.certifications, tp.bio, tp.photo_url, tp.school_name, u.id as user_id
+       FROM trainer_profiles tp
+       JOIN users u ON u.id = tp.user_id
+       WHERE tp.user_id = $1`,
+      [req.params.userId]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Coach not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch coach profile' });
+  }
+});
+
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(

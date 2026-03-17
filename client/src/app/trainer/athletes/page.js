@@ -246,7 +246,7 @@ export default function TrainerAthletesPage() {
                 const name = selectedAthlete.first_name
                   ? `${selectedAthlete.first_name} ${selectedAthlete.last_name || ''}`.trim()
                   : selectedAthlete.email;
-                router.push(`/trainer/messages?with=${selectedAthlete.user_id}&name=${encodeURIComponent(name)}`);
+                router.push(`/trainer/messages?with=${selectedAthlete.user_id}&name=${encodeURIComponent(name)}&role=athlete`);
               }}
               className="w-full py-2.5 rounded-lg font-bold text-white text-sm hover:opacity-90 transition-opacity mb-2"
               style={{ backgroundColor: '#2563eb' }}
