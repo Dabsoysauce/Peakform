@@ -28,14 +28,9 @@ export default function RegisterPage() {
         setError(data.error || 'Registration failed');
         return;
       }
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role);
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('email', data.user.email);
-      if (data.user.role === 'trainer') {
-        router.push('/trainer');
-      } else {
-        router.push('/dashboard');
+      if (data.pendingVerification) {
+        router.push(`/verify?email=${encodeURIComponent(data.email)}`);
+        return;
       }
     } catch {
       setError('Network error. Is the server running?');
