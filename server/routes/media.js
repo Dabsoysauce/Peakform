@@ -36,6 +36,21 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+// GET a player's media (coaches only)
+router.get('/player/:userId', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Coaches only' });
+    const result = await pool.query(
+      'SELECT * FROM media WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.params.userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch media' });
+  }
+});
+
 // DELETE media
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {

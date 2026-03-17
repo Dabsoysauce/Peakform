@@ -2,12 +2,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '../../lib/api';
 
+function isYouTube(url) {
+  return url && (url.includes('youtube.com') || url.includes('youtu.be'));
+}
+function getYouTubeEmbed(url) {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
+  if (match) return `https://www.youtube.com/embed/${match[1]}`;
+  return null;
+}
+function isSupabaseVideo(url) {
+  return url && url.includes('supabase') && (url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') || url.includes('.avi'));
+}
+function isSupabaseImage(url) {
+  return url && url.includes('supabase') && (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.gif') || url.includes('.webp'));
+}
+
 export default function TrainerAthletesPage() {
   const [athletes, setAthletes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [searched, setSearched] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
+  const [playerMedia, setPlayerMedia] = useState([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
 
   async function handleSearch(e) {
     e.preventDefault();
@@ -40,6 +57,22 @@ export default function TrainerAthletesPage() {
   useEffect(() => {
     loadAll();
   }, []);
+
+  async function handleSelectAthlete(a) {
+    if (selectedAthlete?.id === a.id) {
+      setSelectedAthlete(null);
+      setPlayerMedia([]);
+      return;
+    }
+    setSelectedAthlete(a);
+    setPlayerMedia([]);
+    setMediaLoading(true);
+    try {
+      const res = await apiFetch(`/media/player/${a.user_id}`);
+      if (res.ok) setPlayerMedia(await res.json());
+    } catch {}
+    setMediaLoading(false);
+  }
 
   return (
     <div>
@@ -106,7 +139,7 @@ export default function TrainerAthletesPage() {
                     style={{
                       backgroundColor: selectedAthlete?.id === a.id ? 'rgba(232,93,38,0.08)' : '#1e1e30',
                     }}
-                    onClick={() => setSelectedAthlete(selectedAthlete?.id === a.id ? null : a)}
+                    onClick={() => handleSelectAthlete(a)}
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div
@@ -196,8 +229,51 @@ export default function TrainerAthletesPage() {
               )}
             </div>
 
+            {/* Film section */}
+            <div className="mt-5 border-t border-gray-700 pt-4">
+              <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Film Room</div>
+              {mediaLoading ? (
+                <div className="text-xs text-gray-500 text-center py-4">Loading film...</div>
+              ) : playerMedia.length === 0 ? (
+                <div className="text-xs text-gray-500 text-center py-4">No film uploaded yet</div>
+              ) : (
+                <div className="space-y-3">
+                  {playerMedia.map((m) => {
+                    const embedUrl = isYouTube(m.url) ? getYouTubeEmbed(m.url) : null;
+                    const isVideo = isSupabaseVideo(m.url);
+                    const isImage = isSupabaseImage(m.url);
+                    return (
+                      <div key={m.id} className="rounded-lg overflow-hidden border border-gray-700">
+                        <div className="aspect-video bg-gray-900 flex items-center justify-center relative overflow-hidden">
+                          {embedUrl ? (
+                            <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                          ) : isVideo ? (
+                            <video src={m.url} controls className="w-full h-full object-contain" />
+                          ) : isImage ? (
+                            <img src={m.url} alt={m.title} className="w-full h-full object-cover" />
+                          ) : m.thumbnail_url ? (
+                            <img src={m.thumbnail_url} alt={m.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 text-gray-600">
+                              <span className="text-2xl">🎬</span>
+                              <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: '#2563eb' }}>Open ↗</a>
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-3 py-2">
+                          <p className="text-xs font-medium text-white truncate">{m.title || 'Untitled'}</p>
+                          {m.description && <p className="text-xs text-gray-500 truncate">{m.description}</p>}
+                          <p className="text-xs text-gray-600 mt-0.5">{new Date(m.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             <button
-              onClick={() => setSelectedAthlete(null)}
+              onClick={() => { setSelectedAthlete(null); setPlayerMedia([]); }}
               className="mt-5 w-full py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white text-sm"
             >
               Close
