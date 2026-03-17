@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
 import { uploadProfilePicture, deleteProfilePicture } from '../../lib/supabase';
+import SchoolSearch from '../../components/SchoolSearch';
 
 const PRIMARY_GOALS = [
   'Make Varsity',
@@ -19,7 +20,7 @@ export default function AthleteProfilePage() {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
     first_name: '', last_name: '', age: '', weight_lbs: '', height_inches: '',
-    primary_goal: '', bio: '', gym_id: '',
+    primary_goal: '', bio: '', school_name: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -49,7 +50,7 @@ export default function AthleteProfilePage() {
           height_inches: data.height_inches || '',
           primary_goal: data.primary_goal || '',
           bio: data.bio || '',
-          gym_id: data.gym_id || '',
+          school_name: data.school_name || '',
         });
       }
     } catch {}
@@ -95,7 +96,7 @@ export default function AthleteProfilePage() {
         age: form.age ? parseInt(form.age) : null,
         weight_lbs: form.weight_lbs ? parseFloat(form.weight_lbs) : null,
         height_inches: form.height_inches ? parseInt(form.height_inches) : null,
-        gym_id: form.gym_id || null,
+        school_name: form.school_name || null,
       };
       const res = await apiFetch('/athlete-profile', { method: 'PUT', body: JSON.stringify(body) });
       const data = await res.json();
@@ -169,7 +170,7 @@ export default function AthleteProfilePage() {
                 ? `${profile.first_name} ${profile.last_name}`
                 : profile.first_name || 'Set your name'}
             </h2>
-            {profile.gym_name && <p className="text-sm text-gray-400">🏀 {profile.gym_name}</p>}
+            {profile.school_name && <p className="text-sm text-gray-400">🏫 {profile.school_name}</p>}
             {profile.primary_goal && (
               <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#2563eb' }}>
                 {profile.primary_goal}
@@ -248,32 +249,14 @@ export default function AthleteProfilePage() {
         </div>
 
         <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
-          <h3 className="font-bold text-white text-sm uppercase tracking-wide">School / Gym</h3>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide">School</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Gym ID (optional)</label>
-            <input type="text" value={form.gym_id} onChange={(e) => setForm({ ...form, gym_id: e.target.value })} placeholder="Enter gym UUID or leave blank"
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
-            {profile?.gym_name && <p className="text-xs text-gray-400 mt-1">Current gym: {profile.gym_name}</p>}
+            <label className="block text-sm font-medium text-gray-300 mb-1">School</label>
+            <SchoolSearch
+              value={form.school_name}
+              onChange={(val) => setForm({ ...form, school_name: val })}
+            />
           </div>
-          {!showGymCreate ? (
-            <button type="button" onClick={() => setShowGymCreate(true)} className="text-sm text-blue-400 hover:underline">+ Add a new gym</button>
-          ) : (
-            <form onSubmit={createGym} className="space-y-3 pt-2 border-t border-gray-700">
-              <p className="text-sm font-medium text-gray-300">New Gym</p>
-              <input type="text" value={newGym.name} onChange={(e) => setNewGym({ ...newGym, name: e.target.value })} placeholder="Gym name" required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
-              <div className="grid grid-cols-2 gap-3">
-                <input type="text" value={newGym.city} onChange={(e) => setNewGym({ ...newGym, city: e.target.value })} placeholder="City"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
-                <input type="text" value={newGym.state} onChange={(e) => setNewGym({ ...newGym, state: e.target.value })} placeholder="State"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
-              </div>
-              <div className="flex gap-2">
-                <button type="submit" className="px-4 py-2 rounded-lg font-bold text-white text-sm" style={{ backgroundColor: '#2563eb' }}>Add Gym</button>
-                <button type="button" onClick={() => setShowGymCreate(false)} className="px-4 py-2 rounded-lg border border-gray-700 text-gray-300 text-sm">Cancel</button>
-              </div>
-            </form>
-          )}
         </div>
 
         <button type="submit" disabled={saving} className="w-full py-3 rounded-lg font-bold text-white hover:opacity-90 disabled:opacity-50 transition-opacity" style={{ backgroundColor: '#2563eb' }}>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
 import { uploadProfilePicture, deleteProfilePicture } from '../../lib/supabase';
+import SchoolSearch from '../../components/SchoolSearch';
 
 const SPECIALTIES = [
   'Varsity Head Coach',
@@ -22,7 +23,7 @@ const SPECIALTIES = [
 export default function TrainerProfilePage() {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
-    first_name: '', last_name: '', specialty: '', certifications: '', bio: '', gym_id: '',
+    first_name: '', last_name: '', specialty: '', certifications: '', bio: '', school_name: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,7 +49,7 @@ export default function TrainerProfilePage() {
           specialty: data.specialty || '',
           certifications: data.certifications || '',
           bio: data.bio || '',
-          gym_id: data.gym_id || '',
+          school_name: data.school_name || '',
         });
       }
     } catch {}
@@ -91,7 +92,7 @@ export default function TrainerProfilePage() {
     try {
       const res = await apiFetch('/trainer-profile', {
         method: 'PUT',
-        body: JSON.stringify({ ...form, gym_id: form.gym_id || null }),
+        body: JSON.stringify({ ...form, school_name: form.school_name || null }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to save profile'); return; }
@@ -142,7 +143,7 @@ export default function TrainerProfilePage() {
                 : profile.first_name || 'Set your name'}
             </h2>
             {profile.specialty && <p className="text-sm mt-0.5" style={{ color: '#2563eb' }}>{profile.specialty}</p>}
-            {profile.gym_name && <p className="text-sm text-gray-400">🏀 {profile.gym_name}</p>}
+            {profile.school_name && <p className="text-sm text-gray-400">🏫 {profile.school_name}</p>}
             <p className="text-xs text-gray-500 mt-1">Click photo to change</p>
             {photoPreview && (
               <button type="button" onClick={handleRemovePhoto} className="text-xs text-red-400 hover:underline mt-0.5">
@@ -197,13 +198,14 @@ export default function TrainerProfilePage() {
           </div>
         </div>
 
-        <div className="rounded-xl p-6 border border-gray-800" style={{ backgroundColor: '#1e1e30' }}>
-          <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4">School / Gym</h3>
+        <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide">School</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Gym ID (optional)</label>
-            <input type="text" value={form.gym_id} onChange={(e) => setForm({ ...form, gym_id: e.target.value })} placeholder="Enter gym UUID or leave blank"
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
-            {profile?.gym_name && <p className="text-xs text-gray-400 mt-1">Current: {profile.gym_name}</p>}
+            <label className="block text-sm font-medium text-gray-300 mb-1">School</label>
+            <SchoolSearch
+              value={form.school_name}
+              onChange={(val) => setForm({ ...form, school_name: val })}
+            />
           </div>
         </div>
 
