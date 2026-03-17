@@ -155,8 +155,8 @@ export default function TrainerAthletesPage() {
                         <h3 className="font-bold text-white text-sm">
                           {a.first_name ? `${a.first_name} ${a.last_name || ''}`.trim() : a.email}
                         </h3>
-                        {a.gym_name && (
-                          <div className="text-xs text-gray-500">🏢 {a.gym_name}{a.gym_city ? `, ${a.gym_city}` : ''}</div>
+                        {a.school_name && (
+                          <div className="text-xs text-gray-500">🏫 {a.school_name}</div>
                         )}
                       </div>
                     </div>
@@ -204,14 +204,10 @@ export default function TrainerAthletesPage() {
             </div>
 
             <div className="space-y-3 mb-5">
-              {selectedAthlete.gym_name && (
+              {selectedAthlete.school_name && (
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">Gym</div>
-                  <div className="text-sm text-white">
-                    {selectedAthlete.gym_name}
-                    {selectedAthlete.gym_city && `, ${selectedAthlete.gym_city}`}
-                    {selectedAthlete.gym_state && `, ${selectedAthlete.gym_state}`}
-                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">School</div>
+                  <div className="text-sm text-white">{selectedAthlete.school_name}</div>
                 </div>
               )}
               {selectedAthlete.primary_goal && (

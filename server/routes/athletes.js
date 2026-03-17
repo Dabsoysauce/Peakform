@@ -11,11 +11,9 @@ router.get('/:userId/public', async (req, res) => {
     const profileResult = await pool.query(
       `SELECT u.id as user_id, u.email,
               ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio,
-              ap.weight_lbs, ap.height_inches, ap.photo_url,
-              g.name as gym_name, g.city as gym_city, g.state as gym_state
+              ap.weight_lbs, ap.height_inches, ap.photo_url, ap.school_name
        FROM users u
        JOIN athlete_profiles ap ON ap.user_id = u.id
-       LEFT JOIN gyms g ON g.id = ap.gym_id
        WHERE u.id = $1 AND u.role = 'athlete'`,
       [userId]
     );
@@ -39,25 +37,19 @@ router.get('/', authMiddleware, async (req, res) => {
     const { gym, search } = req.query;
     let query = `
       SELECT u.id, u.id as user_id, u.email,
-             ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio, ap.photo_url,
-             g.name as gym_name, g.city as gym_city, g.state as gym_state
+             ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio, ap.photo_url, ap.school_name
       FROM users u
       JOIN athlete_profiles ap ON ap.user_id = u.id
-      LEFT JOIN gyms g ON g.id = ap.gym_id
       WHERE u.role = 'athlete'
     `;
     const params = [];
 
-    if (gym) {
-      params.push(`%${gym}%`);
-      query += ` AND LOWER(g.name) LIKE LOWER($${params.length})`;
-    }
     if (search) {
       params.push(`%${search}%`);
       query += ` AND (LOWER(ap.first_name) LIKE LOWER($${params.length})
                    OR LOWER(ap.last_name) LIKE LOWER($${params.length})
                    OR LOWER(u.email) LIKE LOWER($${params.length})
-                   OR LOWER(g.name) LIKE LOWER($${params.length}))`;
+                   OR LOWER(ap.school_name) LIKE LOWER($${params.length}))`;
     }
 
     query += ' ORDER BY ap.first_name, ap.last_name LIMIT 50';

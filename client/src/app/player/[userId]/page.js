@@ -110,8 +110,8 @@ export default function PublicPlayerProfilePage() {
                   {profile.primary_goal}
                 </span>
               )}
-              {profile.gym_name && (
-                <p className="text-gray-400 text-sm">🏀 {profile.gym_name}{profile.gym_city ? `, ${profile.gym_city}` : ''}{profile.gym_state ? `, ${profile.gym_state}` : ''}</p>
+              {profile.school_name && (
+                <p className="text-gray-400 text-sm">🏫 {profile.school_name}</p>
               )}
             </div>
 
