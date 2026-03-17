@@ -8,12 +8,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export async function uploadProfilePicture(file, userId) {
   const path = `${userId}/avatar`;
 
-  // Delete existing file first (ignore errors if it doesn't exist)
-  await supabase.storage.from('profile-pictures').remove([path]);
-
   const { error } = await supabase.storage
     .from('profile-pictures')
-    .upload(path, file, { contentType: file.type });
+    .upload(path, file, { upsert: true, contentType: file.type });
 
   if (error) throw error;
 
@@ -21,7 +18,6 @@ export async function uploadProfilePicture(file, userId) {
     .from('profile-pictures')
     .getPublicUrl(path);
 
-  // Cache-bust so browser shows new photo immediately
   return `${data.publicUrl}?t=${Date.now()}`;
 }
 
