@@ -1,0 +1,379 @@
+'use client';
+import { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
+import { apiFetch } from '../../lib/api';
+
+function Modal({ title, onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+      <div
+        className="w-full max-w-md rounded-2xl border border-gray-700 p-6"
+        style={{ backgroundColor: '#1e1e30' }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function TrainerTeamsPage() {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', coach_only: false });
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
+
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [msgLoading, setMsgLoading] = useState(false);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const socketRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+
+  useEffect(() => {
+    loadTeams();
+
+    socketRef.current = io('http://localhost:4000', {
+      transports: ['websocket', 'polling'],
+    });
+
+    socketRef.current.on('new_message', (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    return () => socketRef.current?.disconnect();
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  async function loadTeams() {
+    setLoading(true);
+    try {
+      const res = await apiFetch('/teams');
+      if (res.ok) setTeams(await res.json());
+    } catch {}
+    setLoading(false);
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault();
+    setCreateError('');
+    setCreateLoading(true);
+    try {
+      const res = await apiFetch('/teams', {
+        method: 'POST',
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCreateError(data.error || 'Failed to create team');
+        return;
+      }
+      setTeams((prev) => [{ ...data, member_count: 0 }, ...prev]);
+      setShowCreate(false);
+      setCreateForm({ name: '', coach_only: false });
+    } catch {
+      setCreateError('Network error');
+    }
+    setCreateLoading(false);
+  }
+
+  async function selectTeam(team) {
+    setSelectedTeam(team);
+    setMessages([]);
+    setMembers([]);
+    setMsgLoading(true);
+
+    socketRef.current?.emit('join_team', { teamId: team.id });
+
+    const [msgRes, memRes] = await Promise.all([
+      apiFetch(`/messages/${team.id}`),
+      apiFetch(`/teams/${team.id}/members`),
+    ]);
+    if (msgRes.ok) setMessages(await msgRes.json());
+    if (memRes.ok) setMembers(await memRes.json());
+    setMsgLoading(false);
+  }
+
+  async function sendMessage(e) {
+    e.preventDefault();
+    if (!input.trim() || !selectedTeam) return;
+    setSending(true);
+    const content = input.trim();
+    setInput('');
+
+    try {
+      const res = await apiFetch(`/messages/${selectedTeam.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) {
+        const msg = await res.json();
+        socketRef.current?.emit('send_message', { teamId: selectedTeam.id, message: msg });
+      }
+    } catch {}
+    setSending(false);
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-white">My Teams</h1>
+          <p className="text-gray-400 mt-1">Create and manage your athlete groups</p>
+        </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90"
+          style={{ backgroundColor: '#e85d26' }}
+        >
+          + Create Team
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-gray-400 text-center py-12">Loading teams...</div>
+      ) : teams.length === 0 ? (
+        <div
+          className="rounded-xl p-12 border border-gray-800 text-center"
+          style={{ backgroundColor: '#1e1e30' }}
+        >
+          <div className="text-5xl mb-4">👥</div>
+          <h3 className="text-xl font-bold text-white mb-2">No teams yet</h3>
+          <p className="text-gray-400 mb-6">Create your first training group to get started.</p>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
+            style={{ backgroundColor: '#e85d26' }}
+          >
+            Create First Team
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-6" style={{ height: '640px' }}>
+          {/* Teams list */}
+          <div className="w-72 flex-shrink-0 flex flex-col gap-3 overflow-y-auto pr-1">
+            {teams.map((t) => (
+              <div
+                key={t.id}
+                className={`rounded-xl border p-5 cursor-pointer transition-all hover:border-orange-700 ${
+                  selectedTeam?.id === t.id ? 'border-orange-600' : 'border-gray-800'
+                }`}
+                style={{
+                  backgroundColor: selectedTeam?.id === t.id ? 'rgba(232,93,38,0.1)' : '#1e1e30',
+                }}
+                onClick={() => selectTeam(t)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-bold text-white text-sm">{t.name}</h3>
+                  {t.coach_only && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}
+                    >
+                      Broadcast
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500 mb-3">
+                  {t.member_count} athlete{t.member_count !== 1 ? 's' : ''}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Join key:</span>
+                  <span
+                    className="text-xs font-mono font-bold px-2 py-0.5 rounded border tracking-wider"
+                    style={{ borderColor: '#e85d26', color: '#e85d26', backgroundColor: 'rgba(232,93,38,0.1)' }}
+                  >
+                    {t.join_key}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chat + members panel */}
+          {!selectedTeam ? (
+            <div
+              className="flex-1 rounded-xl border border-gray-800 flex items-center justify-center text-gray-500"
+              style={{ backgroundColor: '#1e1e30' }}
+            >
+              Select a team to view chat and members
+            </div>
+          ) : (
+            <div className="flex-1 flex gap-4 min-w-0">
+              {/* Chat */}
+              <div
+                className="flex-1 rounded-xl border border-gray-800 flex flex-col overflow-hidden"
+                style={{ backgroundColor: '#1e1e30' }}
+              >
+                <div className="px-5 py-4 border-b border-gray-800">
+                  <h3 className="font-bold text-white">{selectedTeam.name}</h3>
+                  <div className="text-xs text-gray-500">
+                    {selectedTeam.coach_only ? 'Broadcast mode — only you can post' : 'Two-way chat'}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {msgLoading ? (
+                    <div className="text-gray-500 text-center text-sm">Loading...</div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-gray-500 text-center text-sm">No messages yet. Kick things off!</div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isOwn = msg.sender_id === userId;
+                      return (
+                        <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+                            {!isOwn && (
+                              <span className="text-xs text-gray-500 mb-1 ml-1">{msg.sender_name}</span>
+                            )}
+                            <div
+                              className="px-4 py-2.5 rounded-2xl text-sm break-words"
+                              style={isOwn
+                                ? { backgroundColor: '#e85d26', color: 'white', borderBottomRightRadius: '4px' }
+                                : { backgroundColor: '#16213e', color: '#e5e7eb', borderBottomLeftRadius: '4px' }
+                              }
+                            >
+                              {msg.content}
+                            </div>
+                            <span className="text-xs text-gray-600 mt-1">
+                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                <form onSubmit={sendMessage} className="p-4 border-t border-gray-800 flex gap-3">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={selectedTeam.coach_only ? 'Broadcast to your athletes...' : 'Type a message...'}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                    style={{ backgroundColor: '#16213e' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !input.trim()}
+                    className="px-5 py-2.5 rounded-xl font-bold text-white hover:opacity-90 disabled:opacity-50"
+                    style={{ backgroundColor: '#e85d26' }}
+                  >
+                    Send
+                  </button>
+                </form>
+              </div>
+
+              {/* Members */}
+              <div
+                className="w-52 flex-shrink-0 rounded-xl border border-gray-800 overflow-hidden flex flex-col"
+                style={{ backgroundColor: '#1e1e30' }}
+              >
+                <div className="px-4 py-3 border-b border-gray-800">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Members ({members.length})</h4>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {members.length === 0 ? (
+                    <div className="text-xs text-gray-500 text-center pt-4">No athletes yet</div>
+                  ) : (
+                    members.map((m) => (
+                      <div key={m.id} className="flex items-center gap-2">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                          style={{ backgroundColor: '#e85d26' }}
+                        >
+                          {(m.first_name || m.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium text-white truncate">
+                            {m.first_name ? `${m.first_name} ${m.last_name || ''}`.trim() : m.email}
+                          </div>
+                          {m.primary_goal && (
+                            <div className="text-xs text-gray-600 truncate">{m.primary_goal}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create Team Modal */}
+      {showCreate && (
+        <Modal title="Create Team" onClose={() => { setShowCreate(false); setCreateError(''); }}>
+          <form onSubmit={handleCreate} className="space-y-4">
+            {createError && (
+              <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{createError}</div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Team Name *</label>
+              <input
+                type="text"
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                placeholder="e.g. Morning Powerlifters"
+                required
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                style={{ backgroundColor: '#16213e' }}
+              />
+            </div>
+            <div
+              className="flex items-center gap-3 p-4 rounded-lg border border-gray-700 cursor-pointer"
+              style={{ backgroundColor: '#16213e' }}
+              onClick={() => setCreateForm({ ...createForm, coach_only: !createForm.coach_only })}
+            >
+              <div
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors`}
+                style={{
+                  borderColor: createForm.coach_only ? '#e85d26' : '#4b5563',
+                  backgroundColor: createForm.coach_only ? '#e85d26' : 'transparent',
+                }}
+              >
+                {createForm.coach_only && <span className="text-white text-xs">✓</span>}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-white">Broadcast Only Mode</div>
+                <div className="text-xs text-gray-500">Only you can post messages. Athletes can read.</div>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowCreate(false); setCreateError(''); }}
+                className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={createLoading}
+                className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
+                style={{ backgroundColor: '#e85d26' }}
+              >
+                {createLoading ? 'Creating...' : 'Create Team'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew services:*)",
+      "Bash(which psql:*)",
+      "Read(//Users/ryanworkandstudy/**)",
+      "Read(//private/var/db/**)",
+      "Bash(npm run:*)",
+      "Bash(cd:*)",
+      "Bash(node:*)"
+    ]
+  }
+}

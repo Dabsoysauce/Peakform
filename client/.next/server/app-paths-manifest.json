@@ -1,0 +1,12 @@
+{
+  "/register/page": "app/register/page.js",
+  "/login/page": "app/login/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/profile/page": "app/dashboard/profile/page.js",
+  "/dashboard/team/page": "app/dashboard/team/page.js",
+  "/dashboard/media/page": "app/dashboard/media/page.js",
+  "/trainer/page": "app/trainer/page.js",
+  "/trainer/athletes/page": "app/trainer/athletes/page.js",
+  "/trainer/profile/page": "app/trainer/profile/page.js",
+  "/trainer/teams/page": "app/trainer/teams/page.js"
+}
