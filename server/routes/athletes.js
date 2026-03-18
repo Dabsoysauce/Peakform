@@ -11,7 +11,8 @@ router.get('/:userId/public', async (req, res) => {
     const profileResult = await pool.query(
       `SELECT u.id as user_id, u.email,
               ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio,
-              ap.weight_lbs, ap.height_inches, ap.photo_url, ap.school_name
+              ap.weight_lbs, ap.height_inches, ap.photo_url, ap.school_name,
+              ap.gpa, ap.graduation_year
        FROM users u
        JOIN athlete_profiles ap ON ap.user_id = u.id
        WHERE u.id = $1 AND u.role = 'athlete'`,

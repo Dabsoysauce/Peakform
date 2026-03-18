@@ -23,7 +23,11 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.put('/', authMiddleware, async (req, res) => {
   try {
-    const { first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url, school_name } = req.body;
+    const { first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url, school_name, gpa, graduation_year } = req.body;
+
+    if (gpa !== undefined && gpa !== null && (parseFloat(gpa) < 0 || parseFloat(gpa) > 5)) {
+      return res.status(400).json({ error: 'GPA must be between 0.0 and 5.0' });
+    }
 
     const existing = await pool.query('SELECT id FROM athlete_profiles WHERE user_id = $1', [req.user.id]);
 
@@ -38,15 +42,17 @@ router.put('/', authMiddleware, async (req, res) => {
           primary_goal = COALESCE($6, primary_goal),
           bio = COALESCE($7, bio),
           photo_url = CASE WHEN $8::text = '__remove__' THEN NULL ELSE COALESCE($8, photo_url) END,
-          school_name = $9
-        WHERE user_id = $10`,
-        [first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url || null, school_name || null, req.user.id]
+          school_name = $9,
+          gpa = $10,
+          graduation_year = $11
+        WHERE user_id = $12`,
+        [first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url || null, school_name || null, gpa ?? null, graduation_year ?? null, req.user.id]
       );
     } else {
       await pool.query(
-        `INSERT INTO athlete_profiles (user_id, first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url, school_name)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [req.user.id, first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url || null, school_name || null]
+        `INSERT INTO athlete_profiles (user_id, first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url, school_name, gpa, graduation_year)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [req.user.id, first_name, last_name, age, weight_lbs, height_inches, primary_goal, bio, photo_url || null, school_name || null, gpa ?? null, graduation_year ?? null]
       );
     }
 

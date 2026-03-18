@@ -347,7 +347,7 @@ export default function PublicPlayerProfilePage() {
             </div>
 
             {/* Stats */}
-            <div className="flex gap-6 text-center sm:text-right">
+            <div className="flex gap-6 text-center sm:text-right flex-wrap">
               {profile.height_inches && (
                 <div>
                   <div className="text-xl font-black text-white">{heightDisplay(profile.height_inches)}</div>
@@ -364,6 +364,19 @@ export default function PublicPlayerProfilePage() {
                 <div>
                   <div className="text-xl font-black text-white">{profile.age}</div>
                   <div className="text-xs text-gray-500 uppercase tracking-wide">Age</div>
+                </div>
+              )}
+              {profile.gpa != null && (
+                <div>
+                  <div className="text-xl font-black text-white">{parseFloat(profile.gpa).toFixed(2)}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">GPA</div>
+                  <div className="text-xs text-gray-600">Self-reported</div>
+                </div>
+              )}
+              {profile.graduation_year && (
+                <div>
+                  <div className="text-xl font-black text-white">{profile.graduation_year}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Class of</div>
                 </div>
               )}
             </div>

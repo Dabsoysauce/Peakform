@@ -20,7 +20,7 @@ export default function AthleteProfilePage() {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
     first_name: '', last_name: '', age: '', weight_lbs: '', height_inches: '',
-    primary_goal: '', bio: '', school_name: '',
+    primary_goal: '', bio: '', school_name: '', gpa: '', graduation_year: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,6 +51,8 @@ export default function AthleteProfilePage() {
           primary_goal: data.primary_goal || '',
           bio: data.bio || '',
           school_name: data.school_name || '',
+          gpa: data.gpa != null ? String(data.gpa) : '',
+          graduation_year: data.graduation_year || '',
         });
       }
     } catch {}
@@ -97,6 +99,8 @@ export default function AthleteProfilePage() {
         weight_lbs: form.weight_lbs ? parseFloat(form.weight_lbs) : null,
         height_inches: form.height_inches ? parseInt(form.height_inches) : null,
         school_name: form.school_name || null,
+        gpa: form.gpa !== '' ? parseFloat(form.gpa) : null,
+        graduation_year: form.graduation_year ? parseInt(form.graduation_year) : null,
       };
       const res = await apiFetch('/athlete-profile', { method: 'PUT', body: JSON.stringify(body) });
       const data = await res.json();
@@ -256,6 +260,40 @@ export default function AthleteProfilePage() {
               value={form.school_name}
               onChange={(val) => setForm({ ...form, school_name: val })}
             />
+          </div>
+        </div>
+
+        <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide">Academic Info</h3>
+          <p className="text-xs text-gray-500">Self-reported — visible to coaches</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">GPA</label>
+              <input
+                type="number"
+                value={form.gpa}
+                onChange={(e) => setForm({ ...form, gpa: e.target.value })}
+                placeholder="3.75"
+                step="0.01"
+                min="0"
+                max="5"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                style={{ backgroundColor: '#16213e' }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Graduation Year</label>
+              <input
+                type="number"
+                value={form.graduation_year}
+                onChange={(e) => setForm({ ...form, graduation_year: e.target.value })}
+                placeholder="2026"
+                min="2020"
+                max="2035"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                style={{ backgroundColor: '#16213e' }}
+              />
+            </div>
           </div>
         </div>
 
