@@ -278,9 +278,13 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
         body: JSON.stringify({ content: analysis, title: playName, type: 'play' }),
       });
       const data = await res.json();
-      setShareMsg(res.ok ? `Shared to ${data.sent} player${data.sent !== 1 ? 's' : ''} ✓` : 'Failed to share');
-    } catch { setShareMsg('Failed to share'); }
-    setTimeout(() => setShareMsg(''), 3000);
+      if (res.ok) {
+        setShareMsg(`Shared to ${data.sent} player${data.sent !== 1 ? 's' : ''} ✓`);
+      } else {
+        setShareMsg(data.error || `Error ${res.status}`);
+      }
+    } catch (err) { setShareMsg(err?.message || 'Network error'); }
+    setTimeout(() => setShareMsg(''), 4000);
   }
 
   async function handleChat(e) {

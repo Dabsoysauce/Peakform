@@ -305,7 +305,9 @@ router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req
           [req.user.id, member.user_id, message]
         );
         sent++;
-      } catch {}
+      } catch (insertErr) {
+        console.error('DM insert error:', insertErr?.message);
+      }
     }
 
     res.json({ success: true, sent });
