@@ -353,6 +353,7 @@ export default function PlaybookPage() {
   const [screens, setScreens] = useState([]);
   const [selected, setSelected] = useState(null); // { type: 'player'|'line'|'screen', id }
   const [drawingLine, setDrawingLine] = useState(null); // { x1, y1 }
+  const [drawingScreen, setDrawingScreen] = useState(null); // { x1, y1 }
   const [mousePos, setMousePos] = useState(null);
   const [dragging, setDragging] = useState(null);
 
@@ -401,9 +402,14 @@ export default function PlaybookPage() {
       drawLine(ctx, { type: tool, x1: drawingLine.x1, y1: drawingLine.y1, x2: mousePos.x, y2: mousePos.y }, true);
     }
     if (tool === 'screen' && mousePos) {
-      drawScreenSymbol(ctx, { x: mousePos.x, y: mousePos.y, angle: 0 }, true);
+      const angle = drawingScreen
+        ? Math.atan2(mousePos.y - drawingScreen.y1, mousePos.x - drawingScreen.x1)
+        : 0;
+      const x = drawingScreen ? (drawingScreen.x1 + mousePos.x) / 2 : mousePos.x;
+      const y = drawingScreen ? (drawingScreen.y1 + mousePos.y) / 2 : mousePos.y;
+      drawScreenSymbol(ctx, { x, y, angle }, true);
     }
-  }, [players, lines, screens, selected, drawingLine, mousePos, tool]);
+  }, [players, lines, screens, selected, drawingLine, drawingScreen, mousePos, tool]);
 
   function getCanvasPos(e) {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -445,7 +451,7 @@ export default function PlaybookPage() {
     }
 
     if (tool === 'screen') {
-      setScreens(prev => [...prev, { id: uid(), x: pos.x, y: pos.y, angle: 0 }]);
+      setDrawingScreen({ x1: pos.x, y1: pos.y });
       return;
     }
 
@@ -476,6 +482,21 @@ export default function PlaybookPage() {
         setLines(prev => [...prev, { id: uid(), type: tool, x1: drawingLine.x1, y1: drawingLine.y1, x2: pos.x, y2: pos.y }]);
       }
       setDrawingLine(null);
+    }
+    if (drawingScreen) {
+      const dx = pos.x - drawingScreen.x1, dy = pos.y - drawingScreen.y1;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 8) {
+        // Place screen at midpoint, angle follows drag direction
+        const angle = Math.atan2(dy, dx);
+        const x = (drawingScreen.x1 + pos.x) / 2;
+        const y = (drawingScreen.y1 + pos.y) / 2;
+        setScreens(prev => [...prev, { id: uid(), x, y, angle }]);
+      } else {
+        // Short tap — place at click position with default angle
+        setScreens(prev => [...prev, { id: uid(), x: pos.x, y: pos.y, angle: 0 }]);
+      }
+      setDrawingScreen(null);
     }
     setDragging(null);
   }
@@ -610,7 +631,7 @@ export default function PlaybookPage() {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onMouseLeave={() => { setMousePos(null); if (drawingLine) setDrawingLine(null); setDragging(null); }}
+            onMouseLeave={() => { setMousePos(null); if (drawingLine) setDrawingLine(null); if (drawingScreen) setDrawingScreen(null); setDragging(null); }}
             className="rounded-xl border border-gray-700 w-full"
             style={{ cursor: tool === 'select' ? 'default' : tool === 'erase' ? 'crosshair' : 'crosshair', maxWidth: CW }}
           />
