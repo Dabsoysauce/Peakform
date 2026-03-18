@@ -4,6 +4,115 @@ import { useParams, useRouter } from 'next/navigation';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
+// ── Offscreen play rendering ──────────────────────────────────────────────────
+const _PCW = 560, _PCH = 440, _PCX = _PCW / 2;
+const _PM = 15, _CB = _PCH - _PM, _BY = _CB - 46;
+const _KW = 144, _KH = 172, _FY = _CB - _KH, _FR = _KW / 2;
+const _TR = 210, _CX = 190;
+const _CTY = _BY - Math.sqrt(_TR ** 2 - _CX ** 2);
+const _TS = Math.atan2(_CTY - _BY, -_CX), _TE = Math.atan2(_CTY - _BY, _CX);
+const _PR = 17;
+
+function _pCourt(ctx) {
+  ctx.fillStyle = '#1a5c2a'; ctx.fillRect(0, 0, _PCW, _PCH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeRect(_PM, _PM, _PCW - _PM * 2, _PCH - _PM * 2);
+  ctx.strokeRect(_PCX - _KW / 2, _FY, _KW, _KH);
+  ctx.beginPath(); ctx.arc(_PCX, _FY, _FR, 0, Math.PI, true); ctx.stroke();
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.arc(_PCX, _FY, _FR, 0, Math.PI, false); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(_PCX, _BY, 38, Math.PI, 0); ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(_PCX - 26, _CB - 12); ctx.lineTo(_PCX + 26, _CB - 12); ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(_PCX, _BY, 11, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(_PCX - _CX, _CB); ctx.lineTo(_PCX - _CX, _CTY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(_PCX + _CX, _CB); ctx.lineTo(_PCX + _CX, _CTY); ctx.stroke();
+  ctx.beginPath(); ctx.arc(_PCX, _BY, _TR, _TS, _TE, false); ctx.stroke();
+}
+
+function _pArrow(ctx, x1, y1, x2, y2, s = 11) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - s * Math.cos(a - 0.45), y2 - s * Math.sin(a - 0.45));
+  ctx.lineTo(x2 - s * Math.cos(a + 0.45), y2 - s * Math.sin(a + 0.45));
+  ctx.closePath(); ctx.fill();
+}
+
+function _pLine(ctx, line) {
+  const { type, x1, y1, x2, y2 } = line;
+  ctx.save(); ctx.strokeStyle = 'white'; ctx.fillStyle = 'white';
+  ctx.lineWidth = type === 'drive' ? 2.5 : 2;
+  if (type === 'pass') {
+    ctx.setLineDash([8, 5]);
+    const d = Math.hypot(x2 - x1, y2 - y1), r = d > _PR ? (d - _PR + 2) / d : 1;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + (x2 - x1) * r, y1 + (y2 - y1) * r); ctx.stroke();
+    ctx.setLineDash([]); _pArrow(ctx, x1, y1, x2, y2);
+  } else if (type === 'drive') {
+    const d = Math.hypot(x2 - x1, y2 - y1), angle = Math.atan2(y2 - y1, x2 - x1), perp = angle + Math.PI / 2;
+    const waves = Math.max(3, Math.floor(d / 18));
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    for (let i = 1; i <= waves * 2; i++) {
+      const t = i / (waves * 2);
+      ctx.lineTo(x1 + (x2 - x1) * t + Math.cos(perp) * (i % 2 === 0 ? 5 : -5), y1 + (y2 - y1) * t + Math.sin(perp) * (i % 2 === 0 ? 5 : -5));
+    }
+    ctx.stroke(); _pArrow(ctx, x1, y1, x2, y2);
+  } else {
+    const d = Math.hypot(x2 - x1, y2 - y1), r = d > _PR ? (d - _PR + 2) / d : 1;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + (x2 - x1) * r, y1 + (y2 - y1) * r); ctx.stroke();
+    _pArrow(ctx, x1, y1, x2, y2);
+  }
+  ctx.restore();
+}
+
+function _pScreen(ctx, scr) {
+  const { x, y, angle } = scr, len = 18, perp = angle + Math.PI / 2;
+  ctx.save(); ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + Math.cos(perp) * len, y + Math.sin(perp) * len);
+  ctx.lineTo(x - Math.cos(perp) * len, y - Math.sin(perp) * len);
+  ctx.stroke(); ctx.restore();
+}
+
+function _pPlayer(ctx, p) {
+  ctx.save();
+  if (p.type === 'offense') {
+    ctx.fillStyle = 'white'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p.x, p.y, _PR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.label, p.x, p.y);
+  } else {
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    const s = _PR - 4;
+    ctx.beginPath();
+    ctx.moveTo(p.x - s, p.y - s); ctx.lineTo(p.x + s, p.y + s);
+    ctx.moveTo(p.x + s, p.y - s); ctx.lineTo(p.x - s, p.y + s);
+    ctx.stroke();
+    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.label, p.x, p.y + _PR + 10);
+  }
+  ctx.restore();
+}
+
+function renderPlayPng(canvasJson) {
+  try {
+    const data = JSON.parse(canvasJson);
+    const c = document.createElement('canvas');
+    c.width = _PCW; c.height = _PCH;
+    const ctx = c.getContext('2d');
+    _pCourt(ctx);
+    (data.lines || []).forEach(l => _pLine(ctx, l));
+    (data.screens || []).forEach(s => _pScreen(ctx, s));
+    (data.players || []).forEach(p => _pPlayer(ctx, p));
+    return c.toDataURL('image/png').split(',')[1];
+  } catch { return null; }
+}
+
 function AnalysisModal({ media, onClose }) {
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(true);
@@ -47,10 +156,26 @@ function AnalysisModal({ media, onClose }) {
       } else {
         body = { media_url: media.url, title: media.title, description: media.description };
       }
+
+      // If viewer is a coach, load their plays and render as PNG for Claude
+      let play_images = [];
+      try {
+        const role = localStorage.getItem('role');
+        if (role === 'trainer') {
+          const playsRes = await fetch(`${API_BASE}/plays`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (playsRes.ok) {
+            const plays = await playsRes.json();
+            play_images = plays.slice(0, 3).map(p => renderPlayPng(p.canvas_json)).filter(Boolean);
+          }
+        }
+      } catch {}
+
       const res = await fetch(`${API_BASE}/ai/analyze-film`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, play_images }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Analysis failed'); return; }

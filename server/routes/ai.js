@@ -78,11 +78,14 @@ Analyze the player's form, footwork, body positioning, and mechanics visible in 
 **Coaching Note**
 One key drill or focus point the player should work on based on this film.
 
+**Recommended Plays** (only include this section if play diagrams were provided)
+Based on the defense/offense you see in the film, recommend which of the provided play diagrams would be most effective and briefly explain why.
+
 Use proper basketball terminology. Be direct, specific, and constructive. If the image is too blurry, too distant, or doesn't clearly show basketball action, say so and give whatever feedback you can.`;
 
 router.post('/analyze-film', authMiddleware, async (req, res) => {
   try {
-    const { media_url, base64_frame, title, description } = req.body;
+    const { media_url, base64_frame, title, description, focus, player_focus, play_images = [] } = req.body;
 
     if (!media_url && !base64_frame) {
       return res.status(400).json({ error: 'media_url or base64_frame is required' });
@@ -112,27 +115,115 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
     const userText = [
       title ? `Film title: "${title}"` : null,
       description ? `Player's note: "${description}"` : null,
+      focus ? `Analysis focus: ${focus}` : null,
+      player_focus ? `The coach wants to focus on the player at approximately position (${Math.round(player_focus.x * 100)}% from left, ${Math.round(player_focus.y * 100)}% from top) of the frame.` : null,
+      play_images.length > 0 ? `The coach has also provided ${play_images.length} play diagram(s) from their playbook. In your analysis, recommend which of these plays would be effective based on what you observe in the film.` : null,
     ].filter(Boolean).join('\n') || 'Please analyze this basketball film.';
+
+    // Build content array — film frame first, then play diagrams
+    const contentItems = [
+      { type: 'image', source: imageSource },
+      ...play_images.map(png => ({ type: 'image', source: { type: 'base64', media_type: 'image/png', data: png } })),
+      { type: 'text', text: userText },
+    ];
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 1000,
       system: FILM_ANALYSIS_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: imageSource },
-            { type: 'text', text: userText },
-          ],
-        },
-      ],
+      messages: [{ role: 'user', content: contentItems }],
     });
 
     res.json({ analysis: response.content[0].text });
   } catch (err) {
     console.error('Film analysis error:', err?.message || err);
     res.status(500).json({ error: err?.message || 'Film analysis failed' });
+  }
+});
+
+// Analyze a play diagram
+router.post('/analyze-play', authMiddleware, async (req, res) => {
+  try {
+    const { canvas_png, name } = req.body;
+    if (!canvas_png) return res.status(400).json({ error: 'canvas_png is required' });
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 700,
+      system: `You are an expert basketball coach and strategist. A coach has drawn a basketball play diagram and wants feedback. Analyze the play and provide structured feedback in this format:
+
+**Play Overview**
+Briefly describe what type of play this is and its goal.
+
+**Strengths**
+2-3 bullet points on what makes this play effective.
+
+**Weaknesses / How to Defend It**
+2-3 bullet points on vulnerabilities and how opposing defenses could stop it.
+
+**Best Used Against**
+Describe what defensive schemes or situations this play works best against.
+
+**Coaching Tips**
+1-2 specific tips to make this play more effective.
+
+Be concise and use proper basketball terminology.`,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/png', data: canvas_png } },
+          { type: 'text', text: `This is a basketball play diagram${name ? ` called "${name}"` : ''}. Please analyze it.` },
+        ],
+      }],
+    });
+
+    res.json({ analysis: response.content[0].text });
+  } catch (err) {
+    console.error('Play analysis error:', err?.message);
+    res.status(500).json({ error: err?.message || 'Play analysis failed' });
+  }
+});
+
+// Detect players in a film frame — returns approximate positions
+router.post('/detect-players', authMiddleware, async (req, res) => {
+  try {
+    const { media_url, base64_frame } = req.body;
+
+    let imageSource;
+    if (base64_frame) {
+      imageSource = { type: 'base64', media_type: 'image/jpeg', data: base64_frame };
+    } else {
+      const imgRes = await fetch(media_url);
+      const buffer = await imgRes.arrayBuffer();
+      const ct = imgRes.headers.get('content-type') || 'image/jpeg';
+      imageSource = { type: 'base64', media_type: ct.split(';')[0], data: Buffer.from(buffer).toString('base64') };
+    }
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: imageSource },
+          { type: 'text', text: `Identify all visible basketball players in this image. For each player, estimate their position as a fraction (0.0 to 1.0) of the image width (x) and height (y) from the top-left corner. Return ONLY a JSON array like this, no other text:
+[{"id":1,"x":0.3,"y":0.5,"team":"offense"},{"id":2,"x":0.6,"y":0.4,"team":"defense"}]
+If you cannot identify any players, return an empty array: []` },
+        ],
+      }],
+    });
+
+    let players = [];
+    try {
+      const text = response.content[0].text.trim();
+      const match = text.match(/\[[\s\S]*\]/);
+      if (match) players = JSON.parse(match[0]);
+    } catch {}
+
+    res.json({ players });
+  } catch (err) {
+    console.error('Player detection error:', err?.message);
+    res.status(500).json({ error: err?.message || 'Detection failed' });
   }
 });
 
@@ -153,13 +244,20 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
       imageSource = { type: 'base64', media_type: contentType.split(';')[0], data: Buffer.from(buffer).toString('base64') };
     }
 
+    const { focus, player_focus } = req.body;
+    const contextText = [
+      'Please analyze this basketball film.',
+      focus ? `Focus: ${focus}.` : null,
+      player_focus ? `Focus on the player at position (${Math.round(player_focus.x * 100)}% from left, ${Math.round(player_focus.y * 100)}% from top).` : null,
+    ].filter(Boolean).join(' ');
+
     // Build message history — image only in the first user turn
     const messages = [
       {
         role: 'user',
         content: [
           { type: 'image', source: imageSource },
-          { type: 'text', text: 'Please analyze this basketball film.' },
+          { type: 'text', text: contextText },
         ],
       },
       ...history.map((h) => ({ role: h.role, content: h.content })),

@@ -3,6 +3,133 @@ import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
 import { uploadMediaFile, deleteMediaFile } from '../../lib/supabase';
 
+// ── Offscreen play rendering (mirrors playbook canvas geometry) ──────────────
+const PCW = 560, PCH = 440, PCX = PCW / 2;
+const PM = 15;
+const PCOURT_B = PCH - PM;
+const PBASKET_Y = PCOURT_B - 46;
+const PKEY_W = 144, PKEY_H = 172;
+const PFT_Y = PCOURT_B - PKEY_H;
+const PFT_R = PKEY_W / 2;
+const PTHREE_R = 210;
+const PCORNER_X = 190;
+const PCORNER_TOP_Y = PBASKET_Y - Math.sqrt(PTHREE_R ** 2 - PCORNER_X ** 2);
+const PTHREE_START = Math.atan2(PCORNER_TOP_Y - PBASKET_Y, -PCORNER_X);
+const PTHREE_END = Math.atan2(PCORNER_TOP_Y - PBASKET_Y, PCORNER_X);
+const PPLAYER_R = 17;
+
+function _drawCourt(ctx) {
+  ctx.fillStyle = '#1a5c2a';
+  ctx.fillRect(0, 0, PCW, PCH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeRect(PM, PM, PCW - PM * 2, PCH - PM * 2);
+  ctx.strokeRect(PCX - PKEY_W / 2, PFT_Y, PKEY_W, PKEY_H);
+  ctx.beginPath(); ctx.arc(PCX, PFT_Y, PFT_R, 0, Math.PI, true); ctx.stroke();
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.arc(PCX, PFT_Y, PFT_R, 0, Math.PI, false); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(PCX, PBASKET_Y, 38, Math.PI, 0); ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(PCX - 26, PCOURT_B - 12); ctx.lineTo(PCX + 26, PCOURT_B - 12); ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(PCX, PBASKET_Y, 11, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PCX - PCORNER_X, PCOURT_B); ctx.lineTo(PCX - PCORNER_X, PCORNER_TOP_Y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PCX + PCORNER_X, PCOURT_B); ctx.lineTo(PCX + PCORNER_X, PCORNER_TOP_Y); ctx.stroke();
+  ctx.beginPath(); ctx.arc(PCX, PBASKET_Y, PTHREE_R, PTHREE_START, PTHREE_END, false); ctx.stroke();
+}
+
+function _drawArrowhead(ctx, x1, y1, x2, y2, size = 11) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - size * Math.cos(a - 0.45), y2 - size * Math.sin(a - 0.45));
+  ctx.lineTo(x2 - size * Math.cos(a + 0.45), y2 - size * Math.sin(a + 0.45));
+  ctx.closePath(); ctx.fill();
+}
+
+function _drawLine(ctx, line) {
+  const { type, x1, y1, x2, y2 } = line;
+  ctx.save();
+  ctx.lineWidth = type === 'drive' ? 2.5 : 2;
+  ctx.strokeStyle = 'white'; ctx.fillStyle = 'white';
+  if (type === 'pass') {
+    ctx.setLineDash([8, 5]);
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    const ratio = dist > PPLAYER_R ? (dist - PPLAYER_R + 2) / dist : 1;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + (x2 - x1) * ratio, y1 + (y2 - y1) * ratio); ctx.stroke();
+    ctx.setLineDash([]);
+    _drawArrowhead(ctx, x1, y1, x2, y2);
+  } else if (type === 'drive') {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const perp = angle + Math.PI / 2;
+    const waves = Math.max(3, Math.floor(dist / 18));
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    for (let i = 1; i <= waves * 2; i++) {
+      const t = i / (waves * 2);
+      const mx = x1 + (x2 - x1) * t, my = y1 + (y2 - y1) * t;
+      const amp = (i % 2 === 0 ? 1 : -1) * 5;
+      ctx.lineTo(mx + Math.cos(perp) * amp, my + Math.sin(perp) * amp);
+    }
+    ctx.stroke();
+    _drawArrowhead(ctx, x1, y1, x2, y2);
+  } else {
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+    const ratio = dist > PPLAYER_R ? (dist - PPLAYER_R + 2) / dist : 1;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + (x2 - x1) * ratio, y1 + (y2 - y1) * ratio); ctx.stroke();
+    _drawArrowhead(ctx, x1, y1, x2, y2);
+  }
+  ctx.restore();
+}
+
+function _drawScreen(ctx, scr) {
+  const { x, y, angle } = scr;
+  const len = 18, perp = angle + Math.PI / 2;
+  ctx.save(); ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + Math.cos(perp) * len, y + Math.sin(perp) * len);
+  ctx.lineTo(x - Math.cos(perp) * len, y - Math.sin(perp) * len);
+  ctx.stroke(); ctx.restore();
+}
+
+function _drawPlayer(ctx, p) {
+  const { type, x, y, label } = p;
+  ctx.save();
+  if (type === 'offense') {
+    ctx.fillStyle = 'white'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, PPLAYER_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y);
+  } else {
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    const s = PPLAYER_R - 4;
+    ctx.beginPath();
+    ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s);
+    ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
+    ctx.stroke();
+    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y + PPLAYER_R + 10);
+  }
+  ctx.restore();
+}
+
+function renderPlayToBase64(canvasJson) {
+  try {
+    const data = JSON.parse(canvasJson);
+    const canvas = document.createElement('canvas');
+    canvas.width = PCW; canvas.height = PCH;
+    const ctx = canvas.getContext('2d');
+    _drawCourt(ctx);
+    (data.lines || []).forEach(l => _drawLine(ctx, l));
+    (data.screens || []).forEach(s => _drawScreen(ctx, s));
+    (data.players || []).forEach(p => _drawPlayer(ctx, p));
+    return canvas.toDataURL('image/png').split(',')[1];
+  } catch { return null; }
+}
+
 
 function Modal({ title, onClose, children }) {
   return (
@@ -41,8 +168,17 @@ function isSupabaseImage(url) {
 }
 
 function AnalysisModal({ media, onClose }) {
+  // Step 1: pre-screening; Step 2: analysis + chat
+  const [step, setStep] = useState('pre'); // 'pre' | 'analyzing' | 'done'
+  const [focus, setFocus] = useState('both'); // 'offense' | 'defense' | 'both'
+  const [frameBase64, setFrameBase64] = useState(null);
+  const [frameLoading, setFrameLoading] = useState(false);
+  const [playerFocus, setPlayerFocus] = useState(null); // { x, y } as fractions
+  const [detectedPlayers, setDetectedPlayers] = useState([]);
+  const [detecting, setDetecting] = useState(false);
+  const frameRef = useRef(null);
+
   const [analysis, setAnalysis] = useState('');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [imagePayload, setImagePayload] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
@@ -50,7 +186,7 @@ function AnalysisModal({ media, onClose }) {
   const [chatLoading, setChatLoading] = useState(false);
   const bottomRef = useRef(null);
 
-  useEffect(() => { analyzeFilm(); }, []);
+  useEffect(() => { loadFrame(); }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, analysis]);
 
   async function extractVideoFrame(videoUrl) {
@@ -73,40 +209,90 @@ function AnalysisModal({ media, onClose }) {
     });
   }
 
+  async function loadFrame() {
+    setFrameLoading(true);
+    if (isSupabaseVideo(media.url)) {
+      try {
+        const b64 = await extractVideoFrame(media.url);
+        setFrameBase64(b64);
+      } catch {}
+    }
+    setFrameLoading(false);
+  }
+
+  async function detectPlayers() {
+    setDetecting(true);
+    try {
+      const body = isSupabaseVideo(media.url) && frameBase64
+        ? { base64_frame: frameBase64 }
+        : { media_url: media.url };
+      const res = await apiFetch('/ai/detect-players', { method: 'POST', body: JSON.stringify(body) });
+      const data = await res.json();
+      if (res.ok) setDetectedPlayers(data.players || []);
+    } catch {}
+    setDetecting(false);
+  }
+
+  function handleFrameClick(e) {
+    const rect = frameRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setPlayerFocus({ x, y });
+  }
+
   async function analyzeFilm() {
-    setLoading(true);
+    setStep('analyzing');
     setError('');
     setChatHistory([]);
     try {
       const isVideo = isSupabaseVideo(media.url);
-      const isImage = isSupabaseImage(media.url);
-      let body;
+      const isImg = isSupabaseImage(media.url);
+      let payload;
 
       if (isVideo) {
-        try {
-          const base64_frame = await extractVideoFrame(media.url);
-          body = { base64_frame, title: media.title, description: media.description };
-          setImagePayload({ base64_frame });
-        } catch {
-          setError('Could not extract a frame from this video. Try uploading a screenshot or image instead.');
-          setLoading(false);
-          return;
-        }
-      } else if (isImage) {
-        body = { media_url: media.url, title: media.title, description: media.description };
+        if (!frameBase64) { setError('Could not extract video frame.'); setStep('pre'); return; }
+        payload = { base64_frame: frameBase64 };
+        setImagePayload({ base64_frame: frameBase64 });
+      } else if (isImg) {
+        payload = { media_url: media.url };
         setImagePayload({ media_url: media.url });
       } else {
-        setError('AI analysis works on uploaded image and video files. YouTube links are not supported.');
-        setLoading(false);
+        setError('AI analysis works on uploaded image and video files only.');
+        setStep('pre');
         return;
       }
 
+      // Load coach's plays and render as PNG for Claude to see
+      let play_images = [];
+      try {
+        const role = localStorage.getItem('role');
+        if (role === 'trainer') {
+          const playsRes = await apiFetch('/plays');
+          if (playsRes.ok) {
+            const plays = await playsRes.json();
+            play_images = plays
+              .slice(0, 3)
+              .map(p => renderPlayToBase64(p.canvas_json))
+              .filter(Boolean);
+          }
+        }
+      } catch {}
+
+      const body = {
+        ...payload,
+        title: media.title,
+        description: media.description,
+        focus,
+        player_focus: playerFocus,
+        play_images,
+      };
+
       const res = await apiFetch('/ai/analyze-film', { method: 'POST', body: JSON.stringify(body) });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Analysis failed'); return; }
+      if (!res.ok) { setError(data.error || 'Analysis failed'); setStep('pre'); return; }
       setAnalysis(data.analysis);
-    } catch (err) { setError(err?.message || 'Analysis failed. Please try again.'); }
-    setLoading(false);
+      setStep('done');
+    } catch (err) { setError(err?.message || 'Analysis failed.'); setStep('pre'); }
   }
 
   async function handleChatSend(e) {
@@ -152,6 +338,8 @@ function AnalysisModal({ media, onClose }) {
     });
   }
 
+  const frameUrl = isSupabaseImage(media.url) ? media.url : (frameBase64 ? `data:image/jpeg;base64,${frameBase64}` : null);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
       <div className="w-full max-w-xl rounded-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]" style={{ backgroundColor: '#1e1e30' }}>
@@ -164,41 +352,124 @@ function AnalysisModal({ media, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {loading ? (
+
+          {/* Step 1: Pre-screening questions */}
+          {(step === 'pre') && (
+            <div className="space-y-5">
+              {error && <div className="px-3 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>}
+
+              {/* Offense / Defense */}
+              <div>
+                <p className="text-sm font-bold text-white mb-2">What's the focus?</p>
+                <div className="flex gap-2">
+                  {[['offense', '⚔️ Offense'], ['defense', '🛡️ Defense'], ['both', '🔄 Both']].map(([val, label]) => (
+                    <button key={val} onClick={() => setFocus(val)}
+                      className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+                      style={focus === val
+                        ? { backgroundColor: '#2563eb', color: 'white' }
+                        : { backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Player focus */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-white">Focus on a specific player? <span className="text-gray-500 font-normal">(optional)</span></p>
+                  {!detectedPlayers.length && frameUrl && (
+                    <button onClick={detectPlayers} disabled={detecting}
+                      className="text-xs text-blue-400 hover:underline disabled:opacity-50">
+                      {detecting ? 'Detecting...' : '🤖 Auto-detect players'}
+                    </button>
+                  )}
+                </div>
+
+                {frameUrl ? (
+                  <div className="relative rounded-lg overflow-hidden cursor-crosshair border border-gray-700" ref={frameRef} onClick={handleFrameClick}>
+                    <img src={frameUrl} alt="Film frame" className="w-full object-contain" style={{ maxHeight: 220 }} />
+
+                    {/* Detected player overlays */}
+                    {detectedPlayers.map(p => (
+                      <button key={p.id} onClick={e => { e.stopPropagation(); setPlayerFocus({ x: p.x, y: p.y }); }}
+                        className="absolute rounded-full border-2 transition-all hover:scale-110"
+                        style={{
+                          left: `${p.x * 100}%`, top: `${p.y * 100}%`,
+                          transform: 'translate(-50%, -50%)',
+                          width: 32, height: 32,
+                          backgroundColor: playerFocus?.x === p.x ? 'rgba(37,99,235,0.7)' : 'rgba(0,0,0,0.5)',
+                          borderColor: p.team === 'offense' ? 'white' : '#ef4444',
+                        }} />
+                    ))}
+
+                    {/* Click marker */}
+                    {playerFocus && !detectedPlayers.length && (
+                      <div className="absolute pointer-events-none"
+                        style={{ left: `${playerFocus.x * 100}%`, top: `${playerFocus.y * 100}%`, transform: 'translate(-50%, -50%)' }}>
+                        <div className="w-7 h-7 rounded-full border-2 border-yellow-400 bg-yellow-400/30" />
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-1 left-1 right-1 text-center">
+                      <span className="text-xs text-white/60 bg-black/40 px-2 py-0.5 rounded">
+                        {playerFocus ? '✓ Player selected — click elsewhere to change' : 'Click on a player to focus on them'}
+                      </span>
+                    </div>
+                  </div>
+                ) : frameLoading ? (
+                  <div className="rounded-lg border border-gray-700 h-32 flex items-center justify-center text-gray-500 text-sm">
+                    Loading frame...
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-gray-700 h-20 flex items-center justify-center text-gray-500 text-xs">
+                    No preview available
+                  </div>
+                )}
+
+                {playerFocus && (
+                  <button onClick={() => { setPlayerFocus(null); setDetectedPlayers([]); }}
+                    className="text-xs text-gray-500 hover:text-gray-300 mt-1">
+                    Clear player focus ×
+                  </button>
+                )}
+              </div>
+
+              <button onClick={analyzeFilm}
+                className="w-full py-3 rounded-lg font-bold text-white hover:opacity-90"
+                style={{ backgroundColor: '#2563eb' }}>
+                Analyze Film →
+              </button>
+            </div>
+          )}
+
+          {/* Step 2: Analyzing */}
+          {step === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
               <p className="text-gray-400 text-sm">Analyzing your film...</p>
             </div>
-          ) : error ? (
-            <div className="px-4 py-3 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>
-          ) : (
-            <>
-              {/* Initial analysis */}
-              <div className="space-y-1">{renderText(analysis)}</div>
+          )}
 
-              {/* Follow-up chat */}
+          {/* Step 3: Results + chat */}
+          {step === 'done' && (
+            <>
+              <div className="space-y-1">{renderText(analysis)}</div>
               {chatHistory.length > 0 && (
                 <div className="border-t border-gray-700 pt-4 space-y-4">
                   {chatHistory.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div
-                        className="max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                        style={{
-                          backgroundColor: msg.role === 'user' ? '#2563eb' : '#16213e',
-                          color: 'white',
+                      <div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                        style={{ backgroundColor: msg.role === 'user' ? '#2563eb' : '#16213e', color: 'white',
                           borderBottomRightRadius: msg.role === 'user' ? 4 : undefined,
-                          borderBottomLeftRadius: msg.role === 'assistant' ? 4 : undefined,
-                        }}
-                      >
+                          borderBottomLeftRadius: msg.role === 'assistant' ? 4 : undefined }}>
                         {msg.role === 'assistant' ? <div className="space-y-1">{renderText(msg.content)}</div> : msg.content}
                       </div>
                     </div>
                   ))}
                   {chatLoading && (
                     <div className="flex justify-start">
-                      <div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{ backgroundColor: '#16213e' }}>
-                        Thinking...
-                      </div>
+                      <div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{ backgroundColor: '#16213e' }}>Thinking...</div>
                     </div>
                   )}
                 </div>
@@ -208,25 +479,16 @@ function AnalysisModal({ media, onClose }) {
           )}
         </div>
 
-        {!loading && !error && (
+        {step === 'done' && (
           <form onSubmit={handleChatSend} className="px-4 py-3 border-t border-gray-700 flex gap-2 flex-shrink-0">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
+            <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)}
               placeholder="Ask a follow-up question about this film..."
               disabled={chatLoading}
               className="flex-1 px-4 py-2 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
-              style={{ backgroundColor: '#16213e' }}
-            />
-            <button
-              type="submit"
-              disabled={chatLoading || !chatInput.trim()}
+              style={{ backgroundColor: '#16213e' }} />
+            <button type="submit" disabled={chatLoading || !chatInput.trim()}
               className="px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-50 hover:opacity-90 flex-shrink-0"
-              style={{ backgroundColor: '#2563eb' }}
-            >
-              Ask
-            </button>
+              style={{ backgroundColor: '#2563eb' }}>Ask</button>
           </form>
         )}
       </div>

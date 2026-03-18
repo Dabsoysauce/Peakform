@@ -19,6 +19,7 @@ const dmRoutes = require('./routes/dm');
 const schoolsRoutes = require('./routes/schools');
 const aiRoutes = require('./routes/ai');
 const eventsRoutes = require('./routes/events');
+const playsRoutes = require('./routes/plays');
 const setupSocket = require('./socket/index');
 
 const session = require('express-session');
@@ -56,6 +57,7 @@ app.use('/api/dm', dmRoutes);
 app.use('/api/schools', schoolsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/plays', playsRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true, service: 'Athlete Edge API' }));
 
