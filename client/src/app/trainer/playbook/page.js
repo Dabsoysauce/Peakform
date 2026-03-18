@@ -369,7 +369,7 @@ export default function PlaybookPage() {
 
   // Load saved plays
   useEffect(() => {
-    apiFetch('/plays').then(r => r.json()).then(setSavedPlays).catch(() => {}).finally(() => setLoading(false));
+    apiFetch('/plays').then(r => r.json()).then(data => setSavedPlays(Array.isArray(data) ? data : [])).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   // Redraw canvas
