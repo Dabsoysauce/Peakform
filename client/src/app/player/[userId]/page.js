@@ -69,11 +69,15 @@ function _pLine(ctx, line) {
 }
 
 function _pScreen(ctx, scr) {
-  const { x, y, angle } = scr, len = 18, perp = angle + Math.PI / 2;
-  ctx.save(); ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  const { x1, y1, x2, y2 } = scr;
+  const angle = Math.atan2(y2 - y1, x2 - x1), perp = angle + Math.PI / 2, len = 18;
+  ctx.save(); ctx.strokeStyle = 'white'; ctx.lineCap = 'round';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(x + Math.cos(perp) * len, y + Math.sin(perp) * len);
-  ctx.lineTo(x - Math.cos(perp) * len, y - Math.sin(perp) * len);
+  ctx.moveTo(x2 + Math.cos(perp) * len, y2 + Math.sin(perp) * len);
+  ctx.lineTo(x2 - Math.cos(perp) * len, y2 - Math.sin(perp) * len);
   ctx.stroke(); ctx.restore();
 }
 

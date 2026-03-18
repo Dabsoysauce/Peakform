@@ -141,16 +141,25 @@ function drawLine(ctx, line, preview = false) {
 }
 
 function drawScreenSymbol(ctx, scr, preview = false) {
-  const { x, y, angle } = scr;
+  const { x1, y1, x2, y2 } = scr;
+  const color = preview ? 'rgba(255,255,255,0.5)' : 'white';
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const perp = angle + Math.PI / 2;
   const len = 18;
   ctx.save();
-  ctx.strokeStyle = preview ? 'rgba(255,255,255,0.5)' : 'white';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = color;
   ctx.lineCap = 'round';
-  const perp = angle + Math.PI / 2;
+  // Line from start to end
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(x + Math.cos(perp) * len, y + Math.sin(perp) * len);
-  ctx.lineTo(x - Math.cos(perp) * len, y - Math.sin(perp) * len);
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  // Perpendicular bar at end point
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x2 + Math.cos(perp) * len, y2 + Math.sin(perp) * len);
+  ctx.lineTo(x2 - Math.cos(perp) * len, y2 - Math.sin(perp) * len);
   ctx.stroke();
   ctx.restore();
 }
@@ -213,7 +222,13 @@ function hitLine(px, py, lines) {
 }
 
 function hitScreen(px, py, screens) {
-  return screens.find(s => Math.hypot(s.x - px, s.y - py) <= 20);
+  return screens.find(s => {
+    const dx = s.x2 - s.x1, dy = s.y2 - s.y1;
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return Math.hypot(px - s.x1, py - s.y1) < 12;
+    const t = Math.max(0, Math.min(1, ((px - s.x1) * dx + (py - s.y1) * dy) / (len * len)));
+    return Math.hypot(px - (s.x1 + t * dx), py - (s.y1 + t * dy)) < 10;
+  });
 }
 
 const TOOLS = [
@@ -401,13 +416,8 @@ export default function PlaybookPage() {
     if (drawingLine && mousePos) {
       drawLine(ctx, { type: tool, x1: drawingLine.x1, y1: drawingLine.y1, x2: mousePos.x, y2: mousePos.y }, true);
     }
-    if (tool === 'screen' && mousePos) {
-      const angle = drawingScreen
-        ? Math.atan2(mousePos.y - drawingScreen.y1, mousePos.x - drawingScreen.x1)
-        : 0;
-      const x = drawingScreen ? (drawingScreen.x1 + mousePos.x) / 2 : mousePos.x;
-      const y = drawingScreen ? (drawingScreen.y1 + mousePos.y) / 2 : mousePos.y;
-      drawScreenSymbol(ctx, { x, y, angle }, true);
+    if (tool === 'screen' && drawingScreen && mousePos) {
+      drawScreenSymbol(ctx, { x1: drawingScreen.x1, y1: drawingScreen.y1, x2: mousePos.x, y2: mousePos.y }, true);
     }
   }, [players, lines, screens, selected, drawingLine, drawingScreen, mousePos, tool]);
 
@@ -427,7 +437,7 @@ export default function PlaybookPage() {
       const s = !p && !l && hitScreen(pos.x, pos.y, screens);
       if (p) { setSelected({ type: 'player', id: p.id }); setDragging({ type: 'player', id: p.id, ox: pos.x - p.x, oy: pos.y - p.y }); }
       else if (l) setSelected({ type: 'line', id: l.id });
-      else if (s) { setSelected({ type: 'screen', id: s.id }); setDragging({ type: 'screen', id: s.id, ox: pos.x - s.x, oy: pos.y - s.y }); }
+      else if (s) { setSelected({ type: 'screen', id: s.id }); setDragging({ type: 'screen', id: s.id, ox: pos.x - s.x1, oy: pos.y - s.y1 }); }
       else setSelected(null);
       return;
     }
@@ -455,6 +465,7 @@ export default function PlaybookPage() {
       return;
     }
 
+
     if (['cut', 'pass', 'drive'].includes(tool)) {
       setDrawingLine({ x1: pos.x, y1: pos.y });
     }
@@ -469,7 +480,11 @@ export default function PlaybookPage() {
         setPlayers(prev => prev.map(p => p.id === dragging.id ? { ...p, x: pos.x - dragging.ox, y: pos.y - dragging.oy } : p));
       }
       if (dragging.type === 'screen') {
-        setScreens(prev => prev.map(s => s.id === dragging.id ? { ...s, x: pos.x - dragging.ox, y: pos.y - dragging.oy } : s));
+        setScreens(prev => prev.map(s => {
+          if (s.id !== dragging.id) return s;
+          const nx1 = pos.x - dragging.ox, ny1 = pos.y - dragging.oy;
+          return { ...s, x1: nx1, y1: ny1, x2: nx1 + (s.x2 - s.x1), y2: ny1 + (s.y2 - s.y1) };
+        }));
       }
     }
   }
@@ -484,17 +499,8 @@ export default function PlaybookPage() {
       setDrawingLine(null);
     }
     if (drawingScreen) {
-      const dx = pos.x - drawingScreen.x1, dy = pos.y - drawingScreen.y1;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 8) {
-        // Place screen at midpoint, angle follows drag direction
-        const angle = Math.atan2(dy, dx);
-        const x = (drawingScreen.x1 + pos.x) / 2;
-        const y = (drawingScreen.y1 + pos.y) / 2;
-        setScreens(prev => [...prev, { id: uid(), x, y, angle }]);
-      } else {
-        // Short tap — place at click position with default angle
-        setScreens(prev => [...prev, { id: uid(), x: pos.x, y: pos.y, angle: 0 }]);
+      if (Math.hypot(pos.x - drawingScreen.x1, pos.y - drawingScreen.y1) > 10) {
+        setScreens(prev => [...prev, { id: uid(), x1: drawingScreen.x1, y1: drawingScreen.y1, x2: pos.x, y2: pos.y }]);
       }
       setDrawingScreen(null);
     }
