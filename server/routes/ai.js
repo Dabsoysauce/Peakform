@@ -131,8 +131,8 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
 
     res.json({ analysis: response.content[0].text });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Film analysis failed' });
+    console.error('Film analysis error:', err?.message || err);
+    res.status(500).json({ error: err?.message || 'Film analysis failed' });
   }
 });
 

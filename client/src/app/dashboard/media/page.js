@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
 import { uploadMediaFile, deleteMediaFile } from '../../lib/supabase';
 
+
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
@@ -74,8 +75,6 @@ function AnalysisModal({ media, onClose }) {
     try {
       const isVideo = isSupabaseVideo(media.url);
       const isImage = isSupabaseImage(media.url);
-      const { apiFetch } = await import('../../lib/api');
-
       let body;
 
       if (isVideo) {
