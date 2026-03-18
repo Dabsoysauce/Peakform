@@ -44,10 +44,14 @@ function AnalysisModal({ media, onClose }) {
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [imagePayload, setImagePayload] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const bottomRef = useRef(null);
 
-  useEffect(() => {
-    analyzeFilm();
-  }, []);
+  useEffect(() => { analyzeFilm(); }, []);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, analysis]);
 
   async function extractVideoFrame(videoUrl) {
     return new Promise((resolve, reject) => {
@@ -72,6 +76,7 @@ function AnalysisModal({ media, onClose }) {
   async function analyzeFilm() {
     setLoading(true);
     setError('');
+    setChatHistory([]);
     try {
       const isVideo = isSupabaseVideo(media.url);
       const isImage = isSupabaseImage(media.url);
@@ -81,6 +86,7 @@ function AnalysisModal({ media, onClose }) {
         try {
           const base64_frame = await extractVideoFrame(media.url);
           body = { base64_frame, title: media.title, description: media.description };
+          setImagePayload({ base64_frame });
         } catch {
           setError('Could not extract a frame from this video. Try uploading a screenshot or image instead.');
           setLoading(false);
@@ -88,6 +94,7 @@ function AnalysisModal({ media, onClose }) {
         }
       } else if (isImage) {
         body = { media_url: media.url, title: media.title, description: media.description };
+        setImagePayload({ media_url: media.url });
       } else {
         setError('AI analysis works on uploaded image and video files. YouTube links are not supported.');
         setLoading(false);
@@ -102,14 +109,44 @@ function AnalysisModal({ media, onClose }) {
     setLoading(false);
   }
 
-  function renderAnalysis(text) {
+  async function handleChatSend(e) {
+    e.preventDefault();
+    if (!chatInput.trim() || chatLoading) return;
+    const message = chatInput.trim();
+    setChatInput('');
+    setChatLoading(true);
+
+    const newHistory = [...chatHistory, { role: 'user', content: message }];
+    setChatHistory(newHistory);
+
+    try {
+      // Build history for the API: initial analysis exchange + subsequent turns
+      const historyForApi = [
+        { role: 'assistant', content: analysis },
+        ...chatHistory,
+      ];
+      const res = await apiFetch('/ai/film-chat', {
+        method: 'POST',
+        body: JSON.stringify({ ...imagePayload, history: historyForApi, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setChatHistory([...newHistory, { role: 'assistant', content: `Error: ${data.error}` }]);
+      } else {
+        setChatHistory([...newHistory, { role: 'assistant', content: data.reply }]);
+      }
+    } catch {
+      setChatHistory([...newHistory, { role: 'assistant', content: 'Something went wrong. Try again.' }]);
+    }
+    setChatLoading(false);
+  }
+
+  function renderText(text) {
     return text.split('\n').map((line, i) => {
-      if (line.startsWith('**') && line.endsWith('**')) {
-        return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-4 mb-1">{line.replace(/\*\*/g, '')}</h3>;
-      }
-      if (line.startsWith('- ') || line.startsWith('• ')) {
+      if (line.startsWith('**') && line.endsWith('**'))
+        return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-3 mb-1">{line.replace(/\*\*/g, '')}</h3>;
+      if (line.startsWith('- ') || line.startsWith('• '))
         return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{line.slice(2)}</li>;
-      }
       if (line.trim() === '') return null;
       return <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>;
     });
@@ -126,7 +163,7 @@ function AnalysisModal({ media, onClose }) {
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
@@ -135,21 +172,62 @@ function AnalysisModal({ media, onClose }) {
           ) : error ? (
             <div className="px-4 py-3 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>
           ) : (
-            <div className="space-y-1">
-              {renderAnalysis(analysis)}
-            </div>
+            <>
+              {/* Initial analysis */}
+              <div className="space-y-1">{renderText(analysis)}</div>
+
+              {/* Follow-up chat */}
+              {chatHistory.length > 0 && (
+                <div className="border-t border-gray-700 pt-4 space-y-4">
+                  {chatHistory.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        className="max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                        style={{
+                          backgroundColor: msg.role === 'user' ? '#2563eb' : '#16213e',
+                          color: 'white',
+                          borderBottomRightRadius: msg.role === 'user' ? 4 : undefined,
+                          borderBottomLeftRadius: msg.role === 'assistant' ? 4 : undefined,
+                        }}
+                      >
+                        {msg.role === 'assistant' ? <div className="space-y-1">{renderText(msg.content)}</div> : msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{ backgroundColor: '#16213e' }}>
+                        Thinking...
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </>
           )}
         </div>
 
         {!loading && !error && (
-          <div className="px-6 py-4 border-t border-gray-700 flex-shrink-0">
+          <form onSubmit={handleChatSend} className="px-4 py-3 border-t border-gray-700 flex gap-2 flex-shrink-0">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask a follow-up question about this film..."
+              disabled={chatLoading}
+              className="flex-1 px-4 py-2 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+              style={{ backgroundColor: '#16213e' }}
+            />
             <button
-              onClick={analyzeFilm}
-              className="text-xs text-blue-400 hover:underline"
+              type="submit"
+              disabled={chatLoading || !chatInput.trim()}
+              className="px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-50 hover:opacity-90 flex-shrink-0"
+              style={{ backgroundColor: '#2563eb' }}
             >
-              Re-analyze ↺
+              Ask
             </button>
-          </div>
+          </form>
         )}
       </div>
     </div>

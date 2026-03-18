@@ -136,4 +136,48 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
   }
 });
 
+// Follow-up questions about a specific film (image stays in context)
+router.post('/film-chat', authMiddleware, async (req, res) => {
+  try {
+    const { media_url, base64_frame, history = [], message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'message is required' });
+    if (!media_url && !base64_frame) return res.status(400).json({ error: 'image source required' });
+
+    let imageSource;
+    if (base64_frame) {
+      imageSource = { type: 'base64', media_type: 'image/jpeg', data: base64_frame };
+    } else {
+      const imgRes = await fetch(media_url);
+      const buffer = await imgRes.arrayBuffer();
+      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+      imageSource = { type: 'base64', media_type: contentType.split(';')[0], data: Buffer.from(buffer).toString('base64') };
+    }
+
+    // Build message history — image only in the first user turn
+    const messages = [
+      {
+        role: 'user',
+        content: [
+          { type: 'image', source: imageSource },
+          { type: 'text', text: 'Please analyze this basketball film.' },
+        ],
+      },
+      ...history.map((h) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message.trim() },
+    ];
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 600,
+      system: FILM_ANALYSIS_PROMPT,
+      messages,
+    });
+
+    res.json({ reply: response.content[0].text });
+  } catch (err) {
+    console.error('Film chat error:', err?.message || err);
+    res.status(500).json({ error: err?.message || 'Chat failed' });
+  }
+});
+
 module.exports = router;
