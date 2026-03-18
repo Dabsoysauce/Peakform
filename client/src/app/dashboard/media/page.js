@@ -98,7 +98,7 @@ function AnalysisModal({ media, onClose }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Analysis failed'); return; }
       setAnalysis(data.analysis);
-    } catch { setError('Analysis failed. Please try again.'); }
+    } catch (err) { setError(err?.message || 'Analysis failed. Please try again.'); }
     setLoading(false);
   }
 
