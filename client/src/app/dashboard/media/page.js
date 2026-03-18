@@ -187,6 +187,7 @@ function AnalysisModal({ media, onClose }) {
   const [chatHistory, setChatHistory] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [shareMsg, setShareMsg] = useState('');
   const bottomRef = useRef(null);
 
   useEffect(() => { loadFrame(); }, []);
@@ -298,6 +299,19 @@ function AnalysisModal({ media, onClose }) {
     } catch (err) { setError(err?.message || 'Analysis failed.'); setStep('pre'); }
   }
 
+  async function handleShare() {
+    setShareMsg('Sharing...');
+    try {
+      const res = await apiFetch('/ai/share-to-team', {
+        method: 'POST',
+        body: JSON.stringify({ content: analysis, title: media.title, type: 'film' }),
+      });
+      const data = await res.json();
+      setShareMsg(res.ok ? `Shared to ${data.sent} player${data.sent !== 1 ? 's' : ''} ✓` : 'Failed to share');
+    } catch { setShareMsg('Failed to share'); }
+    setTimeout(() => setShareMsg(''), 3000);
+  }
+
   async function handleChatSend(e) {
     e.preventDefault();
     if (!chatInput.trim() || chatLoading) return;
@@ -351,7 +365,16 @@ function AnalysisModal({ media, onClose }) {
             <h2 className="text-lg font-black text-white">AI Film Analysis</h2>
             <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{media.title || 'Untitled'}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+          <div className="flex items-center gap-3">
+            {step === 'done' && (
+              <button onClick={handleShare}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex-shrink-0"
+                style={{ backgroundColor: '#16a34a', color: 'white' }}>
+                {shareMsg || '📤 Share to Team'}
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">

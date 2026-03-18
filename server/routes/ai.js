@@ -278,4 +278,41 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
   }
 });
 
+// Share an analysis to all team members as a DM
+router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req, res) => {
+  const pool = require('../config/db');
+  try {
+    const { content, title, type } = req.body;
+    if (!content) return res.status(400).json({ error: 'content is required' });
+
+    const icon = type === 'play' ? '📋' : '🎬';
+    const label = type === 'play' ? 'Play Analysis' : 'Film Analysis';
+    const header = `${icon} ${label}${title ? `: "${title}"` : ''}\n${'─'.repeat(32)}\n`;
+    const message = header + content;
+
+    const members = await pool.query(
+      `SELECT DISTINCT tm.user_id FROM team_members tm
+       JOIN teams t ON t.id = tm.team_id
+       WHERE t.trainer_id = $1`,
+      [req.user.id]
+    );
+
+    let sent = 0;
+    for (const member of members.rows) {
+      try {
+        await pool.query(
+          'INSERT INTO direct_messages (sender_id, recipient_id, content) VALUES ($1, $2, $3)',
+          [req.user.id, member.user_id, message]
+        );
+        sent++;
+      } catch {}
+    }
+
+    res.json({ success: true, sent });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to share analysis' });
+  }
+});
+
 module.exports = router;

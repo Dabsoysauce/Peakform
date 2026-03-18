@@ -248,6 +248,7 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [shareMsg, setShareMsg] = useState('');
   const bottomRef = useRef(null);
 
   useEffect(() => { analyze(); }, []);
@@ -267,6 +268,19 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
       setAnalysis(`Error: ${err.message}`);
     }
     setLoading(false);
+  }
+
+  async function handleShare() {
+    setShareMsg('Sharing...');
+    try {
+      const res = await apiFetch('/ai/share-to-team', {
+        method: 'POST',
+        body: JSON.stringify({ content: analysis, title: playName, type: 'play' }),
+      });
+      const data = await res.json();
+      setShareMsg(res.ok ? `Shared to ${data.sent} player${data.sent !== 1 ? 's' : ''} ✓` : 'Failed to share');
+    } catch { setShareMsg('Failed to share'); }
+    setTimeout(() => setShareMsg(''), 3000);
   }
 
   async function handleChat(e) {
@@ -310,7 +324,16 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
             <h2 className="text-lg font-black text-white">AI Play Analysis</h2>
             {playName && <p className="text-xs text-gray-500">{playName}</p>}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">×</button>
+          <div className="flex items-center gap-3">
+            {!loading && analysis && (
+              <button onClick={handleShare}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all"
+                style={{ backgroundColor: '#16a34a', color: 'white' }}>
+                {shareMsg || '📤 Share to Team'}
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">×</button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {loading ? (
