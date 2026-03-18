@@ -1,6 +1,7 @@
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
+const pool = require('../config/db');
 
 const router = express.Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -280,7 +281,6 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
 
 // Share an analysis to all team members as a DM
 router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req, res) => {
-  const pool = require('../config/db');
   try {
     const { content, title, type } = req.body;
     if (!content) return res.status(400).json({ error: 'content is required' });
