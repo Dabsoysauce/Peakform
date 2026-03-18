@@ -63,6 +63,20 @@ export async function uploadDMMedia(file, userId) {
   return { url: data.publicUrl, media_type: file.type.startsWith('video/') ? 'video' : 'image' };
 }
 
+export async function uploadPlayDiagram(base64Png, userId) {
+  const path = `${userId}/play-${Date.now()}.png`;
+  const blob = await fetch(`data:image/png;base64,${base64Png}`).then(r => r.blob());
+
+  const { error } = await supabase.storage
+    .from('dm-media')
+    .upload(path, blob, { contentType: 'image/png' });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage.from('dm-media').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function deleteMediaFile(url) {
   // Extract path from public URL
   const parts = url.split('/game-film/');

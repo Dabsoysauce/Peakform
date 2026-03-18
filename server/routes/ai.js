@@ -280,9 +280,9 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
 });
 
 // Share an analysis to all team members as a DM
-router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req, res) => {
+router.post('/share-to-team', authMiddleware, async (req, res) => {
   try {
-    const { content, title, type } = req.body;
+    const { content, title, type, image_url } = req.body;
     if (!content) return res.status(400).json({ error: 'content is required' });
 
     const icon = type === 'play' ? '📋' : '🎬';
@@ -300,6 +300,14 @@ router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req
     let sent = 0;
     for (const member of members.rows) {
       try {
+        // Send play/film image first if provided
+        if (image_url) {
+          await pool.query(
+            'INSERT INTO direct_messages (sender_id, recipient_id, content, media_url, media_type) VALUES ($1, $2, $3, $4, $5)',
+            [req.user.id, member.user_id, '', image_url, 'image']
+          );
+        }
+        // Then send the analysis text
         await pool.query(
           'INSERT INTO direct_messages (sender_id, recipient_id, content) VALUES ($1, $2, $3)',
           [req.user.id, member.user_id, message]

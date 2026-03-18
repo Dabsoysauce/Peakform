@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiFetch } from '../../lib/api';
+import { uploadPlayDiagram } from '../../lib/supabase';
 
 const CW = 560;
 const CH = 440;
@@ -273,9 +274,15 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
   async function handleShare() {
     setShareMsg('Sharing...');
     try {
+      const userId = localStorage.getItem('userId');
+      let image_url = null;
+      try {
+        image_url = await uploadPlayDiagram(canvasPng, userId);
+      } catch {}
+
       const res = await apiFetch('/ai/share-to-team', {
         method: 'POST',
-        body: JSON.stringify({ content: analysis, title: playName, type: 'play' }),
+        body: JSON.stringify({ content: analysis, title: playName, type: 'play', image_url }),
       });
       const data = await res.json();
       if (res.ok) {
