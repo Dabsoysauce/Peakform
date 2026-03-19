@@ -16,6 +16,7 @@ export default function TeamPage() {
   const [sending, setSending] = useState(false);
   const [leaveLoading, setLeaveLoading] = useState(null);
   const [hoveredMsg, setHoveredMsg] = useState(null);
+  const [pickerMsg, setPickerMsg] = useState(null);
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
@@ -112,7 +113,7 @@ export default function TeamPage() {
         });
       }
     } catch {}
-    setHoveredMsg(null);
+    setPickerMsg(null);
   }
 
   async function leaveTeam(teamId) {
@@ -216,7 +217,7 @@ export default function TeamPage() {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3" onClick={(e) => { if (e.target === e.currentTarget) setPickerMsg(null); }}>
                   {msgLoading ? (
                     <div className="text-gray-500 text-center text-sm">Loading messages...</div>
                   ) : messages.length === 0 ? (
@@ -225,13 +226,43 @@ export default function TeamPage() {
                     messages.map((msg) => {
                       const isOwn = msg.sender_id === userId;
                       const reactions = msg.reactions || [];
+                      const showDots = hoveredMsg === msg.id || pickerMsg === msg.id;
                       return (
                         <div
                           key={msg.id}
-                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                          className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
                           onMouseEnter={() => setHoveredMsg(msg.id)}
                           onMouseLeave={() => setHoveredMsg(null)}
                         >
+                          {/* Dots button — left side for own messages */}
+                          {isOwn && (
+                            <div className="relative flex-shrink-0 mb-5">
+                              <button
+                                onClick={() => setPickerMsg(pickerMsg === msg.id ? null : msg.id)}
+                                className="text-gray-600 hover:text-gray-400 transition-colors text-lg leading-none"
+                                style={{ opacity: showDots ? 1 : 0, pointerEvents: showDots ? 'auto' : 'none' }}
+                              >
+                                ···
+                              </button>
+                              {pickerMsg === msg.id && (
+                                <div
+                                  className="absolute bottom-8 right-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-gray-700 shadow-xl z-20"
+                                  style={{ backgroundColor: '#1a1a2e' }}
+                                >
+                                  {EMOJIS.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => reactToMessage(msg.id, emoji)}
+                                      className="text-lg hover:scale-125 transition-transform leading-none"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
                             {!isOwn && (
                               <span className="text-xs text-gray-500 mb-1 ml-1">
@@ -241,6 +272,7 @@ export default function TeamPage() {
                                 )}
                               </span>
                             )}
+                            {/* Bubble + reactions wrapper */}
                             <div className="relative">
                               <div
                                 className="px-4 py-2.5 rounded-2xl text-sm break-words"
@@ -251,18 +283,55 @@ export default function TeamPage() {
                               >
                                 {msg.content}
                               </div>
-                              {/* Reaction picker — shows on hover */}
-                              {hoveredMsg === msg.id && (
+                              {/* Instagram-style reaction pills */}
+                              {reactions.length > 0 && (
                                 <div
-                                  className={`absolute -top-9 ${isOwn ? 'right-0' : 'left-0'} flex gap-1 px-2 py-1 rounded-full border border-gray-700 shadow-lg z-10`}
+                                  className={`absolute -bottom-3 ${isOwn ? 'right-2' : 'left-2'} flex gap-1`}
+                                >
+                                  {reactions.map((r) => {
+                                    const reacted = r.user_ids?.includes(userId);
+                                    return (
+                                      <button
+                                        key={r.emoji}
+                                        onClick={() => reactToMessage(msg.id, r.emoji)}
+                                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border shadow-md transition-colors"
+                                        style={reacted
+                                          ? { backgroundColor: 'rgba(37,99,235,0.25)', borderColor: '#2563eb', color: 'white' }
+                                          : { backgroundColor: '#1a1a2e', borderColor: '#374151', color: '#d1d5db' }
+                                        }
+                                      >
+                                        {r.emoji}{r.count > 1 && <span className="ml-0.5">{r.count}</span>}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-600 mt-4">
+                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+
+                          {/* Dots button — right side for others' messages */}
+                          {!isOwn && (
+                            <div className="relative flex-shrink-0 mb-5">
+                              <button
+                                onClick={() => setPickerMsg(pickerMsg === msg.id ? null : msg.id)}
+                                className="text-gray-600 hover:text-gray-400 transition-colors text-lg leading-none"
+                                style={{ opacity: showDots ? 1 : 0, pointerEvents: showDots ? 'auto' : 'none' }}
+                              >
+                                ···
+                              </button>
+                              {pickerMsg === msg.id && (
+                                <div
+                                  className="absolute bottom-8 left-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-gray-700 shadow-xl z-20"
                                   style={{ backgroundColor: '#1a1a2e' }}
-                                  onMouseEnter={() => setHoveredMsg(msg.id)}
                                 >
                                   {EMOJIS.map((emoji) => (
                                     <button
                                       key={emoji}
                                       onClick={() => reactToMessage(msg.id, emoji)}
-                                      className="text-base hover:scale-125 transition-transform leading-none"
+                                      className="text-lg hover:scale-125 transition-transform leading-none"
                                     >
                                       {emoji}
                                     </button>
@@ -270,31 +339,7 @@ export default function TeamPage() {
                                 </div>
                               )}
                             </div>
-                            {/* Reaction counts */}
-                            {reactions.length > 0 && (
-                              <div className={`flex flex-wrap gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                                {reactions.map((r) => {
-                                  const reacted = r.user_ids?.includes(userId);
-                                  return (
-                                    <button
-                                      key={r.emoji}
-                                      onClick={() => reactToMessage(msg.id, r.emoji)}
-                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors"
-                                      style={reacted
-                                        ? { backgroundColor: 'rgba(37,99,235,0.2)', borderColor: '#2563eb', color: '#93c5fd' }
-                                        : { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: '#374151', color: '#9ca3af' }
-                                      }
-                                    >
-                                      {r.emoji} {r.count}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                            <span className="text-xs text-gray-600 mt-1">
-                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
+                          )}
                         </div>
                       );
                     })
