@@ -10,6 +10,12 @@ module.exports = (io) => {
       }
     });
 
+    socket.on('reaction_updated', ({ teamId, messageId, reactions }) => {
+      if (teamId && messageId) {
+        io.to(teamId).emit('reaction_updated', { messageId, reactions });
+      }
+    });
+
     // DM: each user joins their own personal room
     socket.on('join_dm', ({ userId }) => {
       if (userId) socket.join(`dm:${userId}`);

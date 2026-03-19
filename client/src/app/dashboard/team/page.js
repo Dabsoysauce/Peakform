@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { apiFetch } from '../../lib/api';
 
+const EMOJIS = ['❤️', '👍', '😂', '🔥', '😮'];
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
 export default function TeamPage() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +15,7 @@ export default function TeamPage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [leaveLoading, setLeaveLoading] = useState(null);
+  const [hoveredMsg, setHoveredMsg] = useState(null);
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
@@ -25,7 +29,13 @@ export default function TeamPage() {
     });
 
     socketRef.current.on('new_message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => [...prev, { ...msg, reactions: msg.reactions || [] }]);
+    });
+
+    socketRef.current.on('reaction_updated', ({ messageId, reactions }) => {
+      setMessages((prev) =>
+        prev.map((m) => m.id === messageId ? { ...m, reactions } : m)
+      );
     });
 
     return () => {
@@ -81,6 +91,28 @@ export default function TeamPage() {
       }
     } catch {}
     setSending(false);
+  }
+
+  async function reactToMessage(messageId, emoji) {
+    if (!selectedTeam) return;
+    try {
+      const res = await apiFetch(`/messages/${selectedTeam.id}/react/${messageId}`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) =>
+          prev.map((m) => m.id === messageId ? { ...m, reactions: data.reactions } : m)
+        );
+        socketRef.current?.emit('reaction_updated', {
+          teamId: selectedTeam.id,
+          messageId,
+          reactions: data.reactions,
+        });
+      }
+    } catch {}
+    setHoveredMsg(null);
   }
 
   async function leaveTeam(teamId) {
@@ -192,8 +224,14 @@ export default function TeamPage() {
                   ) : (
                     messages.map((msg) => {
                       const isOwn = msg.sender_id === userId;
+                      const reactions = msg.reactions || [];
                       return (
-                        <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                        <div
+                          key={msg.id}
+                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                          onMouseEnter={() => setHoveredMsg(msg.id)}
+                          onMouseLeave={() => setHoveredMsg(null)}
+                        >
                           <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
                             {!isOwn && (
                               <span className="text-xs text-gray-500 mb-1 ml-1">
@@ -203,15 +241,56 @@ export default function TeamPage() {
                                 )}
                               </span>
                             )}
-                            <div
-                              className="px-4 py-2.5 rounded-2xl text-sm break-words"
-                              style={isOwn
-                                ? { backgroundColor: '#2563eb', color: 'white', borderBottomRightRadius: '4px' }
-                                : { backgroundColor: '#16213e', color: '#e5e7eb', borderBottomLeftRadius: '4px' }
-                              }
-                            >
-                              {msg.content}
+                            <div className="relative">
+                              <div
+                                className="px-4 py-2.5 rounded-2xl text-sm break-words"
+                                style={isOwn
+                                  ? { backgroundColor: '#2563eb', color: 'white', borderBottomRightRadius: '4px' }
+                                  : { backgroundColor: '#16213e', color: '#e5e7eb', borderBottomLeftRadius: '4px' }
+                                }
+                              >
+                                {msg.content}
+                              </div>
+                              {/* Reaction picker — shows on hover */}
+                              {hoveredMsg === msg.id && (
+                                <div
+                                  className={`absolute -top-9 ${isOwn ? 'right-0' : 'left-0'} flex gap-1 px-2 py-1 rounded-full border border-gray-700 shadow-lg z-10`}
+                                  style={{ backgroundColor: '#1a1a2e' }}
+                                  onMouseEnter={() => setHoveredMsg(msg.id)}
+                                >
+                                  {EMOJIS.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => reactToMessage(msg.id, emoji)}
+                                      className="text-base hover:scale-125 transition-transform leading-none"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </div>
+                            {/* Reaction counts */}
+                            {reactions.length > 0 && (
+                              <div className={`flex flex-wrap gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                                {reactions.map((r) => {
+                                  const reacted = r.user_ids?.includes(userId);
+                                  return (
+                                    <button
+                                      key={r.emoji}
+                                      onClick={() => reactToMessage(msg.id, r.emoji)}
+                                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors"
+                                      style={reacted
+                                        ? { backgroundColor: 'rgba(37,99,235,0.2)', borderColor: '#2563eb', color: '#93c5fd' }
+                                        : { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: '#374151', color: '#9ca3af' }
+                                      }
+                                    >
+                                      {r.emoji} {r.count}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                             <span className="text-xs text-gray-600 mt-1">
                               {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
