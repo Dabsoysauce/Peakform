@@ -13,7 +13,22 @@ router.get('/:userId/public', async (req, res) => {
       `SELECT u.id as user_id, u.email,
               ap.first_name, ap.last_name, ap.age, ap.primary_goal, ap.bio,
               ap.weight_lbs, ap.height_inches, ap.photo_url, ap.school_name,
-              ap.gpa, ap.graduation_year
+              ap.gpa, ap.graduation_year,
+       (WITH dates AS (
+         SELECT DISTINCT session_date::date AS d FROM workout_sessions
+         WHERE user_id = $1 AND session_date <= CURRENT_DATE
+       ),
+       anchor AS (
+         SELECT CASE WHEN MAX(d) = CURRENT_DATE THEN CURRENT_DATE
+                     WHEN MAX(d) = CURRENT_DATE - 1 THEN CURRENT_DATE - 1
+                     ELSE NULL END AS s FROM dates
+       ),
+       ranked AS (
+         SELECT (anchor.s - d) AS days_ago,
+                ROW_NUMBER() OVER (ORDER BY d DESC) - 1 AS rn
+         FROM dates, anchor WHERE anchor.s IS NOT NULL
+       )
+       SELECT COALESCE(COUNT(*), 0) FROM ranked WHERE days_ago = rn) AS workout_streak
        FROM users u
        JOIN athlete_profiles ap ON ap.user_id = u.id
        WHERE u.id = $1 AND u.role = 'athlete'`,

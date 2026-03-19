@@ -188,17 +188,6 @@ function AnalysisModal({ media, onClose }) {
     setLoading(false);
   }
 
-  function renderAnalysis(text) {
-    return text.split('\n').map((line, i) => {
-      if (line.startsWith('**') && line.endsWith('**'))
-        return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-4 mb-1">{line.replace(/\*\*/g, '')}</h3>;
-      if (line.startsWith('- ') || line.startsWith('• '))
-        return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{line.slice(2)}</li>;
-      if (line.trim() === '') return null;
-      return <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>;
-    });
-  }
-
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80">
       <div className="w-full max-w-xl rounded-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]" style={{ backgroundColor: '#1e1e30' }}>
@@ -229,6 +218,17 @@ function AnalysisModal({ media, onClose }) {
       </div>
     </div>
   );
+}
+
+function renderAnalysis(text) {
+  return text.split('\n').map((line, i) => {
+    if (line.startsWith('**') && line.endsWith('**'))
+      return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-4 mb-1">{line.replace(/\*\*/g, '')}</h3>;
+    if (line.startsWith('- ') || line.startsWith('• '))
+      return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{line.slice(2)}</li>;
+    if (line.trim() === '') return null;
+    return <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>;
+  });
 }
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -262,6 +262,11 @@ export default function PublicPlayerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [analyzingMedia, setAnalyzingMedia] = useState(null);
+  const [scoutingReportOpen, setScoutingReportOpen] = useState(false);
+  const [scoutingReport, setScoutingReport] = useState('');
+  const [scoutingLoading, setScoutingLoading] = useState(false);
+  const [scoutingError, setScoutingError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -315,6 +320,24 @@ export default function PublicPlayerProfilePage() {
     ? `${profile.first_name} ${profile.last_name || ''}`.trim()
     : 'Unknown Player';
   const initials = (profile.first_name || 'P').charAt(0).toUpperCase();
+
+  async function generateScoutingReport() {
+    setScoutingLoading(true);
+    setScoutingError('');
+    setScoutingReport('');
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await fetch(`${BASE}/ai/scouting-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setScoutingError(data.error || 'Failed to generate report'); return; }
+      setScoutingReport(data.analysis);
+    } catch { setScoutingError('Failed to generate report. Try again.'); }
+    setScoutingLoading(false);
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0f0f1a' }}>
@@ -391,6 +414,12 @@ export default function PublicPlayerProfilePage() {
                   <div className="text-xs text-gray-500 uppercase tracking-wide">Class of</div>
                 </div>
               )}
+              {profile.workout_streak > 0 && (
+                <div>
+                  <div className="text-xl font-black" style={{ color: '#f97316' }}>🔥 {profile.workout_streak}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Day Streak</div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -400,9 +429,9 @@ export default function PublicPlayerProfilePage() {
             </div>
           )}
 
-          {/* Message button — only show to logged-in users who aren't the profile owner */}
+          {/* Action buttons */}
           {myUserId && myUserId !== userId && (
-            <div className="mt-6 pt-6 border-t border-gray-700 flex gap-3">
+            <div className="mt-6 pt-6 border-t border-gray-700 flex flex-wrap gap-3">
               <button
                 onClick={() => {
                   const dest = myRole === 'trainer' ? '/trainer/messages' : '/dashboard/messages';
@@ -413,6 +442,46 @@ export default function PublicPlayerProfilePage() {
               >
                 💬 Send Message
               </button>
+              <button
+                onClick={() => { setScoutingReportOpen(true); if (!scoutingReport && !scoutingLoading) generateScoutingReport(); }}
+                className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity text-sm"
+                style={{ backgroundColor: '#7c3aed' }}
+              >
+                🤖 Scouting Report
+              </button>
+            </div>
+          )}
+          {/* Scouting Report Panel */}
+          {scoutingReportOpen && (
+            <div className="mt-4 rounded-xl border border-purple-800 p-5" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-black text-white text-sm uppercase tracking-wide">AI Scouting Report</h3>
+                <div className="flex gap-2">
+                  {scoutingReport && (
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(scoutingReport); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                      className="text-xs px-3 py-1 rounded border font-medium hover:opacity-80"
+                      style={{ borderColor: '#7c3aed', color: '#a78bfa' }}
+                    >
+                      {copied ? '✓ Copied' : '📋 Copy'}
+                    </button>
+                  )}
+                  <button onClick={() => setScoutingReportOpen(false)} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
+                </div>
+              </div>
+              {scoutingLoading ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="w-5 h-5 rounded-full border-2 border-purple-500 border-t-transparent animate-spin flex-shrink-0" />
+                  <span className="text-gray-400 text-sm">Generating scouting report...</span>
+                </div>
+              ) : scoutingError ? (
+                <div className="px-4 py-3 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{scoutingError}</div>
+              ) : (
+                <div className="space-y-1">{renderAnalysis(scoutingReport)}</div>
+              )}
+              {!scoutingLoading && (
+                <button onClick={generateScoutingReport} className="text-xs text-purple-400 hover:underline mt-3">Regenerate ↺</button>
+              )}
             </div>
           )}
         </div>

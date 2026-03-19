@@ -8,6 +8,7 @@ const navItems = [
   { label: 'Overview', href: '/dashboard', icon: '📊' },
   { label: 'Workouts', href: '/dashboard/workouts', icon: '🏀' },
   { label: 'Goals', href: '/dashboard/goals', icon: '🎯' },
+  { label: 'Progress', href: '/dashboard/progress', icon: '📸' },
   { label: 'Film Room', href: '/dashboard/media', icon: '🎬' },
   { label: 'Schedule', href: '/dashboard/schedule', icon: '📅' },
   { label: 'Messages', href: '/dashboard/messages', icon: '💬' },

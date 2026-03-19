@@ -144,6 +144,10 @@ router.delete('/:id/leave', authMiddleware, requireRole('athlete'), async (req, 
       [req.params.id, req.user.id]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'Not a member of this team' });
+    await pool.query(
+      'DELETE FROM depth_chart_entries WHERE team_id = $1 AND user_id = $2',
+      [req.params.id, req.user.id]
+    );
     res.json({ message: 'Left team successfully' });
   } catch (err) {
     console.error(err);

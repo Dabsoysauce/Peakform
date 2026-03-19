@@ -33,6 +33,7 @@ export default function DashboardOverview() {
   const [userName, setUserName] = useState('');
   const [workouts, setWorkouts] = useState([]);
   const [goals, setGoals] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [joinKey, setJoinKey] = useState('');
   const [joinMsg, setJoinMsg] = useState('');
@@ -46,12 +47,14 @@ export default function DashboardOverview() {
 
   async function loadData() {
     try {
-      const [wRes, gRes] = await Promise.all([
+      const [wRes, gRes, pRes] = await Promise.all([
         apiFetch('/workouts'),
         apiFetch('/goals'),
+        apiFetch('/athlete-profile'),
       ]);
       if (wRes.ok) setWorkouts(await wRes.json());
       if (gRes.ok) setGoals(await gRes.json());
+      if (pRes.ok) setProfile(await pRes.json());
     } catch {}
     setLoading(false);
   }
@@ -98,6 +101,7 @@ export default function DashboardOverview() {
     { label: 'Active Goals', value: activeGoals.length, icon: '🎯', color: '#4ade80', href: '/dashboard/goals' },
     { label: 'This Week', value: `${thisWeekSessions.length} sessions`, icon: '📅', color: '#60a5fa', href: '/dashboard/workouts' },
     { label: 'Goals Hit', value: goals.filter((g) => g.achieved).length, icon: '🏆', color: '#fbbf24', href: '/dashboard/goals' },
+    { label: 'Workout Streak', value: `${profile?.workout_streak || 0} days`, icon: '🔥', color: '#f97316', href: '/dashboard/workouts' },
   ];
 
   return (
@@ -112,7 +116,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {statsCards.map((s) => (
           <a
             key={s.label}

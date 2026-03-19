@@ -7,7 +7,22 @@ const router = express.Router();
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT ap.*, g.name as gym_name, g.city as gym_city, g.state as gym_state
+      `SELECT ap.*, g.name as gym_name, g.city as gym_city, g.state as gym_state,
+       (WITH dates AS (
+         SELECT DISTINCT session_date::date AS d FROM workout_sessions
+         WHERE user_id = $1 AND session_date <= CURRENT_DATE
+       ),
+       anchor AS (
+         SELECT CASE WHEN MAX(d) = CURRENT_DATE THEN CURRENT_DATE
+                     WHEN MAX(d) = CURRENT_DATE - 1 THEN CURRENT_DATE - 1
+                     ELSE NULL END AS s FROM dates
+       ),
+       ranked AS (
+         SELECT (anchor.s - d) AS days_ago,
+                ROW_NUMBER() OVER (ORDER BY d DESC) - 1 AS rn
+         FROM dates, anchor WHERE anchor.s IS NOT NULL
+       )
+       SELECT COALESCE(COUNT(*), 0) FROM ranked WHERE days_ago = rn) AS workout_streak
        FROM athlete_profiles ap
        LEFT JOIN gyms g ON ap.gym_id = g.id
        WHERE ap.user_id = $1`,
