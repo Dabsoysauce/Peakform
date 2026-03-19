@@ -6,6 +6,7 @@ import { uploadDMMedia } from '../lib/supabase';
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+const EMOJIS = ['❤️', '👍', '😂', '🔥', '😮'];
 
 function NewMessageModal({ onClose, onSelect }) {
   const [query, setQuery] = useState('');
@@ -112,6 +113,8 @@ export default function MessagesPage() {
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [showNewMsg, setShowNewMsg] = useState(false);
+  const [hoveredMsg, setHoveredMsg] = useState(null);
+  const [pickerMsg, setPickerMsg] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachPreview, setAttachPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -129,12 +132,18 @@ export default function MessagesPage() {
     socket.on('new_dm', (msg) => {
       setActiveId((current) => {
         if (current === msg.sender_id) {
-          setMessages((prev) => [...prev, msg]);
+          setMessages((prev) => [...prev, { ...msg, reactions: msg.reactions || [] }]);
           apiFetch(`/dm/${msg.sender_id}`).catch(() => {});
         }
         return current;
       });
       loadConversations();
+    });
+
+    socket.on('dm_reaction_updated', ({ messageId, reactions }) => {
+      setMessages((prev) =>
+        prev.map((m) => m.id === messageId ? { ...m, reactions } : m)
+      );
     });
 
     return () => socket.disconnect();
@@ -233,6 +242,28 @@ export default function MessagesPage() {
       setUploading(false);
     }
     setSending(false);
+  }
+
+  async function reactToMessage(messageId, emoji) {
+    if (!activeId) return;
+    try {
+      const res = await apiFetch(`/dm/${activeId}/react/${messageId}`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) =>
+          prev.map((m) => m.id === messageId ? { ...m, reactions: data.reactions } : m)
+        );
+        socketRef.current?.emit('dm_reaction_updated', {
+          recipientId: activeId,
+          messageId,
+          reactions: data.reactions,
+        });
+      }
+    } catch {}
+    setPickerMsg(null);
   }
 
   function handleContactSelect(contact) {
@@ -349,31 +380,116 @@ export default function MessagesPage() {
               ) : (
                 messages.map((m) => {
                   const isMine = m.sender_id === myUserId;
+                  const reactions = m.reactions || [];
+                  const showDots = hoveredMsg === m.id || pickerMsg === m.id;
                   return (
-                    <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      key={m.id}
+                      className={`flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
+                      onMouseEnter={() => setHoveredMsg(m.id)}
+                      onMouseLeave={() => setHoveredMsg(null)}
+                    >
+                      {/* Dots — left of bubble for own messages */}
+                      {isMine && (
+                        <div className="relative flex-shrink-0 mb-5">
+                          <button
+                            onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)}
+                            className="text-gray-600 hover:text-gray-400 transition-colors text-lg leading-none"
+                            style={{ opacity: showDots ? 1 : 0, pointerEvents: showDots ? 'auto' : 'none' }}
+                          >
+                            ···
+                          </button>
+                          {pickerMsg === m.id && (
+                            <div
+                              className="absolute bottom-8 right-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-gray-700 shadow-xl z-20"
+                              style={{ backgroundColor: '#1a1a2e' }}
+                            >
+                              {EMOJIS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => reactToMessage(m.id, emoji)}
+                                  className="text-lg hover:scale-125 transition-transform leading-none"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="max-w-xs lg:max-w-md">
                         {!isMine && <p className="text-xs text-gray-500 mb-1 ml-1">{m.sender_name}</p>}
-                        {m.media_url && (
-                          <MediaBubble url={m.media_url} media_type={m.media_type} />
-                        )}
-                        {m.content && (
-                          <div
-                            className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                            style={{
-                              backgroundColor: isMine ? '#2563eb' : '#16213e',
-                              color: isMine ? 'white' : '#e5e7eb',
-                              borderBottomRightRadius: isMine ? 4 : undefined,
-                              borderBottomLeftRadius: !isMine ? 4 : undefined,
-                              marginTop: m.media_url ? 4 : 0,
-                            }}
-                          >
-                            {m.content}
-                          </div>
-                        )}
-                        <p className={`text-xs text-gray-600 mt-1 ${isMine ? 'text-right mr-1' : 'ml-1'}`}>
+                        {m.media_url && <MediaBubble url={m.media_url} media_type={m.media_type} />}
+                        <div className="relative">
+                          {m.content && (
+                            <div
+                              className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                              style={{
+                                backgroundColor: isMine ? '#2563eb' : '#16213e',
+                                color: isMine ? 'white' : '#e5e7eb',
+                                borderBottomRightRadius: isMine ? 4 : undefined,
+                                borderBottomLeftRadius: !isMine ? 4 : undefined,
+                                marginTop: m.media_url ? 4 : 0,
+                              }}
+                            >
+                              {m.content}
+                            </div>
+                          )}
+                          {reactions.length > 0 && (
+                            <div className={`absolute -bottom-3 ${isMine ? 'right-2' : 'left-2'} flex gap-1`}>
+                              {reactions.map((r) => {
+                                const reacted = r.user_ids?.includes(myUserId);
+                                return (
+                                  <button
+                                    key={r.emoji}
+                                    onClick={() => reactToMessage(m.id, r.emoji)}
+                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border shadow-md transition-colors"
+                                    style={reacted
+                                      ? { backgroundColor: 'rgba(37,99,235,0.25)', borderColor: '#2563eb', color: 'white' }
+                                      : { backgroundColor: '#1a1a2e', borderColor: '#374151', color: '#d1d5db' }
+                                    }
+                                  >
+                                    {r.emoji}{r.count > 1 && <span className="ml-0.5">{r.count}</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        <p className={`text-xs text-gray-600 mt-4 ${isMine ? 'text-right mr-1' : 'ml-1'}`}>
                           {formatTime(m.created_at)}
                         </p>
                       </div>
+
+                      {/* Dots — right of bubble for others' messages */}
+                      {!isMine && (
+                        <div className="relative flex-shrink-0 mb-5">
+                          <button
+                            onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)}
+                            className="text-gray-600 hover:text-gray-400 transition-colors text-lg leading-none"
+                            style={{ opacity: showDots ? 1 : 0, pointerEvents: showDots ? 'auto' : 'none' }}
+                          >
+                            ···
+                          </button>
+                          {pickerMsg === m.id && (
+                            <div
+                              className="absolute bottom-8 left-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-gray-700 shadow-xl z-20"
+                              style={{ backgroundColor: '#1a1a2e' }}
+                            >
+                              {EMOJIS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => reactToMessage(m.id, emoji)}
+                                  className="text-lg hover:scale-125 transition-transform leading-none"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })

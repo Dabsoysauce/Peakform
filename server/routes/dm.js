@@ -126,7 +126,17 @@ router.get('/:userId', authMiddleware, async (req, res) => {
     const result = await pool.query(
       `SELECT dm.*,
               COALESCE(sap.first_name || ' ' || sap.last_name, stp.first_name || ' ' || stp.last_name, su.email) AS sender_name,
-              COALESCE(sap.photo_url, stp.photo_url) AS sender_photo
+              COALESCE(sap.photo_url, stp.photo_url) AS sender_photo,
+              COALESCE(
+                (SELECT json_agg(json_build_object('emoji', r.emoji, 'count', r.cnt, 'user_ids', r.user_ids))
+                 FROM (
+                   SELECT emoji, COUNT(*)::int as cnt, array_agg(user_id::text) as user_ids
+                   FROM dm_reactions
+                   WHERE message_id = dm.id
+                   GROUP BY emoji
+                 ) r
+                ), '[]'::json
+              ) as reactions
        FROM direct_messages dm
        JOIN users su ON su.id = dm.sender_id
        LEFT JOIN athlete_profiles sap ON sap.user_id = dm.sender_id
@@ -178,6 +188,49 @@ router.post('/:userId', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// POST /:partnerId/react/:messageId — toggle a DM reaction
+router.post('/:partnerId/react/:messageId', authMiddleware, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { emoji } = req.body;
+    if (!emoji) return res.status(400).json({ error: 'emoji is required' });
+
+    const ALLOWED = ['❤️', '👍', '😂', '🔥', '😮'];
+    if (!ALLOWED.includes(emoji)) return res.status(400).json({ error: 'Invalid emoji' });
+
+    // Verify message belongs to this conversation
+    const msg = await pool.query(
+      'SELECT id FROM direct_messages WHERE id = $1 AND (sender_id = $2 OR recipient_id = $2)',
+      [messageId, req.user.id]
+    );
+    if (!msg.rows[0]) return res.status(404).json({ error: 'Message not found' });
+
+    const existing = await pool.query(
+      'SELECT id FROM dm_reactions WHERE message_id = $1 AND user_id = $2 AND emoji = $3',
+      [messageId, req.user.id, emoji]
+    );
+    if (existing.rows[0]) {
+      await pool.query('DELETE FROM dm_reactions WHERE id = $1', [existing.rows[0].id]);
+    } else {
+      await pool.query(
+        'INSERT INTO dm_reactions (message_id, user_id, emoji) VALUES ($1, $2, $3)',
+        [messageId, req.user.id, emoji]
+      );
+    }
+
+    const updated = await pool.query(
+      `SELECT emoji, COUNT(*)::int as count, array_agg(user_id::text) as user_ids
+       FROM dm_reactions WHERE message_id = $1
+       GROUP BY emoji`,
+      [messageId]
+    );
+    res.json({ messageId, reactions: updated.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to react' });
   }
 });
 

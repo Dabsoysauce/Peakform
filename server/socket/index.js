@@ -28,6 +28,12 @@ module.exports = (io) => {
       }
     });
 
+    socket.on('dm_reaction_updated', ({ recipientId, messageId, reactions }) => {
+      if (recipientId && messageId) {
+        io.to(`dm:${recipientId}`).emit('dm_reaction_updated', { messageId, reactions });
+      }
+    });
+
     socket.on('disconnect', () => {});
   });
 };
