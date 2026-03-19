@@ -12,14 +12,18 @@ const navItems = [
   { label: 'Schedule', href: '/dashboard/schedule', icon: '📅' },
   { label: 'Messages', href: '/dashboard/messages', icon: '💬' },
   { label: 'Team', href: '/dashboard/team', icon: '👥' },
+  { label: 'Notifications', href: '/dashboard/notifications', icon: '🔔' },
   { label: 'Profile', href: '/dashboard/profile', icon: '👤' },
 ];
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [userName, setUserName] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,7 +38,20 @@ export default function DashboardLayout({ children }) {
     }
     const email = localStorage.getItem('email') || '';
     setUserName(email.split('@')[0]);
+    fetchUnreadCount(token);
   }, [router]);
+
+  async function fetchUnreadCount(token) {
+    try {
+      const res = await fetch(`${API_URL}/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.count);
+      }
+    } catch {}
+  }
 
   function handleLogout() {
     localStorage.clear();
@@ -76,6 +93,7 @@ export default function DashboardLayout({ children }) {
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+            const isNotifications = item.href === '/dashboard/notifications';
             return (
               <Link
                 key={item.href}
@@ -89,7 +107,12 @@ export default function DashboardLayout({ children }) {
                 style={active ? { backgroundColor: 'rgba(232,93,38,0.2)', color: '#2563eb' } : {}}
               >
                 <span className="text-lg">{item.icon}</span>
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {isNotifications && unreadCount > 0 && (
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: '#ef4444', minWidth: '20px', textAlign: 'center' }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}

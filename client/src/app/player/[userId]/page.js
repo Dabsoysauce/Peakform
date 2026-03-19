@@ -275,6 +275,18 @@ export default function PublicPlayerProfilePage() {
         }
       } catch {}
       setLoading(false);
+
+      // Record coach view (fire-and-forget)
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+        if (token && role === 'trainer') {
+          fetch(`${BASE}/athletes/${userId}/view`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => {});
+        }
+      } catch {}
     }
     load();
   }, [userId]);

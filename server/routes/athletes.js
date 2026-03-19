@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
@@ -29,6 +30,74 @@ router.get('/:userId/public', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch player profile' });
+  }
+});
+
+// POST /:userId/view — record a coach viewing a player's profile
+router.post('/:userId/view', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Extract JWT from Authorization header if present
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) return res.sendStatus(204);
+
+    let viewer;
+    try {
+      viewer = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.sendStatus(204);
+    }
+
+    // Only record if viewer is a coach
+    if (viewer.role !== 'trainer') return res.sendStatus(204);
+
+    // Don't record if coach is viewing their own... (irrelevant but safe)
+    if (viewer.id === userId) return res.sendStatus(204);
+
+    // Deduplicate: skip if same coach viewed this player in the last 24 hours
+    const recent = await pool.query(
+      `SELECT id FROM profile_views
+       WHERE viewer_id = $1 AND player_id = $2
+         AND viewed_at > NOW() - INTERVAL '24 hours'`,
+      [viewer.id, userId]
+    );
+    if (recent.rows.length > 0) return res.sendStatus(204);
+
+    // Record the view
+    await pool.query(
+      `INSERT INTO profile_views (viewer_id, player_id) VALUES ($1, $2)`,
+      [viewer.id, userId]
+    );
+
+    // Get coach name for the notification message
+    const coachResult = await pool.query(
+      `SELECT tp.first_name, tp.last_name, tp.school_name
+       FROM trainer_profiles tp WHERE tp.user_id = $1`,
+      [viewer.id]
+    );
+    const coach = coachResult.rows[0];
+    const coachName = coach?.first_name
+      ? `${coach.first_name} ${coach.last_name || ''}`.trim()
+      : viewer.email;
+    const schoolPart = coach?.school_name ? ` from ${coach.school_name}` : '';
+
+    // Create notification for the player
+    await pool.query(
+      `INSERT INTO notifications (user_id, type, message, data)
+       VALUES ($1, 'profile_view', $2, $3)`,
+      [
+        userId,
+        `Coach ${coachName}${schoolPart} viewed your profile`,
+        JSON.stringify({ viewer_id: viewer.id, coach_name: coachName, school_name: coach?.school_name || null }),
+      ]
+    );
+
+    res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(204); // always succeed silently
   }
 });
 
