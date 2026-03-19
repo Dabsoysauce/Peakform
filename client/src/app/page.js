@@ -159,12 +159,12 @@ export default function LandingPage() {
             Built for High School Basketball
           </div>
           <h1 className="text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
-            Your Recruiting<br />Profile.{' '}
+            Your High School<br />Season.{' '}
             <span style={{ color: '#2563eb' }}>Activated.</span>
           </h1>
           <p className="text-lg text-gray-400 max-w-lg mb-8 leading-relaxed">
             Track every workout. Upload your film. Know the moment a coach views your profile.
-            The platform serious players use to get noticed.
+            The platform serious teams use to bring home championships.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <Link href="/register" className="px-8 py-4 rounded-xl font-bold text-lg text-white transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: '#2563eb' }}>
