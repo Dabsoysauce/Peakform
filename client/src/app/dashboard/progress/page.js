@@ -26,14 +26,22 @@ export default function ProgressPage() {
     setLoading(false);
   }
 
+  function inlineBold(str) {
+    const parts = str.split(/\*\*(.+?)\*\*/g);
+    if (parts.length === 1) return str;
+    return parts.map((part, j) =>
+      j % 2 === 1 ? <strong key={j} className="font-bold text-white">{part}</strong> : part
+    );
+  }
+
   function renderReport(text) {
     return text.split('\n').map((line, i) => {
-      if (line.startsWith('**') && line.endsWith('**'))
+      if (line.startsWith('**') && line.endsWith('**') && line.length > 4)
         return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-4 mb-1">{line.replace(/\*\*/g, '')}</h3>;
       if (line.startsWith('- ') || line.startsWith('• '))
-        return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{line.slice(2)}</li>;
+        return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{inlineBold(line.slice(2))}</li>;
       if (line.trim() === '') return null;
-      return <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>;
+      return <p key={i} className="text-sm text-gray-300 leading-relaxed">{inlineBold(line)}</p>;
     });
   }
 
