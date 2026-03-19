@@ -347,6 +347,19 @@ export default function LandingPage() {
         </section>
       </ScrollReveal>
 
+      {/* Contact */}
+      <section className="border-t border-gray-800 px-6 py-16 text-center" style={{ backgroundColor: '#16213e' }}>
+        <h2 className="text-2xl font-black text-white mb-2">Contact Us</h2>
+        <p className="text-gray-400 text-sm mb-4">Questions? Feedback? Reach out anytime.</p>
+        <a
+          href="mailto:ryan.dhalbisoi@gmail.com"
+          className="inline-block text-base font-bold hover:underline"
+          style={{ color: '#2563eb' }}
+        >
+          ryan.dhalbisoi@gmail.com
+        </a>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-gray-800 px-6 py-8 text-center text-gray-600 text-sm">
         <div className="flex justify-center items-center gap-2 mb-2">
