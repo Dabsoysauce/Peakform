@@ -27,12 +27,12 @@ router.get('/:teamId', authMiddleware, async (req, res) => {
               COALESCE(
                 (SELECT json_agg(json_build_object('emoji', r.emoji, 'count', r.cnt, 'user_ids', r.user_ids))
                  FROM (
-                   SELECT emoji, COUNT(*) as cnt, array_agg(user_id::text) as user_ids
+                   SELECT emoji, COUNT(*)::int as cnt, array_agg(user_id::text) as user_ids
                    FROM message_reactions
                    WHERE message_id = m.id
                    GROUP BY emoji
                  ) r
-                ), '[]'
+                ), '[]'::json
               ) as reactions
        FROM messages m
        JOIN users u ON u.id = m.sender_id
@@ -130,7 +130,7 @@ router.post('/:teamId/react/:messageId', authMiddleware, async (req, res) => {
 
     // Return updated reactions for this message
     const updated = await pool.query(
-      `SELECT emoji, COUNT(*) as count, array_agg(user_id::text) as user_ids
+      `SELECT emoji, COUNT(*)::int as count, array_agg(user_id::text) as user_ids
        FROM message_reactions WHERE message_id = $1
        GROUP BY emoji`,
       [messageId]
