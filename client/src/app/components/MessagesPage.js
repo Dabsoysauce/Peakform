@@ -125,7 +125,8 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!myUserId) return;
-    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+    const token = localStorage.getItem('token');
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'], auth: { token } });
     socketRef.current = socket;
     socket.emit('join_dm', { userId: myUserId });
 

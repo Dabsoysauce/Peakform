@@ -44,7 +44,7 @@ function issueToken(user) {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: 'https://peakform-yapx.onrender.com/api/auth/google/callback',
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/api/auth/google/callback',
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails[0].value.toLowerCase();
@@ -161,7 +161,11 @@ router.post('/login', async (req, res) => {
       [email.toLowerCase()]
     );
     const user = result.rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    if (!user || !user.password_hash) {
+      // No account or Google-only account (no password set)
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    if (!(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     const token = jwt.sign(

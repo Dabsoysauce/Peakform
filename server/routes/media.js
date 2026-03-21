@@ -36,10 +36,23 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// GET a player's media (coaches only)
+// GET a player's media (coaches only — player must be on one of the trainer's teams)
 router.get('/player/:userId', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Coaches only' });
+
+    // Verify the player is on at least one team owned by this trainer
+    const membership = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2
+       LIMIT 1`,
+      [req.params.userId, req.user.id]
+    );
+    if (!membership.rows[0]) {
+      return res.status(403).json({ error: 'Player is not on any of your teams' });
+    }
+
     const result = await pool.query(
       'SELECT * FROM media WHERE user_id = $1 ORDER BY created_at DESC',
       [req.params.userId]
