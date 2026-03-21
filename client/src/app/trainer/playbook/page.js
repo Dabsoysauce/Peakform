@@ -243,6 +243,133 @@ const TOOLS = [
   { id: 'erase', icon: '✕', label: 'Erase' },
 ];
 
+function PlayGeneratorModal({ onClose, onApply }) {
+  const [history, setHistory] = useState([
+    { role: 'assistant', content: "Hey coach! Tell me about your team — what positions do you have, who are your strongest players, and what are your main struggles on offense? The more detail you give me, the better I can tailor a play for you." }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [pendingPlay, setPendingPlay] = useState(null);
+  const bottomRef = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history]);
+
+  async function handleSend(e) {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+    const msg = input.trim();
+    setInput('');
+    setLoading(true);
+    const newHistory = [...history, { role: 'user', content: msg }];
+    setHistory(newHistory);
+
+    try {
+      const res = await apiFetch('/ai/generate-play', {
+        method: 'POST',
+        body: JSON.stringify({ message: msg, history: history }),
+      });
+      const data = await res.json();
+      setHistory([...newHistory, { role: 'assistant', content: data.reply || data.error }]);
+      if (data.play) setPendingPlay(data.play);
+    } catch {
+      setHistory([...newHistory, { role: 'assistant', content: 'Something went wrong. Try again.' }]);
+    }
+    setLoading(false);
+  }
+
+  function renderText(text) {
+    return (text || '').split('\n').map((line, i) => {
+      if (!line.trim()) return null;
+      const parts = line.split(/\*\*(.+?)\*\*/g);
+      const rendered = parts.map((p, j) => j % 2 === 1 ? <strong key={j} className="font-bold text-white">{p}</strong> : p);
+      if (line.startsWith('- ') || line.startsWith('• '))
+        return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{rendered}</li>;
+      return <p key={i} className="text-sm text-gray-300 leading-relaxed">{rendered}</p>;
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+      <div className="w-full max-w-lg rounded-2xl border border-gray-700 flex flex-col max-h-[90vh]" style={{ backgroundColor: '#1e1e30' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+          <div>
+            <h2 className="text-lg font-black text-white">Ask AI For Help</h2>
+            <p className="text-xs text-gray-500">Describe your team — AI will design a custom play</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+        </div>
+
+        {/* Chat messages */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {history.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {m.role === 'assistant' && (
+                <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mr-2 mt-0.5 text-xs font-black"
+                  style={{ backgroundColor: '#2563eb', color: 'white' }}>AI</div>
+              )}
+              <div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm space-y-1"
+                style={{
+                  backgroundColor: m.role === 'user' ? '#2563eb' : '#16213e',
+                  color: 'white',
+                  borderBottomRightRadius: m.role === 'user' ? 4 : undefined,
+                  borderBottomLeftRadius: m.role === 'assistant' ? 4 : undefined,
+                }}>
+                {m.role === 'assistant' ? renderText(m.content) : m.content}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mr-2 text-xs font-black"
+                style={{ backgroundColor: '#2563eb', color: 'white' }}>AI</div>
+              <div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{ backgroundColor: '#16213e' }}>
+                Designing your play...
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Apply to canvas banner */}
+        {pendingPlay && (
+          <div className="mx-4 mb-2 px-4 py-3 rounded-xl border border-green-700/50 flex items-center justify-between gap-3"
+            style={{ backgroundColor: 'rgba(22,163,74,0.1)' }}>
+            <div>
+              <p className="text-sm font-bold text-green-400">"{pendingPlay.name}" is ready!</p>
+              <p className="text-xs text-gray-500">Apply it to the canvas to see the diagram</p>
+            </div>
+            <button
+              onClick={() => { onApply(pendingPlay); onClose(); }}
+              className="px-4 py-2 rounded-lg font-bold text-white text-sm flex-shrink-0"
+              style={{ backgroundColor: '#16a34a' }}>
+              Apply to Canvas
+            </button>
+          </div>
+        )}
+
+        {/* Input */}
+        <form onSubmit={handleSend} className="px-4 py-3 border-t border-gray-700 flex gap-2">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            disabled={loading}
+            placeholder="Describe your team or ask a follow-up..."
+            className="flex-1 px-4 py-2 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
+            style={{ backgroundColor: '#16213e' }}
+            autoFocus
+          />
+          <button type="submit" disabled={loading || !input.trim()}
+            className="px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-50"
+            style={{ backgroundColor: '#2563eb' }}>
+            Send
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function AnalysisModal({ canvasPng, playName, onClose }) {
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(true);
@@ -420,6 +547,7 @@ export default function PlaybookPage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [analysisModal, setAnalysisModal] = useState(null);
+  const [showPlayGenerator, setShowPlayGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const nextId = useRef(1);
@@ -593,6 +721,17 @@ export default function PlaybookPage() {
     if (currentPlayId === id) clearCanvas();
   }
 
+  function applyGeneratedPlay(play) {
+    clearCanvas();
+    const newPlayers = (play.players || []).map(p => ({ ...p, id: uid() }));
+    const newLines = (play.lines || []).map(l => ({ ...l, id: uid() }));
+    const newScreens = (play.screens || []).map(s => ({ ...s, id: uid() }));
+    setPlayers(newPlayers);
+    setLines(newLines);
+    setScreens(newScreens);
+    if (play.name) setPlayName(play.name);
+  }
+
   function openAnalysis() {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -602,6 +741,12 @@ export default function PlaybookPage() {
 
   return (
     <div>
+      {showPlayGenerator && (
+        <PlayGeneratorModal
+          onClose={() => setShowPlayGenerator(false)}
+          onApply={applyGeneratedPlay}
+        />
+      )}
       {analysisModal && (
         <AnalysisModal
           canvasPng={analysisModal.png}
@@ -610,9 +755,21 @@ export default function PlaybookPage() {
         />
       )}
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-black text-white">Playbook</h1>
-        <p className="text-gray-400 mt-1">Draw up plays and get AI analysis</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black text-white">Playbook</h1>
+          <p className="text-gray-400 mt-1">Draw up plays and get AI analysis</p>
+        </div>
+        <button
+          onClick={() => setShowPlayGenerator(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: '#7c3aed' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/><circle cx="18" cy="6" r="3" fill="#7c3aed" stroke="white" strokeWidth="1.5"/>
+            <line x1="18" y1="4.5" x2="18" y2="7.5"/><line x1="16.5" y1="6" x2="19.5" y2="6"/>
+          </svg>
+          Ask AI For Help
+        </button>
       </div>
 
       <div className="flex gap-6 items-start">

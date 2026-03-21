@@ -348,6 +348,84 @@ ${goalsText}`;
   }
 });
 
+// Generate a play from a coach's team description
+router.post('/generate-play', authMiddleware, requireRole('trainer'), async (req, res) => {
+  try {
+    const { message, history = [] } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'message is required' });
+
+    const SYSTEM = `You are an elite basketball coach and play designer. A coach will describe their team's players, strengths, and struggles. Your job is to design a basketball play perfectly tailored to that team.
+
+The play will be drawn on a half-court canvas with these dimensions and coordinate system:
+- Canvas: 560 wide x 440 tall (pixels)
+- Basket: x=280, y=380 (bottom-center)
+- Key/paint: x=208–352, y=213–395
+- Free-throw line: y=213, x=208–352
+- Three-point arc top: ~y=170 at x=280
+- Wings: left ~(130, 210), right ~(430, 210)
+- Corners: left ~(90, 375), right ~(470, 375)
+- Top of key: ~(280, 140)
+- Elbows: left ~(208, 213), right ~(352, 213)
+- High post: ~(280, 230)
+- Low post: left ~(230, 310), right ~(330, 310)
+
+Offense players are white circles labeled 1–5 (1=PG, 2=SG, 3=SF, 4=PF, 5=C).
+Defense players are red X marks.
+Lines: "cut" (solid arrow), "pass" (dashed arrow), "drive" (wavy arrow).
+Screens are perpendicular bars.
+
+Have a natural conversation to understand the team. Ask follow-up questions if needed. Once you have enough info to design a great play, respond with your explanation AND include a JSON block at the end in this exact format (no markdown around it):
+
+PLAY_JSON_START
+{
+  "name": "Play Name",
+  "players": [
+    {"type":"offense","x":280,"y":140,"label":"1"},
+    {"type":"offense","x":130,"y":210,"label":"2"},
+    {"type":"offense","x":430,"y":210,"label":"3"},
+    {"type":"offense","x":230,"y":310,"label":"4"},
+    {"type":"offense","x":330,"y":310,"label":"5"}
+  ],
+  "lines": [
+    {"type":"cut","x1":280,"y1":140,"x2":208,"y2":213},
+    {"type":"pass","x1":280,"y1":140,"x2":130,"y2":210}
+  ],
+  "screens": []
+}
+PLAY_JSON_END
+
+Only include the JSON when you are ready to present a complete play. During the conversation, just chat normally.`;
+
+    const messages = [
+      ...history.slice(-10).map(h => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message.trim() },
+    ];
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1200,
+      system: SYSTEM,
+      messages,
+    });
+
+    const text = response.content[0].text;
+
+    // Extract play JSON if present
+    let play = null;
+    const match = text.match(/PLAY_JSON_START\s*([\s\S]*?)\s*PLAY_JSON_END/);
+    if (match) {
+      try { play = JSON.parse(match[1]); } catch {}
+    }
+
+    const reply = text.replace(/PLAY_JSON_START[\s\S]*?PLAY_JSON_END/, '').trim();
+
+    res.json({ reply, play });
+  } catch (err) {
+    console.error('Generate play error:', err?.message || err);
+    res.status(500).json({ error: err?.message || 'Failed to generate play' });
+  }
+});
+
 // Share an analysis to all team members as a DM
 router.post('/share-to-team', authMiddleware, async (req, res) => {
   try {
