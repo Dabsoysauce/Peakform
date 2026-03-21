@@ -21,7 +21,7 @@ const features = [
     title: 'Every rep.\nEvery session.\nAll tracked.',
     desc: 'Log workouts with sets, reps, weight, and RPE. Build a complete history coaches can actually see.',
     stat: '54 min avg session',
-    color: '#e85d26',
+    color: '#2563eb',
   },
   {
     label: 'Achieve',
@@ -35,7 +35,7 @@ const features = [
     title: 'Your game.\nOn tape.\nAI analyzed.',
     desc: 'Upload game and practice film. Get AI-powered breakdowns of your form, footwork, and mechanics.',
     stat: 'AI-powered analysis',
-    color: '#e85d26',
+    color: '#2563eb',
   },
   {
     label: 'Recruit',
@@ -116,7 +116,7 @@ function PinnedFeatures() {
           {features.map((_, i) => (
             <div key={i} style={{
               width: 6, height: i === featureIndex ? 24 : 6,
-              borderRadius: 99, backgroundColor: i === featureIndex ? '#e85d26' : 'rgba(255,255,255,0.2)',
+              borderRadius: 99, backgroundColor: i === featureIndex ? '#2563eb' : 'rgba(255,255,255,0.2)',
               transition: 'all 0.4s ease',
             }} />
           ))}
@@ -210,7 +210,7 @@ function PinnedFeatures() {
         {/* Progress bar at bottom */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, backgroundColor: 'rgba(255,255,255,0.06)' }}>
           <div style={{
-            height: '100%', backgroundColor: '#e85d26',
+            height: '100%', backgroundColor: '#2563eb',
             width: `${progress * 100}%`, transition: 'width 0.1s linear',
           }} />
         </div>
@@ -265,7 +265,7 @@ function HowItWorks() {
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <HeroReveal delay={0}>
           <div style={{ textAlign: 'center', marginBottom: 100 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#e85d26', marginBottom: 20 }}>How It Works</p>
+            <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#2563eb', marginBottom: 20 }}>How It Works</p>
             <h2 style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>
               From first login<br />to first offer.
             </h2>
@@ -328,7 +328,7 @@ function PlayerCard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div style={{
             width: 52, height: 52, borderRadius: '50%',
-            backgroundColor: '#e85d26', display: 'flex',
+            backgroundColor: '#2563eb', display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             fontSize: 22, fontWeight: 900, color: '#fff', flexShrink: 0,
           }}>M</div>
@@ -349,7 +349,7 @@ function PlayerCard() {
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 99, backgroundColor: 'rgba(232,93,38,0.15)', color: '#e85d26', fontWeight: 600 }}>🎯 Scholarship</span>
+          <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 99, backgroundColor: 'rgba(37,99,235,0.15)', color: '#2563eb', fontWeight: 600 }}>🎯 Scholarship</span>
           <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 99, backgroundColor: 'rgba(74,222,128,0.1)', color: '#4ade80', fontWeight: 600 }}>Class of 2026</span>
         </div>
 
@@ -410,8 +410,8 @@ export default function LandingPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 8px #e85d26; }
-          50% { box-shadow: 0 0 20px #e85d26; }
+          0%, 100% { box-shadow: 0 0 8px #2563eb; }
+          50% { box-shadow: 0 0 20px #2563eb; }
         }
         .cta-btn:hover { opacity: 0.88; transform: scale(1.02); }
         .cta-btn { transition: all 0.2s ease; }
@@ -430,7 +430,7 @@ export default function LandingPage() {
         transition: 'all 0.4s ease',
       }}>
         <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em', color: '#fff' }}>
-          PEAK<span style={{ color: '#e85d26' }}>FORM</span>
+          PEAK<span style={{ color: '#2563eb' }}>FORM</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <Link href="/login" style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontWeight: 500 }}>
@@ -438,7 +438,7 @@ export default function LandingPage() {
           </Link>
           <Link href="/register" className="cta-btn" style={{
             fontSize: 13, fontWeight: 600, color: '#fff',
-            backgroundColor: '#e85d26', padding: '7px 18px',
+            backgroundColor: '#2563eb', padding: '7px 18px',
             borderRadius: 99, textDecoration: 'none',
           }}>
             Get Started
@@ -463,7 +463,7 @@ export default function LandingPage() {
 
         <div style={{
           fontSize: 11, fontWeight: 700, letterSpacing: '0.22em',
-          textTransform: 'uppercase', color: '#e85d26',
+          textTransform: 'uppercase', color: '#2563eb',
           marginBottom: 28,
           opacity: heroVisible ? 1 : 0,
           transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
@@ -482,7 +482,7 @@ export default function LandingPage() {
           transition: 'all 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s',
         }}>
           Your season.<br />
-          <span style={{ color: '#e85d26' }}>Activated.</span>
+          <span style={{ color: '#2563eb' }}>Activated.</span>
         </h1>
 
         <p style={{
@@ -504,7 +504,7 @@ export default function LandingPage() {
         }}>
           <Link href="/register" className="cta-btn" style={{
             padding: '16px 36px', borderRadius: 99,
-            backgroundColor: '#e85d26', color: '#fff',
+            backgroundColor: '#2563eb', color: '#fff',
             fontWeight: 700, fontSize: 16, textDecoration: 'none',
             display: 'inline-block',
           }}>
@@ -549,7 +549,7 @@ export default function LandingPage() {
             flexShrink: 0, paddingLeft: 24, paddingRight: 16,
             borderRight: '1px solid rgba(255,255,255,0.08)',
             fontSize: 10, fontWeight: 800, letterSpacing: '0.2em',
-            textTransform: 'uppercase', color: '#e85d26',
+            textTransform: 'uppercase', color: '#2563eb',
           }}>
             Live
           </div>
@@ -583,7 +583,7 @@ export default function LandingPage() {
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 32, backgroundColor: '#080808',
           }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#e85d26', marginBottom: 20 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#2563eb', marginBottom: 20 }}>
               Ready to be seen?
             </p>
             <h2 style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 20 }}>
@@ -595,7 +595,7 @@ export default function LandingPage() {
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/register" className="cta-btn" style={{
                 padding: '16px 40px', borderRadius: 99,
-                backgroundColor: '#e85d26', color: '#fff',
+                backgroundColor: '#2563eb', color: '#fff',
                 fontWeight: 700, fontSize: 16, textDecoration: 'none',
                 display: 'inline-block',
               }}>
@@ -623,12 +623,12 @@ export default function LandingPage() {
         textAlign: 'center',
       }}>
         <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', color: '#fff', marginBottom: 12 }}>
-          PEAK<span style={{ color: '#e85d26' }}>FORM</span>
+          PEAK<span style={{ color: '#2563eb' }}>FORM</span>
         </div>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', marginBottom: 10 }}>
           © 2026 Peakform. Built for ballers, by ballers.
         </p>
-        <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#e85d26', textDecoration: 'none' }}>
+        <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}>
           ryan.dhalbisoi@gmail.com
         </a>
       </footer>
