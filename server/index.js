@@ -4,6 +4,34 @@ const cors = require('cors');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
+
+// Strict limit for auth endpoints — prevents brute force and credential stuffing
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { error: 'Too many attempts, please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Limit AI endpoints — each call hits the Anthropic API and costs money
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { error: 'Too many AI requests, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// General API limit — catch-all to prevent abuse
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,
+  message: { error: 'Too many requests, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const authRoutes = require('./routes/auth');
 const athleteProfileRoutes = require('./routes/athlete-profile');
@@ -48,7 +76,8 @@ app.use(session({ secret: process.env.JWT_SECRET || 'secret', resave: false, sav
 app.use(passport.initialize());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/api/auth', authRoutes);
+app.use('/api', generalLimiter);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/athlete-profile', athleteProfileRoutes);
 app.use('/api/trainer-profile', trainerProfileRoutes);
 app.use('/api/workouts', workoutsRoutes);
@@ -60,7 +89,7 @@ app.use('/api/athletes', athletesRoutes);
 app.use('/api/gyms', gymsRoutes);
 app.use('/api/dm', dmRoutes);
 app.use('/api/schools', schoolsRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/ai', aiLimiter, aiRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/plays', playsRoutes);
 app.use('/api/notifications', notificationsRoutes);
