@@ -27,6 +27,7 @@ export default function TeamPage() {
     const token = localStorage.getItem('token');
     socketRef.current = io(process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000', {
       transports: ['websocket', 'polling'],
+      auth: { token },
     });
 
     socketRef.current.on('new_message', (msg) => {

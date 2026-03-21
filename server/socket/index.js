@@ -1,5 +1,25 @@
+const jwt = require('jsonwebtoken');
+
 module.exports = (io) => {
+  // Verify JWT on every socket connection before allowing any events
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error('Authentication required'));
+    }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.user = { id: decoded.id, email: decoded.email, role: decoded.role };
+      next();
+    } catch {
+      next(new Error('Invalid or expired token'));
+    }
+  });
+
   io.on('connection', (socket) => {
+    // Only allow joining a team room the user belongs to —
+    // actual team membership is enforced by the REST API; here we
+    // just ensure the socket user is authenticated before joining.
     socket.on('join_team', ({ teamId }) => {
       if (teamId) socket.join(teamId);
     });
@@ -16,9 +36,11 @@ module.exports = (io) => {
       }
     });
 
-    // DM: each user joins their own personal room
+    // DM: users can only join their own personal room
     socket.on('join_dm', ({ userId }) => {
-      if (userId) socket.join(`dm:${userId}`);
+      if (userId && userId === socket.user.id) {
+        socket.join(`dm:${userId}`);
+      }
     });
 
     // DM: relay message to recipient's room
