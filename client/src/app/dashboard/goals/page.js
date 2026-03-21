@@ -198,7 +198,14 @@ export default function GoalsPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="font-bold text-white">{g.title}</h3>
+                        <h3 className="font-bold text-white flex items-center gap-2">
+                          {g.title}
+                          {g.assigned_by && (
+                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#60a5fa' }}>
+                              Coach
+                            </span>
+                          )}
+                        </h3>
                         <div className="text-xs text-gray-500 mt-0.5">{metricLabel(g.metric)}</div>
                       </div>
                       <div className="flex gap-2">

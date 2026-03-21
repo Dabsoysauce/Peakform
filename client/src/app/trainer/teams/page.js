@@ -20,6 +20,17 @@ function Modal({ title, onClose, children }) {
   );
 }
 
+const METRICS = [
+  { value: 'bench_press_max',      label: 'Bench Press Max (lbs)' },
+  { value: 'squat_max',            label: 'Squat Max (lbs)' },
+  { value: 'deadlift_max',         label: 'Deadlift Max (lbs)' },
+  { value: 'total_weekly_sessions', label: 'Weekly Sessions' },
+  { value: 'bodyweight',           label: 'Bodyweight (lbs)' },
+];
+
+const emptyGoalForm   = { title: '', metric: 'bench_press_max', target_value: '', comparison: 'gte', deadline: '' };
+const emptyWorkoutForm = { session_name: '', session_date: new Date().toISOString().slice(0, 10), notes: '', exercises: [] };
+
 export default function TrainerTeamsPage() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +45,14 @@ export default function TrainerTeamsPage() {
   const [msgLoading, setMsgLoading] = useState(false);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+
+  // Assign modal state
+  const [assignTarget, setAssignTarget] = useState(null); // member object
+  const [assignTab, setAssignTab] = useState('goal');
+  const [goalForm, setGoalForm] = useState(emptyGoalForm);
+  const [workoutForm, setWorkoutForm] = useState(emptyWorkoutForm);
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignMsg, setAssignMsg] = useState('');
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -106,6 +125,62 @@ export default function TrainerTeamsPage() {
     if (msgRes.ok) setMessages(await msgRes.json());
     if (memRes.ok) setMembers(await memRes.json());
     setMsgLoading(false);
+  }
+
+  function openAssign(member) {
+    setAssignTarget(member);
+    setAssignTab('goal');
+    setGoalForm(emptyGoalForm);
+    setWorkoutForm({ ...emptyWorkoutForm, session_date: new Date().toISOString().slice(0, 10) });
+    setAssignMsg('');
+  }
+
+  async function handleAssign(e) {
+    e.preventDefault();
+    setAssignLoading(true);
+    setAssignMsg('');
+    try {
+      let res;
+      if (assignTab === 'goal') {
+        res = await apiFetch(`/goals/assign/${assignTarget.id}`, {
+          method: 'POST',
+          body: JSON.stringify(goalForm),
+        });
+      } else {
+        res = await apiFetch(`/workouts/assign/${assignTarget.id}`, {
+          method: 'POST',
+          body: JSON.stringify(workoutForm),
+        });
+      }
+      const data = await res.json();
+      if (res.ok) {
+        setAssignMsg(`✓ ${assignTab === 'goal' ? 'Goal' : 'Workout'} assigned to ${assignTarget.first_name || assignTarget.email}!`);
+      } else {
+        setAssignMsg(data.error || 'Failed to assign');
+      }
+    } catch {
+      setAssignMsg('Network error');
+    }
+    setAssignLoading(false);
+  }
+
+  function addExercise() {
+    setWorkoutForm((f) => ({
+      ...f,
+      exercises: [...f.exercises, { exercise_name: '', sets: '', reps: '', weight_lbs: '' }],
+    }));
+  }
+
+  function updateExercise(i, field, value) {
+    setWorkoutForm((f) => {
+      const exercises = [...f.exercises];
+      exercises[i] = { ...exercises[i], [field]: value };
+      return { ...f, exercises };
+    });
+  }
+
+  function removeExercise(i) {
+    setWorkoutForm((f) => ({ ...f, exercises: f.exercises.filter((_, idx) => idx !== i) }));
   }
 
   async function sendMessage(e) {
@@ -293,14 +368,14 @@ export default function TrainerTeamsPage() {
                     <div className="text-xs text-gray-500 text-center pt-4">No players yet</div>
                   ) : (
                     members.map((m) => (
-                      <div key={m.id} className="flex items-center gap-2">
+                      <div key={m.id} className="flex items-center gap-2 group">
                         <div
                           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                           style={{ backgroundColor: '#2563eb' }}
                         >
                           {(m.first_name || m.email).charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="text-xs font-medium text-white truncate">
                             {m.first_name ? `${m.first_name} ${m.last_name || ''}`.trim() : m.email}
                           </div>
@@ -308,6 +383,14 @@ export default function TrainerTeamsPage() {
                             <div className="text-xs text-gray-600 truncate">{m.primary_goal}</div>
                           )}
                         </div>
+                        <button
+                          onClick={() => openAssign(m)}
+                          className="opacity-0 group-hover:opacity-100 text-xs px-2 py-1 rounded font-semibold transition-all flex-shrink-0"
+                          style={{ backgroundColor: 'rgba(37,99,235,0.2)', color: '#60a5fa' }}
+                          title="Assign goal or workout"
+                        >
+                          Assign
+                        </button>
                       </div>
                     ))
                   )}
@@ -316,6 +399,234 @@ export default function TrainerTeamsPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Assign Goal / Workout Modal */}
+      {assignTarget && (
+        <Modal
+          title={`Assign to ${assignTarget.first_name || assignTarget.email}`}
+          onClose={() => setAssignTarget(null)}
+        >
+          {/* Tabs */}
+          <div className="flex gap-1 mb-5 p-1 rounded-lg" style={{ backgroundColor: '#12122a' }}>
+            {['goal', 'workout'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => { setAssignTab(tab); setAssignMsg(''); }}
+                className="flex-1 py-2 rounded-md text-sm font-semibold capitalize transition-all"
+                style={assignTab === tab
+                  ? { backgroundColor: '#2563eb', color: 'white' }
+                  : { color: '#6b7280' }}
+              >
+                {tab === 'goal' ? 'Goal' : 'Workout'}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleAssign} className="space-y-3">
+            {assignTab === 'goal' ? (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Goal Title *</label>
+                  <input
+                    required
+                    type="text"
+                    value={goalForm.title}
+                    onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })}
+                    placeholder="e.g. Hit 225 bench press"
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                    style={{ backgroundColor: '#12122a' }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Metric *</label>
+                    <select
+                      value={goalForm.metric}
+                      onChange={(e) => setGoalForm({ ...goalForm, metric: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    >
+                      {METRICS.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Comparison *</label>
+                    <select
+                      value={goalForm.comparison}
+                      onChange={(e) => setGoalForm({ ...goalForm, comparison: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    >
+                      <option value="gte">≥ At least</option>
+                      <option value="lte">≤ At most</option>
+                      <option value="eq">= Exactly</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Target Value *</label>
+                    <input
+                      required
+                      type="number"
+                      value={goalForm.target_value}
+                      onChange={(e) => setGoalForm({ ...goalForm, target_value: e.target.value })}
+                      placeholder="225"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Deadline</label>
+                    <input
+                      type="date"
+                      value={goalForm.deadline}
+                      onChange={(e) => setGoalForm({ ...goalForm, deadline: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Workout Name *</label>
+                    <input
+                      required
+                      type="text"
+                      value={workoutForm.session_name}
+                      onChange={(e) => setWorkoutForm({ ...workoutForm, session_name: e.target.value })}
+                      placeholder="e.g. Upper Body A"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Date *</label>
+                    <input
+                      required
+                      type="date"
+                      value={workoutForm.session_date}
+                      onChange={(e) => setWorkoutForm({ ...workoutForm, session_date: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Instructions / Notes</label>
+                  <textarea
+                    rows={2}
+                    value={workoutForm.notes}
+                    onChange={(e) => setWorkoutForm({ ...workoutForm, notes: e.target.value })}
+                    placeholder="Any coaching notes for this session..."
+                    className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500 resize-none"
+                    style={{ backgroundColor: '#12122a' }}
+                  />
+                </div>
+
+                {/* Exercises */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-gray-400">Exercises</label>
+                    <button
+                      type="button"
+                      onClick={addExercise}
+                      className="text-xs font-semibold px-2 py-1 rounded"
+                      style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#60a5fa' }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  {workoutForm.exercises.length === 0 ? (
+                    <p className="text-xs text-gray-600 italic">No exercises added — player will fill in their own.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {workoutForm.exercises.map((ex, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            value={ex.exercise_name}
+                            onChange={(e) => updateExercise(i, 'exercise_name', e.target.value)}
+                            placeholder="Exercise"
+                            className="flex-1 px-2 py-1.5 rounded border border-gray-700 text-white text-xs placeholder-gray-600 focus:outline-none"
+                            style={{ backgroundColor: '#12122a' }}
+                          />
+                          <input
+                            type="number"
+                            value={ex.sets}
+                            onChange={(e) => updateExercise(i, 'sets', e.target.value)}
+                            placeholder="Sets"
+                            className="w-14 px-2 py-1.5 rounded border border-gray-700 text-white text-xs focus:outline-none"
+                            style={{ backgroundColor: '#12122a' }}
+                          />
+                          <input
+                            type="number"
+                            value={ex.reps}
+                            onChange={(e) => updateExercise(i, 'reps', e.target.value)}
+                            placeholder="Reps"
+                            className="w-14 px-2 py-1.5 rounded border border-gray-700 text-white text-xs focus:outline-none"
+                            style={{ backgroundColor: '#12122a' }}
+                          />
+                          <input
+                            type="number"
+                            value={ex.weight_lbs}
+                            onChange={(e) => updateExercise(i, 'weight_lbs', e.target.value)}
+                            placeholder="lbs"
+                            className="w-14 px-2 py-1.5 rounded border border-gray-700 text-white text-xs focus:outline-none"
+                            style={{ backgroundColor: '#12122a' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeExercise(i)}
+                            className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {assignMsg && (
+              <div
+                className={`px-3 py-2 rounded-lg text-sm ${
+                  assignMsg.startsWith('✓')
+                    ? 'bg-green-900/20 border border-green-800/50 text-green-400'
+                    : 'bg-red-900/20 border border-red-800/50 text-red-400'
+                }`}
+              >
+                {assignMsg}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setAssignTarget(null)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white text-sm"
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={assignLoading}
+                className="flex-1 py-2.5 rounded-lg font-bold text-sm text-white disabled:opacity-40"
+                style={{ backgroundColor: '#2563eb' }}
+              >
+                {assignLoading ? 'Assigning...' : `Assign ${assignTab === 'goal' ? 'Goal' : 'Workout'}`}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* Create Team Modal */}

@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS workout_sessions (
   session_name VARCHAR(255),
   notes TEXT,
   duration_minutes INTEGER,
+  assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -78,6 +79,7 @@ CREATE TABLE IF NOT EXISTS goals (
   comparison VARCHAR(10) NOT NULL CHECK (comparison IN ('gte', 'lte', 'eq')),
   achieved BOOLEAN DEFAULT FALSE,
   deadline DATE,
+  assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -249,6 +251,10 @@ CREATE TABLE IF NOT EXISTS depth_chart_entries (
   position VARCHAR(50) NOT NULL,
   depth_order INTEGER DEFAULT 1
 );
+
+-- Migrations for existing databases (safe to re-run)
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE workout_sessions ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
 
 -- Indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_user_id ON athlete_profiles(user_id);

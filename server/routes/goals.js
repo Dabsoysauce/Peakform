@@ -75,6 +75,45 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// POST assign a goal to a player (trainer only)
+router.post('/assign/:userId', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Trainers only' });
+
+    // Verify player is on one of this trainer's teams
+    const membership = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2 LIMIT 1`,
+      [req.params.userId, req.user.id]
+    );
+    if (!membership.rows[0]) return res.status(403).json({ error: 'Player is not on any of your teams' });
+
+    const { title, metric, target_value, comparison, deadline } = req.body;
+    if (!title || !metric || target_value == null || !comparison) {
+      return res.status(400).json({ error: 'title, metric, target_value, and comparison are required' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO goals (user_id, title, metric, target_value, comparison, deadline, assigned_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [req.params.userId, title, metric, target_value, comparison, deadline || null, req.user.id]
+    );
+
+    // Notify the player
+    await pool.query(
+      `INSERT INTO notifications (user_id, type, message, related_id)
+       VALUES ($1, 'goal_assigned', $2, $3)`,
+      [req.params.userId, `Your coach assigned you a new goal: "${title}"`, result.rows[0].id]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to assign goal' });
+  }
+});
+
 // POST check goals against current stats
 router.post('/check', authMiddleware, async (req, res) => {
   try {

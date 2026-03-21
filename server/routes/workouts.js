@@ -76,6 +76,57 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// POST assign a workout to a player (trainer only)
+router.post('/assign/:userId', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Trainers only' });
+
+    // Verify player is on one of this trainer's teams
+    const membership = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2 LIMIT 1`,
+      [req.params.userId, req.user.id]
+    );
+    if (!membership.rows[0]) return res.status(403).json({ error: 'Player is not on any of your teams' });
+
+    const { session_name, session_date, notes, duration_minutes, exercises } = req.body;
+    if (!session_name || !session_date) {
+      return res.status(400).json({ error: 'session_name and session_date are required' });
+    }
+
+    const session = await pool.query(
+      `INSERT INTO workout_sessions (user_id, session_date, session_name, notes, duration_minutes, assigned_by)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.params.userId, session_date, session_name, notes || null, duration_minutes || null, req.user.id]
+    );
+
+    // Insert prescribed exercises if provided
+    if (Array.isArray(exercises) && exercises.length > 0) {
+      for (const ex of exercises) {
+        if (!ex.exercise_name) continue;
+        await pool.query(
+          `INSERT INTO exercises (session_id, exercise_name, sets, reps, weight_lbs, notes)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [session.rows[0].id, ex.exercise_name, ex.sets || null, ex.reps || null, ex.weight_lbs || null, ex.notes || null]
+        );
+      }
+    }
+
+    // Notify the player
+    await pool.query(
+      `INSERT INTO notifications (user_id, type, message, related_id)
+       VALUES ($1, 'workout_assigned', $2, $3)`,
+      [req.params.userId, `Your coach assigned you a workout: "${session_name}"`, session.rows[0].id]
+    );
+
+    res.status(201).json(session.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to assign workout' });
+  }
+});
+
 // POST add exercise to session
 router.post('/:id/exercises', authMiddleware, async (req, res) => {
   try {
