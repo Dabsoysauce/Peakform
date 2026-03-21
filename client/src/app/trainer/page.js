@@ -118,10 +118,10 @@ export default function TrainerOverview() {
   const displayName = profile?.first_name || userName;
 
   const statsCards = [
-    { label: 'Total Teams',      num: teams.length,                                   suffix: '', iconKey: 'teams',     color: '#2563eb' },
-    { label: 'Total Players',    num: totalAthletes,                                  suffix: '', iconKey: 'players',   color: '#4ade80' },
-    { label: 'Active Rooms',     num: teams.filter((t) => !t.coach_only).length,      suffix: '', iconKey: 'chat',      color: '#60a5fa' },
-    { label: 'Broadcast Rooms',  num: teams.filter((t) => t.coach_only).length,       suffix: '', iconKey: 'broadcast', color: '#fbbf24' },
+    { label: 'Total Teams',      num: teams.length,                                   suffix: '', iconKey: 'teams',     color: '#2563eb', href: '/trainer/teams'    },
+    { label: 'Total Players',    num: totalAthletes,                                  suffix: '', iconKey: 'players',   color: '#4ade80', href: '/trainer/athletes' },
+    { label: 'Active Rooms',     num: teams.filter((t) => !t.coach_only).length,      suffix: '', iconKey: 'chat',      color: '#60a5fa', href: '/trainer/messages' },
+    { label: 'Broadcast Rooms',  num: teams.filter((t) => t.coach_only).length,       suffix: '', iconKey: 'broadcast', color: '#fbbf24', href: '/trainer/messages' },
   ];
 
   const quickActions = [
@@ -157,14 +157,15 @@ export default function TrainerOverview() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statsCards.map((s, i) => (
-          <div
+          <a
             key={s.label}
-            className="rounded-xl p-5 border border-gray-800"
+            href={s.href}
+            className="rounded-xl p-5 border border-gray-800 hover:border-blue-700 transition-all cursor-pointer block group"
             style={{
               backgroundColor: '#1e1e30',
               opacity: mounted ? 1 : 0,
               transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-              transition: `opacity 0.5s ease ${i * 0.07 + 0.1}s, transform 0.5s ease ${i * 0.07 + 0.1}s`,
+              transition: `opacity 0.5s ease ${i * 0.07 + 0.1}s, transform 0.5s ease ${i * 0.07 + 0.1}s, border-color 0.2s`,
             }}
           >
             <div className="mb-3 w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${s.color}18`, color: s.color }}>
@@ -174,7 +175,7 @@ export default function TrainerOverview() {
               {loading ? <Skeleton height={28} width={48} /> : <CountUp to={s.num} />}
             </div>
             <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{s.label}</div>
-          </div>
+          </a>
         ))}
       </div>
 

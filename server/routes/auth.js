@@ -180,6 +180,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.delete('/account', authMiddleware, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [req.user.id]);
+    res.json({ message: 'Account deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const r = await pool.query(

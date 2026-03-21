@@ -29,6 +29,8 @@ export default function TrainerProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
@@ -82,6 +84,21 @@ export default function TrainerProfilePage() {
       await apiFetch('/trainer-profile', { method: 'PUT', body: JSON.stringify({ photo_url: '__remove__' }) });
     } catch { setError('Failed to remove photo'); }
     setPhotoUploading(false);
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      const res = await apiFetch('/auth/account', { method: 'DELETE' });
+      if (res.ok) {
+        localStorage.clear();
+        window.location.href = '/';
+      } else {
+        setError('Failed to delete account');
+        setConfirmDelete(false);
+      }
+    } catch { setError('Network error'); setConfirmDelete(false); }
+    setDeleting(false);
   }
 
   async function handleSave(e) {
@@ -213,6 +230,40 @@ export default function TrainerProfilePage() {
           {saving ? 'Saving...' : 'Save Profile'}
         </button>
       </form>
+
+      {/* Danger Zone */}
+      <div className="mt-8 rounded-xl p-6 border border-red-900/40" style={{ backgroundColor: 'rgba(127,29,29,0.1)' }}>
+        <h3 className="font-bold text-red-400 text-sm uppercase tracking-wide mb-1">Danger Zone</h3>
+        <p className="text-sm text-gray-500 mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
+        {!confirmDelete ? (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="px-5 py-2.5 rounded-lg font-semibold text-sm text-red-400 border border-red-800 hover:bg-red-900/30 transition-colors"
+          >
+            Delete Account
+          </button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-red-300">Are you sure? This is permanent.</span>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              className="px-5 py-2.5 rounded-lg font-bold text-sm text-white bg-red-700 hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {deleting ? 'Deleting...' : 'Yes, delete'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(false)}
+              className="px-4 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
