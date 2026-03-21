@@ -11,7 +11,8 @@
       "Bash(find:*)",
       "Bash(npm install:*)",
       "Bash(grep:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(sudo chown:*)"
     ]
   }
 }
