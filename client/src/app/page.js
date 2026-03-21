@@ -389,6 +389,12 @@ export default function LandingPage() {
   const [heroVisible, setHeroVisible] = useState(false);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token) {
+      window.location.replace(role === 'trainer' ? '/trainer' : '/dashboard');
+      return;
+    }
     setHeroVisible(true);
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, { passive: true });
