@@ -155,4 +155,21 @@ router.delete('/:id/leave', authMiddleware, requireRole('athlete'), async (req, 
   }
 });
 
+// GET check if a user is one of this trainer's players
+router.get('/is-my-player/:userId', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'trainer') return res.json({ isPlayer: false });
+    const result = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2 LIMIT 1`,
+      [req.params.userId, req.user.id]
+    );
+    res.json({ isPlayer: !!result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ isPlayer: false });
+  }
+});
+
 module.exports = router;

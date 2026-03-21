@@ -8,6 +8,16 @@ import { io } from 'socket.io-client';
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
 const EMOJIS = ['❤️', '👍', '😂', '🔥', '😮'];
 
+const METRICS = [
+  { value: 'bench_press_max',       label: 'Bench Press Max (lbs)' },
+  { value: 'squat_max',             label: 'Squat Max (lbs)' },
+  { value: 'deadlift_max',          label: 'Deadlift Max (lbs)' },
+  { value: 'total_weekly_sessions', label: 'Weekly Sessions' },
+  { value: 'bodyweight',            label: 'Bodyweight (lbs)' },
+];
+const emptyGoalForm    = { title: '', metric: 'bench_press_max', target_value: '', comparison: 'gte', deadline: '' };
+const emptyWorkoutForm = { session_name: '', session_date: new Date().toISOString().slice(0, 10), notes: '', exercises: [] };
+
 function NewMessageModal({ onClose, onSelect }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -118,10 +128,18 @@ export default function MessagesPage() {
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachPreview, setAttachPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isMyPlayer, setIsMyPlayer] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
+  const [assignTab, setAssignTab] = useState('goal');
+  const [goalForm, setGoalForm] = useState(emptyGoalForm);
+  const [workoutForm, setWorkoutForm] = useState(emptyWorkoutForm);
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignMsg, setAssignMsg] = useState('');
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
   const myUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const myRole   = typeof window !== 'undefined' ? localStorage.getItem('role')   : null;
 
   useEffect(() => {
     if (!myUserId) return;
@@ -173,16 +191,68 @@ export default function MessagesPage() {
     setActiveId(partnerId);
     setActiveName(partnerName);
     setActiveRole(partnerRole || null);
+    setIsMyPlayer(false);
+    setShowAssign(false);
+    setAssignMsg('');
     setLoadingMsgs(true);
     setMessages([]);
     try {
-      const res = await apiFetch(`/dm/${partnerId}`);
-      if (res.ok) setMessages(await res.json());
+      const [msgRes, playerRes] = await Promise.all([
+        apiFetch(`/dm/${partnerId}`),
+        myRole === 'trainer' ? apiFetch(`/teams/is-my-player/${partnerId}`) : Promise.resolve(null),
+      ]);
+      if (msgRes.ok) setMessages(await msgRes.json());
+      if (playerRes?.ok) {
+        const data = await playerRes.json();
+        setIsMyPlayer(data.isPlayer);
+      }
     } catch {}
     setLoadingMsgs(false);
     setConversations((prev) =>
       prev.map((c) => c.partner_id === partnerId ? { ...c, unread_count: 0 } : c)
     );
+  }
+
+  async function handleAssign(e) {
+    e.preventDefault();
+    setAssignLoading(true);
+    setAssignMsg('');
+    try {
+      let res;
+      if (assignTab === 'goal') {
+        res = await apiFetch(`/goals/assign/${activeId}`, { method: 'POST', body: JSON.stringify(goalForm) });
+      } else {
+        res = await apiFetch(`/workouts/assign/${activeId}`, { method: 'POST', body: JSON.stringify(workoutForm) });
+      }
+      const data = await res.json();
+      setAssignMsg(res.ok
+        ? `✓ ${assignTab === 'goal' ? 'Goal' : 'Workout'} assigned to ${activeName}!`
+        : (data.error || 'Failed to assign'));
+    } catch {
+      setAssignMsg('Network error');
+    }
+    setAssignLoading(false);
+  }
+
+  function addExercise() {
+    setWorkoutForm((f) => ({ ...f, exercises: [...f.exercises, { exercise_name: '', sets: '', reps: '', weight_lbs: '' }] }));
+  }
+  function updateExercise(i, field, value) {
+    setWorkoutForm((f) => {
+      const exercises = [...f.exercises];
+      exercises[i] = { ...exercises[i], [field]: value };
+      return { ...f, exercises };
+    });
+  }
+  function removeExercise(i) {
+    setWorkoutForm((f) => ({ ...f, exercises: f.exercises.filter((_, idx) => idx !== i) }));
+  }
+  function openAssignModal() {
+    setGoalForm(emptyGoalForm);
+    setWorkoutForm({ ...emptyWorkoutForm, session_date: new Date().toISOString().slice(0, 10) });
+    setAssignTab('goal');
+    setAssignMsg('');
+    setShowAssign(true);
   }
 
   useEffect(() => {
@@ -291,6 +361,166 @@ export default function MessagesPage() {
         />
       )}
 
+      {showAssign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="w-full max-w-md rounded-2xl border border-gray-700 p-6" style={{ backgroundColor: '#1e1e30' }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-white">Assign to {activeName}</h2>
+              <button onClick={() => setShowAssign(false)} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 mb-5 p-1 rounded-lg" style={{ backgroundColor: '#12122a' }}>
+              {['goal', 'workout'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => { setAssignTab(tab); setAssignMsg(''); }}
+                  className="flex-1 py-2 rounded-md text-sm font-semibold capitalize transition-all"
+                  style={assignTab === tab ? { backgroundColor: '#2563eb', color: 'white' } : { color: '#6b7280' }}
+                >
+                  {tab === 'goal' ? 'Goal' : 'Workout'}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleAssign} className="space-y-3">
+              {assignTab === 'goal' ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Goal Title *</label>
+                    <input required type="text" value={goalForm.title}
+                      onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })}
+                      placeholder="e.g. Hit 225 bench press"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                      style={{ backgroundColor: '#12122a' }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Metric *</label>
+                      <select value={goalForm.metric} onChange={(e) => setGoalForm({ ...goalForm, metric: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                        style={{ backgroundColor: '#12122a' }}
+                      >
+                        {METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Comparison *</label>
+                      <select value={goalForm.comparison} onChange={(e) => setGoalForm({ ...goalForm, comparison: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                        style={{ backgroundColor: '#12122a' }}
+                      >
+                        <option value="gte">≥ At least</option>
+                        <option value="lte">≤ At most</option>
+                        <option value="eq">= Exactly</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Target Value *</label>
+                      <input required type="number" value={goalForm.target_value}
+                        onChange={(e) => setGoalForm({ ...goalForm, target_value: e.target.value })}
+                        placeholder="225"
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                        style={{ backgroundColor: '#12122a' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Deadline</label>
+                      <input type="date" value={goalForm.deadline}
+                        onChange={(e) => setGoalForm({ ...goalForm, deadline: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                        style={{ backgroundColor: '#12122a' }}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Workout Name *</label>
+                      <input required type="text" value={workoutForm.session_name}
+                        onChange={(e) => setWorkoutForm({ ...workoutForm, session_name: e.target.value })}
+                        placeholder="e.g. Upper Body A"
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                        style={{ backgroundColor: '#12122a' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Date *</label>
+                      <input required type="date" value={workoutForm.session_date}
+                        onChange={(e) => setWorkoutForm({ ...workoutForm, session_date: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500"
+                        style={{ backgroundColor: '#12122a' }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Instructions / Notes</label>
+                    <textarea rows={2} value={workoutForm.notes}
+                      onChange={(e) => setWorkoutForm({ ...workoutForm, notes: e.target.value })}
+                      placeholder="Any coaching notes..."
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-700 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-blue-500 resize-none"
+                      style={{ backgroundColor: '#12122a' }}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-400">Exercises</label>
+                      <button type="button" onClick={addExercise}
+                        className="text-xs font-semibold px-2 py-1 rounded"
+                        style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#60a5fa' }}
+                      >+ Add</button>
+                    </div>
+                    {workoutForm.exercises.length === 0 ? (
+                      <p className="text-xs text-gray-600 italic">No exercises — player fills in their own.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                        {workoutForm.exercises.map((ex, i) => (
+                          <div key={i} className="flex gap-2 items-center">
+                            <input type="text" value={ex.exercise_name}
+                              onChange={(e) => updateExercise(i, 'exercise_name', e.target.value)}
+                              placeholder="Exercise" className="flex-1 px-2 py-1.5 rounded border border-gray-700 text-white text-xs placeholder-gray-600 focus:outline-none" style={{ backgroundColor: '#12122a' }} />
+                            <input type="number" value={ex.sets} onChange={(e) => updateExercise(i, 'sets', e.target.value)}
+                              placeholder="Sets" className="w-14 px-2 py-1.5 rounded border border-gray-700 text-white text-xs focus:outline-none" style={{ backgroundColor: '#12122a' }} />
+                            <input type="number" value={ex.reps} onChange={(e) => updateExercise(i, 'reps', e.target.value)}
+                              placeholder="Reps" className="w-14 px-2 py-1.5 rounded border border-gray-700 text-white text-xs focus:outline-none" style={{ backgroundColor: '#12122a' }} />
+                            <input type="number" value={ex.weight_lbs} onChange={(e) => updateExercise(i, 'weight_lbs', e.target.value)}
+                              placeholder="lbs" className="w-14 px-2 py-1.5 rounded border border-gray-700 text-white text-xs focus:outline-none" style={{ backgroundColor: '#12122a' }} />
+                            <button type="button" onClick={() => removeExercise(i)} className="text-gray-600 hover:text-red-400 transition-colors">×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {assignMsg && (
+                <div className={`px-3 py-2 rounded-lg text-sm ${assignMsg.startsWith('✓') ? 'bg-green-900/20 border border-green-800/50 text-green-400' : 'bg-red-900/20 border border-red-800/50 text-red-400'}`}>
+                  {assignMsg}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setShowAssign(false)}
+                  className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white text-sm">
+                  Close
+                </button>
+                <button type="submit" disabled={assignLoading}
+                  className="flex-1 py-2.5 rounded-lg font-bold text-sm text-white disabled:opacity-40"
+                  style={{ backgroundColor: '#2563eb' }}>
+                  {assignLoading ? 'Assigning...' : `Assign ${assignTab === 'goal' ? 'Goal' : 'Workout'}`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="flex h-[calc(100vh-120px)] gap-0 rounded-xl overflow-hidden border border-gray-800" style={{ backgroundColor: '#1e1e30' }}>
         {/* Sidebar */}
         <div className="w-72 flex-shrink-0 flex flex-col border-r border-gray-800">
@@ -354,10 +584,9 @@ export default function MessagesPage() {
         {/* Thread */}
         {activeId ? (
           <div className="flex-1 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-800 flex items-center gap-3">
+            <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
               <button
                 onClick={() => {
-                  const myRole = localStorage.getItem('role');
                   const dest = activeRole === 'trainer' ? `/coach/${activeId}` : `/player/${activeId}`;
                   router.push(dest);
                 }}
@@ -371,6 +600,18 @@ export default function MessagesPage() {
                 </div>
                 <span className="font-bold text-white hover:underline">{activeName}</span>
               </button>
+              {myRole === 'trainer' && isMyPlayer && (
+                <button
+                  onClick={openAssignModal}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                  style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#60a5fa', border: '1px solid rgba(37,99,235,0.3)' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                  </svg>
+                  Assign
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
