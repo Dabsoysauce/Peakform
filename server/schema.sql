@@ -5,10 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) CHECK (role IN ('athlete', 'trainer')),
   google_id VARCHAR(255) UNIQUE,
   email_verified BOOLEAN DEFAULT FALSE,
-  verification_code VARCHAR(6),
-  verification_expires TIMESTAMP,
-  ai_calls_today INTEGER DEFAULT 0,
-  ai_calls_date DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -257,10 +253,6 @@ CREATE TABLE IF NOT EXISTS depth_chart_entries (
 );
 
 -- Migrations for existing databases (safe to re-run)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMP;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_calls_today INTEGER DEFAULT 0;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_calls_date DATE DEFAULT CURRENT_DATE;
 ALTER TABLE goals ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE workout_sessions ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
 
