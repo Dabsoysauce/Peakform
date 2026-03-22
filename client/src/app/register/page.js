@@ -28,15 +28,8 @@ export default function RegisterPage() {
         setError(data.error || 'Registration failed');
         return;
       }
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role);
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('email', data.user.email);
-      if (data.user.role === 'trainer') {
-        router.push('/trainer');
-      } else {
-        router.push('/dashboard');
-      }
+      // Registration returns pending — redirect to verify page
+      router.push(`/verify?email=${encodeURIComponent(data.email)}`);
     } catch {
       setError('Network error. Is the server running?');
     } finally {
@@ -100,7 +93,7 @@ export default function RegisterPage() {
                       className="py-3 px-4 rounded-lg border font-semibold capitalize transition-all"
                       style={{
                         borderColor: form.role === r ? '#2563eb' : '#374151',
-                        backgroundColor: form.role === r ? 'rgba(232,93,38,0.15)' : '#16213e',
+                        backgroundColor: form.role === r ? 'rgba(37,99,235,0.15)' : '#16213e',
                         color: form.role === r ? '#2563eb' : '#9ca3af',
                       }}
                     >

@@ -3,20 +3,28 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Gmail SMTP transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.SMTP_EMAIL,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
 
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 async function sendVerificationEmail(email, code) {
-  await resend.emails.send({
-    from: 'Athlete Edge <onboarding@resend.dev>',
+  await transporter.sendMail({
+    from: `"Athlete Edge" <${process.env.SMTP_EMAIL}>`,
     to: email,
     subject: 'Your Athlete Edge verification code',
     html: `
@@ -50,20 +58,18 @@ passport.use(new GoogleStrategy({
     const email = profile.emails[0].value.toLowerCase();
     const googleId = profile.id;
 
-    // Check if user exists by google_id or email
     let result = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
     if (result.rows[0]) return done(null, result.rows[0]);
 
     result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows[0]) {
-      // Link google_id to existing account
-      await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, result.rows[0].id]);
-      return done(null, result.rows[0]);
+      await pool.query('UPDATE users SET google_id = $1, email_verified = TRUE WHERE id = $2', [googleId, result.rows[0].id]);
+      return done(null, { ...result.rows[0], role: result.rows[0].role });
     }
 
-    // New user — create without role (will be set on setup page)
+    // Google-verified users skip email verification
     const newUser = await pool.query(
-      'INSERT INTO users (email, google_id, role) VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO users (email, google_id, role, email_verified) VALUES ($1, $2, $3, TRUE) RETURNING *',
       [email, googleId, null]
     );
     return done(null, { ...newUser.rows[0], isNew: true });
@@ -79,7 +85,6 @@ router.get('/google/callback',
   async (req, res) => {
     const user = req.user;
     if (!user.role) {
-      // New user — send to role setup
       const tempToken = issueToken({ id: user.id, email: user.email, role: null });
       return res.redirect(`${FRONTEND_URL}/auth/setup?token=${tempToken}&email=${encodeURIComponent(user.email)}`);
     }
@@ -96,7 +101,6 @@ router.put('/role', authMiddleware, async (req, res) => {
 
     await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, req.user.id]);
 
-    // Create profile
     if (role === 'athlete') {
       await pool.query(
         'INSERT INTO athlete_profiles (user_id, first_name) VALUES ($1, $2) ON CONFLICT DO NOTHING',
@@ -119,19 +123,26 @@ router.put('/role', authMiddleware, async (req, res) => {
   }
 });
 
+// Register — creates account, sends verification email, does NOT return a token
 router.post('/register', async (req, res) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password || !role) {
       return res.status(400).json({ error: 'Email, password, and role are required' });
     }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
     if (!['athlete', 'trainer'].includes(role)) {
       return res.status(400).json({ error: 'Role must be athlete or trainer' });
     }
+
+    const code = generateCode();
     const password_hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role',
-      [email.toLowerCase(), password_hash, role]
+      `INSERT INTO users (email, password_hash, role, verification_code, verification_expires)
+       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes') RETURNING id, email, role`,
+      [email.toLowerCase(), password_hash, role, code]
     );
     const user = result.rows[0];
 
@@ -141,8 +152,15 @@ router.post('/register', async (req, res) => {
       await pool.query('INSERT INTO trainer_profiles (user_id, first_name) VALUES ($1, $2)', [user.id, email.split('@')[0]]);
     }
 
-    const token = issueToken(user);
-    res.status(201).json({ user: { id: user.id, email: user.email, role: user.role }, token });
+    // Send verification email (don't fail registration if email fails)
+    try {
+      await sendVerificationEmail(email, code);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr.message);
+    }
+
+    // Return pending status — no token until verified
+    res.status(201).json({ pending: true, email: user.email });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already registered' });
     console.error(err);
@@ -150,6 +168,66 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Verify email with 6-digit code
+router.post('/verify', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
+
+    const result = await pool.query(
+      `SELECT id, email, role, verification_code, verification_expires
+       FROM users WHERE email = $1`,
+      [email.toLowerCase()]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+
+    if (user.verification_code !== code) {
+      return res.status(400).json({ error: 'Invalid code' });
+    }
+    if (new Date(user.verification_expires) < new Date()) {
+      return res.status(400).json({ error: 'Code expired. Request a new one.' });
+    }
+
+    await pool.query(
+      'UPDATE users SET email_verified = TRUE, verification_code = NULL, verification_expires = NULL WHERE id = $1',
+      [user.id]
+    );
+
+    const token = issueToken(user);
+    res.json({ user: { id: user.id, email: user.email, role: user.role }, token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// Resend verification code
+router.post('/resend', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const result = await pool.query('SELECT id, email_verified FROM users WHERE email = $1', [email.toLowerCase()]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+    if (user.email_verified) return res.json({ message: 'Already verified' });
+
+    const code = generateCode();
+    await pool.query(
+      `UPDATE users SET verification_code = $1, verification_expires = NOW() + INTERVAL '15 minutes' WHERE id = $2`,
+      [code, user.id]
+    );
+
+    await sendVerificationEmail(email, code);
+    res.json({ message: 'Code sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to resend code' });
+  }
+});
+
+// Login — blocks unverified users
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -162,17 +240,24 @@ router.post('/login', async (req, res) => {
     );
     const user = result.rows[0];
     if (!user || !user.password_hash) {
-      // No account or Google-only account (no password set)
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     if (!(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+
+    if (!user.email_verified) {
+      // Resend code automatically and tell them to verify
+      const code = generateCode();
+      await pool.query(
+        `UPDATE users SET verification_code = $1, verification_expires = NOW() + INTERVAL '15 minutes' WHERE id = $2`,
+        [code, user.id]
+      );
+      try { await sendVerificationEmail(email, code); } catch {}
+      return res.status(403).json({ error: 'verify', email: user.email });
+    }
+
+    const token = issueToken(user);
     res.json({ user: { id: user.id, email: user.email, role: user.role }, token });
   } catch (err) {
     console.error(err);

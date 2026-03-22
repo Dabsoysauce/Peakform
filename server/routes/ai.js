@@ -6,6 +6,41 @@ const pool = require('../config/db');
 const router = express.Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const AI_DAILY_LIMIT = 50;
+
+// Per-user daily AI call cap — resets each calendar day
+async function aiRateGuard(req, res, next) {
+  try {
+    // Block unverified users from AI
+    const userCheck = await pool.query('SELECT email_verified, ai_calls_today, ai_calls_date FROM users WHERE id = $1', [req.user.id]);
+    const u = userCheck.rows[0];
+    if (!u) return res.status(401).json({ error: 'User not found' });
+    if (!u.email_verified) return res.status(403).json({ error: 'Verify your email before using AI features' });
+
+    const today = new Date().toISOString().slice(0, 10);
+    let calls = u.ai_calls_today || 0;
+
+    // Reset counter if it's a new day
+    if (!u.ai_calls_date || u.ai_calls_date.toISOString().slice(0, 10) !== today) {
+      calls = 0;
+    }
+
+    if (calls >= AI_DAILY_LIMIT) {
+      return res.status(429).json({ error: `Daily AI limit reached (${AI_DAILY_LIMIT} calls). Resets at midnight.` });
+    }
+
+    // Increment counter
+    await pool.query(
+      'UPDATE users SET ai_calls_today = $1, ai_calls_date = $2 WHERE id = $3',
+      [calls + 1, today, req.user.id]
+    );
+    next();
+  } catch (err) {
+    console.error('AI rate guard error:', err.message);
+    next(); // fail open so the feature isn't broken if the guard query fails
+  }
+}
+
 const SYSTEM_PROMPT = `You are Athlete Edge's in-app assistant. Athlete Edge is a sports platform built for high school basketball players and their coaches.
 
 Your only job is to help users navigate the app and understand its features. Be concise, friendly, and direct. Never give long responses — 2-3 sentences max unless listing steps.
@@ -36,7 +71,7 @@ If a user asks something unrelated to navigation or app features, politely redir
 
 Always refer to the app as "Athlete Edge". Refer to athletes as "players" and trainers as "coaches".`;
 
-router.post('/chat', authMiddleware, async (req, res) => {
+router.post('/chat', authMiddleware, aiRateGuard, async (req, res) => {
   try {
     const { message, history = [] } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'message is required' });
@@ -84,7 +119,7 @@ Based on the defense/offense you see in the film, recommend which of the provide
 
 Use proper basketball terminology. Be direct, specific, and constructive. If the image is too blurry, too distant, or doesn't clearly show basketball action, say so and give whatever feedback you can.`;
 
-router.post('/analyze-film', authMiddleware, async (req, res) => {
+router.post('/analyze-film', authMiddleware, aiRateGuard, async (req, res) => {
   try {
     const { media_url, base64_frame, title, description, focus, player_focus, play_images = [] } = req.body;
 
@@ -143,7 +178,7 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
 });
 
 // Analyze a play diagram
-router.post('/analyze-play', authMiddleware, async (req, res) => {
+router.post('/analyze-play', authMiddleware, aiRateGuard, async (req, res) => {
   try {
     const { canvas_png, name } = req.body;
     if (!canvas_png) return res.status(400).json({ error: 'canvas_png is required' });
@@ -186,7 +221,7 @@ Be concise and use proper basketball terminology.`,
 });
 
 // Detect players in a film frame — returns approximate positions
-router.post('/detect-players', authMiddleware, async (req, res) => {
+router.post('/detect-players', authMiddleware, aiRateGuard, async (req, res) => {
   try {
     const { media_url, base64_frame } = req.body;
 
@@ -229,7 +264,7 @@ If you cannot identify any players, return an empty array: []` },
 });
 
 // Follow-up questions about a specific film (image stays in context)
-router.post('/film-chat', authMiddleware, async (req, res) => {
+router.post('/film-chat', authMiddleware, aiRateGuard, async (req, res) => {
   try {
     const { media_url, base64_frame, history = [], message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'message is required' });
@@ -280,7 +315,7 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
 });
 
 // Generate a scouting report for a player (trainers only, must be their player)
-router.post('/scouting-report', authMiddleware, async (req, res) => {
+router.post('/scouting-report', authMiddleware, aiRateGuard, async (req, res) => {
   try {
     if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Trainers only' });
 
@@ -360,7 +395,7 @@ ${goalsText}`;
 });
 
 // Generate a play from a coach's team description
-router.post('/generate-play', authMiddleware, requireRole('trainer'), async (req, res) => {
+router.post('/generate-play', authMiddleware, aiRateGuard, requireRole('trainer'), async (req, res) => {
   try {
     const { message, history = [] } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'message is required' });
