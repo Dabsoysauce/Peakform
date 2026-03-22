@@ -2,9 +2,25 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+const PUNS = [
+  { heading: 'Out of bounds.',          sub: "Looks like this page took a bad pass. It doesn't exist or was moved." },
+  { heading: 'Nothing but net... work error.', sub: "The URL swished right through — no page on the other side." },
+  { heading: 'Traveling.',              sub: "This page moved too many steps without a dribble. We lost track of it." },
+  { heading: 'Player not found.',       sub: "We checked the whole roster and this page isn't on it." },
+  { heading: 'Ball don\'t lie.',        sub: "And neither do we — this page doesn't exist." },
+  { heading: 'Bench warmer.',           sub: "This page never made it off the bench. Head back and try another route." },
+  { heading: 'No look pass. Wrong way.', sub: "Somebody threw it behind their back and missed. This page is nowhere to be found." },
+  { heading: 'Rejected.',              sub: "Swatted into the stands. This page got blocked at the rim." },
+];
+
 export default function NotFound() {
   const [visible, setVisible] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 50); return () => clearTimeout(t); }, []);
+  const [pun, setPun] = useState(PUNS[0]);
+  useEffect(() => {
+    setPun(PUNS[Math.floor(Math.random() * PUNS.length)]);
+    const t = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: '#0f0f1a' }}>
@@ -44,11 +60,11 @@ export default function NotFound() {
           fontFamily: 'var(--font-rajdhani), sans-serif',
           letterSpacing: '0.02em',
         }}>
-          Out of bounds.
+          {pun.heading}
         </h1>
 
         <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)', maxWidth: 380, lineHeight: 1.7, margin: '0 auto 40px' }}>
-          Looks like this page took a bad pass. It doesn't exist or was moved.
+          {pun.sub}
         </p>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
