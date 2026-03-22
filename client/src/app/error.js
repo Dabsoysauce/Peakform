@@ -34,11 +34,11 @@ export default function Error({ error, reset }) {
           fontFamily: 'var(--font-rajdhani), sans-serif',
           letterSpacing: '0.02em',
         }}>
-          Something went wrong.
+          We bricked it.
         </h1>
 
         <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', maxWidth: 380, lineHeight: 1.7, margin: '0 auto 12px' }}>
-          An unexpected error occurred. It's not you — try again and it should be fine.
+          That shot hit nothing but the back of the backboard. Try again and we'll drain it next time.
         </p>
 
         {error?.message && (
