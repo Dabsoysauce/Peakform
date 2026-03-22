@@ -1,8 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+const PUNS = [
+  { heading: 'We bricked it.',         sub: "That shot hit nothing but the back of the backboard. Try again and we'll drain it next time." },
+  { heading: 'Turnover.',              sub: "We coughed it up. Give us a chance to get back on defense and try again." },
+  { heading: 'Shot clock violation.',  sub: "We ran out of time on this one. Reset and run the play again." },
+  { heading: 'Flagrant foul.',         sub: "That was ugly — no two ways about it. Hit Try Again and we'll clean it up." },
+  { heading: 'Air ball.',              sub: "Didn't even graze the rim. We'll put up a better shot on the next possession." },
+  { heading: 'Double dribble.',        sub: "We got called for a violation. Ref is resetting the play — try again." },
+  { heading: 'Technical foul.',        sub: "The bench got a little too rowdy. Calm down, reset, and let's run it back." },
+  { heading: 'We got posterized.',     sub: "Absolutely stuffed at the rim. Dust yourself off and try again." },
+  { heading: 'Five-second violation.', sub: "Took too long to inbound the page. Step back and run it again." },
+  { heading: 'Goaltending.',           sub: "We interfered at the wrong moment. The play is dead — try again." },
+];
+
 export default function Error({ error, reset }) {
   const [visible, setVisible] = useState(false);
+  const [pun] = useState(() => PUNS[Math.floor(Math.random() * PUNS.length)]);
   useEffect(() => { const t = setTimeout(() => setVisible(true), 50); return () => clearTimeout(t); }, []);
 
   return (
@@ -34,11 +48,11 @@ export default function Error({ error, reset }) {
           fontFamily: 'var(--font-rajdhani), sans-serif',
           letterSpacing: '0.02em',
         }}>
-          We bricked it.
+          {pun.heading}
         </h1>
 
         <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', maxWidth: 380, lineHeight: 1.7, margin: '0 auto 12px' }}>
-          That shot hit nothing but the back of the backboard. Try again and we'll drain it next time.
+          {pun.sub}
         </p>
 
         {error?.message && (
