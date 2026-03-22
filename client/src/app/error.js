@@ -16,8 +16,12 @@ const PUNS = [
 
 export default function Error({ error, reset }) {
   const [visible, setVisible] = useState(false);
-  const [pun] = useState(() => PUNS[Math.floor(Math.random() * PUNS.length)]);
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 50); return () => clearTimeout(t); }, []);
+  const [pun, setPun] = useState(PUNS[0]);
+  useEffect(() => {
+    setPun(PUNS[Math.floor(Math.random() * PUNS.length)]);
+    const t = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: '#0f0f1a' }}>
