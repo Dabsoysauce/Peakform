@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AIAssistant from '../components/AIAssistant';
+import TourGuide from '../components/TourGuide';
 
 const Icons = {
   overview: (
@@ -63,15 +64,15 @@ const Icons = {
 
 const navItems = [
   { label: 'Overview',      href: '/dashboard',               iconKey: 'overview' },
-  { label: 'Workouts',      href: '/dashboard/workouts',      iconKey: 'workouts' },
-  { label: 'Goals',         href: '/dashboard/goals',         iconKey: 'goals' },
+  { label: 'Workouts',      href: '/dashboard/workouts',      iconKey: 'workouts',      tour: 'nav-workouts' },
+  { label: 'Goals',         href: '/dashboard/goals',         iconKey: 'goals',         tour: 'nav-goals' },
   { label: 'Progress',      href: '/dashboard/progress',      iconKey: 'progress' },
-  { label: 'Film Room',     href: '/dashboard/media',         iconKey: 'media' },
+  { label: 'Film Room',     href: '/dashboard/media',         iconKey: 'media',         tour: 'nav-media' },
   { label: 'Schedule',      href: '/dashboard/schedule',      iconKey: 'schedule' },
-  { label: 'Messages',      href: '/dashboard/messages',      iconKey: 'messages' },
-  { label: 'Team',          href: '/dashboard/team',          iconKey: 'team' },
+  { label: 'Messages',      href: '/dashboard/messages',      iconKey: 'messages',      tour: 'nav-messages' },
+  { label: 'Team',          href: '/dashboard/team',          iconKey: 'team',          tour: 'nav-team' },
   { label: 'Notifications', href: '/dashboard/notifications', iconKey: 'notifications' },
-  { label: 'Profile',       href: '/dashboard/profile',       iconKey: 'profile' },
+  { label: 'Profile',       href: '/dashboard/profile',       iconKey: 'profile',       tour: 'nav-profile' },
 ];
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -151,6 +152,7 @@ export default function DashboardLayout({ children }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
+                data-tour={item.tour || undefined}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${
                   active ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -209,6 +211,7 @@ export default function DashboardLayout({ children }) {
         <main className="flex-1 p-6">{children}</main>
       </div>
       <AIAssistant />
+      <TourGuide role="athlete" />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AIAssistant from '../components/AIAssistant';
+import TourGuide from '../components/TourGuide';
 
 const Icons = {
   overview: (
@@ -64,15 +65,15 @@ const Icons = {
 
 const navItems = [
   { label: 'Overview',        href: '/trainer',                 iconKey: 'overview'   },
-  { label: 'My Teams',        href: '/trainer/teams',           iconKey: 'teams'      },
-  { label: 'Players',         href: '/trainer/athletes',        iconKey: 'players'    },
-  { label: 'Playbook',        href: '/trainer/playbook',        iconKey: 'playbook'   },
+  { label: 'My Teams',        href: '/trainer/teams',           iconKey: 'teams',      tour: 'nav-teams'    },
+  { label: 'Players',         href: '/trainer/athletes',        iconKey: 'players',    tour: 'nav-athletes' },
+  { label: 'Playbook',        href: '/trainer/playbook',        iconKey: 'playbook',   tour: 'nav-playbook' },
   { label: 'Practice Plans',  href: '/trainer/practice-plans',  iconKey: 'plans'      },
   { label: 'Checklists',      href: '/trainer/checklists',      iconKey: 'checklists' },
   { label: 'Depth Chart',     href: '/trainer/depth-chart',     iconKey: 'depth'      },
   { label: 'Schedule',        href: '/trainer/schedule',        iconKey: 'schedule'   },
-  { label: 'Messages',        href: '/trainer/messages',        iconKey: 'messages'   },
-  { label: 'Profile',         href: '/trainer/profile',         iconKey: 'profile'    },
+  { label: 'Messages',        href: '/trainer/messages',        iconKey: 'messages',   tour: 'nav-messages' },
+  { label: 'Profile',         href: '/trainer/profile',         iconKey: 'profile',    tour: 'nav-profile'  },
 ];
 
 export default function TrainerLayout({ children }) {
@@ -135,6 +136,7 @@ export default function TrainerLayout({ children }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
+                data-tour={item.tour || undefined}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${
                   active ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -180,6 +182,7 @@ export default function TrainerLayout({ children }) {
         <main className="flex-1 p-6">{children}</main>
       </div>
       <AIAssistant />
+      <TourGuide role="trainer" />
     </div>
   );
 }
