@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    if (!token) { router.push('/login'); return; }
+    if (!token) { router.push('/'); return; }
     if (role === 'trainer') { router.push('/trainer'); return; }
     const email = localStorage.getItem('email') || '';
     setUserName(email.split('@')[0]);
