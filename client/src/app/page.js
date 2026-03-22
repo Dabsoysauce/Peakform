@@ -387,6 +387,10 @@ function PlayerCard() {
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [heroVisible, setHeroVisible] = useState(false);
+  const glowRef = useRef(null);
+  const dotRef = useRef(null);
+  const cursorPos = useRef({ x: -999, y: -999 });
+  const rafRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -398,13 +402,68 @@ export default function LandingPage() {
     setHeroVisible(true);
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+
+    function onMove(e) {
+      cursorPos.current = { x: e.clientX, y: e.clientY };
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          const { x, y } = cursorPos.current;
+          if (glowRef.current) {
+            glowRef.current.style.transform = `translate(${x}px, ${y}px)`;
+            glowRef.current.style.opacity = '1';
+          }
+          if (dotRef.current) {
+            dotRef.current.style.transform = `translate(${x}px, ${y}px)`;
+            dotRef.current.style.opacity = '1';
+          }
+          rafRef.current = null;
+        });
+      }
+    }
+
+    function onLeave() {
+      if (glowRef.current) glowRef.current.style.opacity = '0';
+      if (dotRef.current) dotRef.current.style.opacity = '0';
+    }
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    window.addEventListener('mouseleave', onLeave);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseleave', onLeave);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return (
-    <div style={{ backgroundColor: '#000', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+    <div style={{ backgroundColor: '#000', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif', cursor: 'none' }}>
+      {/* Cursor glow */}
+      <div ref={glowRef} style={{
+        position: 'fixed', top: 0, left: 0, pointerEvents: 'none', zIndex: 9999,
+        width: 400, height: 400,
+        marginLeft: -200, marginTop: -200,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0.06) 40%, transparent 70%)',
+        opacity: 0,
+        transition: 'opacity 0.3s ease',
+        willChange: 'transform',
+      }} />
+      {/* Custom cursor dot */}
+      <div ref={dotRef} style={{
+        position: 'fixed', top: 0, left: 0, pointerEvents: 'none', zIndex: 10000,
+        width: 8, height: 8,
+        marginLeft: -4, marginTop: -4,
+        borderRadius: '50%',
+        backgroundColor: '#2563eb',
+        boxShadow: '0 0 10px #2563eb, 0 0 20px rgba(37,99,235,0.5)',
+        opacity: 0,
+        transition: 'opacity 0.3s ease',
+        willChange: 'transform',
+      }} />
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        a, button { cursor: none; }
         @keyframes ticker {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
