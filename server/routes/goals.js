@@ -102,9 +102,9 @@ router.post('/assign/:userId', authMiddleware, async (req, res) => {
 
     // Notify the player
     await pool.query(
-      `INSERT INTO notifications (user_id, type, message, related_id)
+      `INSERT INTO notifications (user_id, type, message, data)
        VALUES ($1, 'goal_assigned', $2, $3)`,
-      [req.params.userId, `Your coach assigned you a new goal: "${title}"`, result.rows[0].id]
+      [req.params.userId, `Your coach assigned you a new goal: "${title}"`, JSON.stringify({ goal_id: result.rows[0].id })]
     );
 
     res.status(201).json(result.rows[0]);

@@ -138,7 +138,7 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
     res.json({ analysis: response.content[0].text });
   } catch (err) {
     console.error('Film analysis error:', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Film analysis failed' });
+    res.status(500).json({ error: 'Film analysis failed' });
   }
 });
 
@@ -181,7 +181,7 @@ Be concise and use proper basketball terminology.`,
     res.json({ analysis: response.content[0].text });
   } catch (err) {
     console.error('Play analysis error:', err?.message);
-    res.status(500).json({ error: err?.message || 'Play analysis failed' });
+    res.status(500).json({ error: 'Play analysis failed' });
   }
 });
 
@@ -224,7 +224,7 @@ If you cannot identify any players, return an empty array: []` },
     res.json({ players });
   } catch (err) {
     console.error('Player detection error:', err?.message);
-    res.status(500).json({ error: err?.message || 'Detection failed' });
+    res.status(500).json({ error: 'Detection failed' });
   }
 });
 
@@ -275,15 +275,26 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
     res.json({ reply: response.content[0].text });
   } catch (err) {
     console.error('Film chat error:', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Chat failed' });
+    res.status(500).json({ error: 'Chat failed' });
   }
 });
 
-// Generate a scouting report for a player
+// Generate a scouting report for a player (trainers only, must be their player)
 router.post('/scouting-report', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Trainers only' });
+
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    // Verify this player is on one of the trainer's teams
+    const membership = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2 LIMIT 1`,
+      [userId, req.user.id]
+    );
+    if (!membership.rows[0]) return res.status(403).json({ error: 'Player is not on any of your teams' });
 
     const [profileRes, sessionsRes, goalsRes, mediaRes] = await Promise.all([
       pool.query('SELECT * FROM athlete_profiles WHERE user_id = $1', [userId]),
@@ -344,7 +355,7 @@ ${goalsText}`;
     res.json({ analysis: response.content[0].text });
   } catch (err) {
     console.error('Scouting report error:', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Failed to generate scouting report' });
+    res.status(500).json({ error: 'Failed to generate scouting report' });
   }
 });
 
@@ -422,12 +433,12 @@ Only include the JSON when you are ready to present a complete play. During the 
     res.json({ reply, play });
   } catch (err) {
     console.error('Generate play error:', err?.message || err);
-    res.status(500).json({ error: err?.message || 'Failed to generate play' });
+    res.status(500).json({ error: 'Failed to generate play' });
   }
 });
 
 // Share an analysis to all team members as a DM
-router.post('/share-to-team', authMiddleware, async (req, res) => {
+router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req, res) => {
   try {
     const { content, title, type, image_url } = req.body;
     if (!content) return res.status(400).json({ error: 'content is required' });

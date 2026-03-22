@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 
 module.exports = (io) => {
   // Verify JWT on every socket connection before allowing any events
@@ -17,21 +18,35 @@ module.exports = (io) => {
   });
 
   io.on('connection', (socket) => {
-    // Only allow joining a team room the user belongs to —
-    // actual team membership is enforced by the REST API; here we
-    // just ensure the socket user is authenticated before joining.
-    socket.on('join_team', ({ teamId }) => {
-      if (teamId) socket.join(teamId);
+    // Verify team membership before allowing a user to join a team room
+    socket.on('join_team', async ({ teamId }) => {
+      if (!teamId) return;
+      try {
+        let allowed;
+        if (socket.user.role === 'trainer') {
+          const res = await pool.query('SELECT 1 FROM teams WHERE id = $1 AND trainer_id = $2', [teamId, socket.user.id]);
+          allowed = res.rows.length > 0;
+        } else {
+          const res = await pool.query('SELECT 1 FROM team_members WHERE team_id = $1 AND user_id = $2', [teamId, socket.user.id]);
+          allowed = res.rows.length > 0;
+        }
+        if (allowed) {
+          socket.join(teamId);
+        }
+      } catch (err) {
+        console.error('join_team membership check failed:', err.message);
+      }
     });
 
+    // Verify sender is in the team room before broadcasting
     socket.on('send_message', ({ teamId, message }) => {
-      if (teamId && message) {
+      if (teamId && message && socket.rooms.has(teamId)) {
         io.to(teamId).emit('new_message', message);
       }
     });
 
     socket.on('reaction_updated', ({ teamId, messageId, reactions }) => {
-      if (teamId && messageId) {
+      if (teamId && messageId && socket.rooms.has(teamId)) {
         io.to(teamId).emit('reaction_updated', { messageId, reactions });
       }
     });
