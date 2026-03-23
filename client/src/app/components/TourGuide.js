@@ -109,8 +109,8 @@ export default function TourGuide({ role }) {
   const isLast = step === steps.length - 1;
 
   useEffect(() => {
-    const done = localStorage.getItem('tourCompleted');
-    if (!done) {
+    const shouldShow = localStorage.getItem('showTour');
+    if (shouldShow) {
       // Small delay so the layout finishes rendering
       const t = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(t);
@@ -173,7 +173,7 @@ export default function TourGuide({ role }) {
   }
 
   function finish() {
-    localStorage.setItem('tourCompleted', '1');
+    localStorage.removeItem('showTour');
     setVisible(false);
   }
 

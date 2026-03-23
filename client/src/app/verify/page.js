@@ -56,6 +56,7 @@ function VerifyHandler() {
       localStorage.setItem('role', data.user.role);
       localStorage.setItem('userId', data.user.id);
       localStorage.setItem('email', data.user.email);
+      localStorage.setItem('showTour', '1');
       router.push(data.user.role === 'trainer' ? '/trainer' : '/dashboard');
     } catch {
       setError('Network error');

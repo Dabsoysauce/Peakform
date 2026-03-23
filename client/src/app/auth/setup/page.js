@@ -30,6 +30,7 @@ function SetupHandler() {
       localStorage.setItem('userId', data.user.id);
       localStorage.setItem('email', data.user.email);
       localStorage.setItem('role', data.user.role);
+      localStorage.setItem('showTour', '1');
 
       if (role === 'trainer') router.push('/trainer');
       else router.push('/dashboard');
