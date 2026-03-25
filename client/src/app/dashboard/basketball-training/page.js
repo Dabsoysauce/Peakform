@@ -356,11 +356,11 @@ const BODY_AREAS = [
   { id: 'rightFoot',     shape: 'path',    d: 'M110,338 L136,338 L142,368 L107,368 Z' },
 ];
 
-function BodyMapArea({ area, pain, isActive, onClick }) {
+function BodyMapArea({ area, pain, isSelected, isFocused, onClick }) {
   const sev = pain || 0;
-  const fill = sev > 0 ? sevColor(sev) : isActive ? '#2e3a5c' : '#1e1e30';
-  const stroke = isActive ? 'rgba(255,255,255,0.6)' : sev > 0 ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)';
-  const strokeWidth = isActive ? 2 : 1;
+  const fill = sev > 0 ? sevColor(sev) : isSelected ? '#2e3a5c' : '#1e1e30';
+  const stroke = isFocused ? 'rgba(255,255,255,0.8)' : isSelected ? 'rgba(255,255,255,0.4)' : sev > 0 ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)';
+  const strokeWidth = isFocused ? 2.5 : isSelected ? 1.5 : 1;
   const common = {
     fill, stroke, strokeWidth,
     style: { cursor: 'pointer', transition: 'fill 0.2s, stroke 0.2s' },
@@ -378,29 +378,47 @@ export default function BasketballTrainingPage() {
   const [view, setView] = useState('form');
   const [form, setForm] = useState({ age: '', position: '', fitness: '', soreness: '' });
   const [painData, setPainData] = useState({});
-  const [activeArea, setActiveArea] = useState(null);
+  const [selectedAreas, setSelectedAreas] = useState(new Set());
+  const [focusedArea, setFocusedArea] = useState(null);
   const [sliderVal, setSliderVal] = useState(0);
   const [plan, setPlan] = useState(null);
   const [error, setError] = useState('');
 
   function handleAreaClick(areaId) {
-    if (activeArea === areaId) { setActiveArea(null); setSliderVal(0); }
-    else { setActiveArea(areaId); setSliderVal(painData[areaId] || 0); }
+    if (selectedAreas.has(areaId)) {
+      // Deselect — remove from set and clear its pain
+      const next = new Set(selectedAreas);
+      next.delete(areaId);
+      setSelectedAreas(next);
+      setPainData(prev => { const n = { ...prev }; delete n[areaId]; return n; });
+      if (focusedArea === areaId) {
+        const remaining = [...next];
+        const newFocus = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+        setFocusedArea(newFocus);
+        setSliderVal(newFocus ? (painData[newFocus] || 0) : 0);
+      }
+    } else {
+      // Select — add to set, make it the focused area
+      setSelectedAreas(prev => new Set([...prev, areaId]));
+      setFocusedArea(areaId);
+      setSliderVal(painData[areaId] || 0);
+    }
   }
 
   function handleSlider(val) {
     setSliderVal(val);
-    if (!activeArea) return;
+    if (!focusedArea) return;
     setPainData(prev => {
       const next = { ...prev };
-      if (val === 0) delete next[activeArea]; else next[activeArea] = val;
+      if (val === 0) delete next[focusedArea]; else next[focusedArea] = val;
       return next;
     });
   }
 
   function removeArea(id) {
     setPainData(prev => { const next = { ...prev }; delete next[id]; return next; });
-    if (activeArea === id) { setActiveArea(null); setSliderVal(0); }
+    setSelectedAreas(prev => { const next = new Set(prev); next.delete(id); return next; });
+    if (focusedArea === id) { setFocusedArea(null); setSliderVal(0); }
   }
 
   function generate() {
@@ -504,7 +522,8 @@ export default function BasketballTrainingPage() {
                     key={area.id}
                     area={area}
                     pain={painData[area.id]}
-                    isActive={activeArea === area.id}
+                    isSelected={selectedAreas.has(area.id)}
+                    isFocused={focusedArea === area.id}
                     onClick={() => handleAreaClick(area.id)}
                   />
                 ))}
@@ -515,11 +534,11 @@ export default function BasketballTrainingPage() {
             <div className="flex-1 space-y-4">
               <div>
                 <div className="text-sm text-gray-300 mb-3 italic">
-                  {activeArea
-                    ? `Adjusting: ${AREA_LABELS[activeArea]}`
+                  {focusedArea
+                    ? `Adjusting: ${AREA_LABELS[focusedArea]}`
                     : 'Select a body area to rate severity'}
                 </div>
-                {activeArea && (
+                {focusedArea && (
                   <>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-gray-500">Severity</span>
