@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '../lib/supabase';
 import { apiFetch } from '../lib/api';
 
 function VerifyHandler() {
@@ -45,12 +46,29 @@ function VerifyHandler() {
     setError('');
     setLoading(true);
     try {
-      const res = await apiFetch('/auth/verify', {
+      // Verify the OTP with Supabase
+      const { data: authData, error: otpError } = await supabase.auth.verifyOtp({
+        email,
+        token: fullCode,
+        type: 'signup',
+      });
+      if (otpError) { setError(otpError.message || 'Invalid code'); setLoading(false); return; }
+
+      const accessToken = authData.session?.access_token;
+      const role = sessionStorage.getItem('pending_role') || 'athlete';
+      const password = sessionStorage.getItem('pending_password') || '';
+
+      // Create the user in PostgreSQL and get an app JWT
+      const res = await apiFetch('/auth/complete-registration', {
         method: 'POST',
-        body: JSON.stringify({ email, code: fullCode }),
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ role, password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Invalid code'); setLoading(false); return; }
+      if (!res.ok) { setError(data.error || 'Registration failed'); setLoading(false); return; }
+
+      sessionStorage.removeItem('pending_role');
+      sessionStorage.removeItem('pending_password');
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
@@ -67,8 +85,8 @@ function VerifyHandler() {
   async function handleResend() {
     setResent(false);
     try {
-      await apiFetch('/auth/resend', { method: 'POST', body: JSON.stringify({ email }) });
-      setResent(true);
+      const { error } = await supabase.auth.resend({ type: 'signup', email });
+      if (!error) setResent(true);
     } catch {}
   }
 

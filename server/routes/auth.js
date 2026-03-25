@@ -3,33 +3,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { Resend } = require('resend');
+const { createClient } = require('@supabase/supabase-js');
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
-const resend = new Resend(process.env.RESEND_API_KEY);
 
-function generateCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-async function sendVerificationEmail(email, code) {
-  await resend.emails.send({
-    from: 'Athlete Edge <onboarding@resend.dev>',
-    to: email,
-    subject: 'Your Athlete Edge verification code',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;color:#fff;border-radius:16px;">
-        <h1 style="color:#2563eb;margin-bottom:8px;">ATHLETE EDGE</h1>
-        <h2 style="margin-bottom:16px;">Verify your email</h2>
-        <p style="color:#9ca3af;margin-bottom:24px;">Enter this code to complete your registration:</p>
-        <div style="background:#1e1e30;border:1px solid #374151;border-radius:12px;padding:24px;text-align:center;letter-spacing:12px;font-size:36px;font-weight:900;color:#fff;margin-bottom:24px;">${code}</div>
-        <p style="color:#6b7280;font-size:13px;">This code expires in 15 minutes. If you didn't sign up for Athlete Edge, ignore this email.</p>
-      </div>
-    `,
-  });
-}
+// Supabase admin client — used to verify tokens server-side
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
@@ -132,6 +116,47 @@ router.post('/register', async (req, res) => {
     const result = await pool.query(
       'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role',
       [email.toLowerCase(), password_hash, role]
+    );
+    const user = result.rows[0];
+
+    if (role === 'athlete') {
+      await pool.query('INSERT INTO athlete_profiles (user_id, first_name) VALUES ($1, $2)', [user.id, email.split('@')[0]]);
+    } else {
+      await pool.query('INSERT INTO trainer_profiles (user_id, first_name) VALUES ($1, $2)', [user.id, email.split('@')[0]]);
+    }
+
+    const token = issueToken(user);
+    res.status(201).json({ user: { id: user.id, email: user.email, role: user.role }, token });
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'Email already registered' });
+    console.error(err);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// POST /auth/complete-registration
+// Called after Supabase email OTP verification. Verifies the Supabase access
+// token, then creates the user in PostgreSQL and returns an app JWT.
+router.post('/complete-registration', async (req, res) => {
+  try {
+    const { role, password } = req.body;
+    const accessToken = req.headers.authorization?.replace('Bearer ', '');
+
+    if (!accessToken) return res.status(401).json({ error: 'No token provided' });
+    if (!role || !password) return res.status(400).json({ error: 'Role and password are required' });
+    if (!['athlete', 'trainer'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+
+    // Verify the Supabase token to confirm email is verified
+    const { data: { user: supaUser }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !supaUser) return res.status(401).json({ error: 'Invalid or expired verification token' });
+    if (!supaUser.email_confirmed_at) return res.status(401).json({ error: 'Email not confirmed' });
+
+    const email = supaUser.email.toLowerCase();
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role',
+      [email, password_hash, role]
     );
     const user = result.rows[0];
 

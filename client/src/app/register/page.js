@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,24 +19,18 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await apiFetch('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(form),
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Registration failed');
+      if (error) {
+        setError(error.message || 'Registration failed');
         return;
       }
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role);
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('email', data.user.email);
-      if (data.user.role === 'trainer') {
-        router.push('/trainer');
-      } else {
-        router.push('/dashboard');
-      }
+      // Stash role + password temporarily so the verify page can complete registration
+      sessionStorage.setItem('pending_role', form.role);
+      sessionStorage.setItem('pending_password', form.password);
+      router.push(`/verify?email=${encodeURIComponent(form.email)}`);
     } catch {
       setError('Network error. Is the server running?');
     } finally {
