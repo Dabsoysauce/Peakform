@@ -1,29 +1,21 @@
 'use client';
 import { useState } from 'react';
 
-// ─── Plan generation logic (ported from Playr.AI) ───────────────────────────
+// ─── Plan generation logic ────────────────────────────────────────────────────
 
 const POS_NAMES = {
-  goalkeeper: 'Goalkeeper',
-  centerback: 'Center Back',
-  outsideback: 'Outside Back / Fullback',
-  cdm: 'Center Defensive Midfielder',
-  cm: 'Central Midfielder',
-  cam: 'Central Attacking Midfielder',
-  outsideMid: 'Outside Midfielder',
-  wing: 'Winger',
-  striker: 'Striker / Forward',
+  pg:  'Point Guard',
+  sg:  'Shooting Guard',
+  sf:  'Small Forward',
+  pf:  'Power Forward',
+  c:   'Center',
 };
 const POS_FOCUS = {
-  goalkeeper: 'Reflexes, Positioning, Distribution',
-  centerback: 'Strength, Aerial Ability, Tackling',
-  outsideback: 'Speed, Stamina, Crossing',
-  cdm: 'Tackling, Positioning, Short Passing',
-  cm: 'Endurance, Vision, Passing Range',
-  cam: 'Creativity, Technical Skills, Shooting',
-  outsideMid: 'Crossing, Stamina, Defensive Awareness',
-  wing: 'Speed, Dribbling, Crossing',
-  striker: 'Finishing, Movement, Strength',
+  pg:  'Ball Handling, Vision, Leadership',
+  sg:  'Shooting, Off-Ball Movement, Athleticism',
+  sf:  'Versatility, Scoring, Two-Way Defense',
+  pf:  'Post Play, Rebounding, Strength',
+  c:   'Rim Protection, Post Scoring, Rebounding',
 };
 
 const AREA_LABELS = {
@@ -67,25 +59,25 @@ function buildPlan(age, pos, fitness, soreness, painData) {
 function buildTraining(pos, intensity, fitness, painArea, maxSev) {
   const stdWarm = [
     '5 minutes light jogging & dynamic movement',
-    'Dynamic stretching sequence (leg swings, hip circles, arm rotations)',
-    'Ball control warm-up — juggling, rondos, first-touch drills',
+    'Dynamic stretching — leg swings, hip circles, shoulder rotations',
+    'Ball-handling warm-up — two-ball dribbling, Mikan drill, stationary combos',
   ];
   const stdCool = [
     '5 minutes light jogging & walking',
     'Static stretching — hold each stretch 20–30 seconds',
-    'Foam rolling for major muscle groups',
+    'Foam rolling for quads, hamstrings, calves, and hips',
   ];
-  const plan = { title: '', description: '', warmup: [], main: [], cooldown: [], duration: '', icon: '⚽' };
+  const plan = { title: '', description: '', warmup: [], main: [], cooldown: [], duration: '', icon: '🏀' };
 
   switch (intensity) {
     case 'recovery':
       plan.title = 'Recovery Session'; plan.icon = '🛌';
-      plan.description = 'Focus on active recovery and rehabilitation to promote healing.';
+      plan.description = 'Focus on active recovery and light skill reinforcement to promote healing.';
       plan.warmup = ['5 minutes very light movement — gentle walking', 'Gentle full-body mobility & joint circles'];
       plan.main = [
-        '20 minutes of light technical work at low intensity',
+        '20 minutes of stationary shooting & form work (no cutting or jumping)',
+        'Walk-through play review — mental reps, no physical exertion',
         'Non-impact cross-training — swimming or stationary bike (30 min)',
-        'Technique repetition at walking pace — passing, receiving, first touch',
         'Breathing & relaxation exercises',
       ];
       plan.cooldown = ['Extended stretching session (25–30 minutes)', 'Foam rolling — full body, 90 seconds per area'];
@@ -93,40 +85,41 @@ function buildTraining(pos, intensity, fitness, painArea, maxSev) {
 
     case 'light':
       plan.title = 'Light Training Session'; plan.icon = '🌤';
-      plan.description = 'Maintain fitness while giving your body space to recover.';
+      plan.description = 'Maintain sharpness while giving your body space to recover.';
       plan.warmup = stdWarm;
       plan.main = [
-        'Technical drills at 50–60% max effort',
-        'Positional work with limited high-intensity movement',
-        'Light ball work focusing on technique & decision-making',
-        'Short passing sequences — accuracy over speed',
+        'Stationary & slow-speed ball-handling drills at 50–60% effort',
+        'Catch-and-shoot repetition — no off-dribble or sprinting',
+        'Positional walk-through — half-speed play execution',
+        'Form shooting from close range — focus on mechanics over volume',
       ];
       plan.cooldown = stdCool;
       plan.duration = '45–60 minutes (low to moderate intensity)'; break;
 
     case 'moderate':
       plan.title = 'Moderate Training Session'; plan.icon = '⚡';
-      plan.description = 'Balanced session building technical sharpness and moderate fitness.';
+      plan.description = 'Balanced session building technical sharpness and court fitness.';
       plan.warmup = stdWarm;
       plan.main = [
-        'Technical drills at 70–80% intensity',
-        'Small-sided games — 4v4 or 5v5 (15 minutes)',
-        'Position-specific drills at moderate pace',
-        'Interval running — 1:1 work-to-rest ratio (6 × 30 seconds)',
+        'Ball-handling combos at 70–80% speed',
+        'Mid-range & three-point shooting off movement (curls, flares, pull-ups)',
+        '3-on-3 half-court competitive sets (15 minutes)',
+        'Position-specific drills at moderate game pace',
+        'Interval sprints — full court × 6, 1:1 work-to-rest',
       ];
       plan.cooldown = stdCool;
       plan.duration = '60–75 minutes (moderate intensity)'; break;
 
     case 'high':
       plan.title = 'High Intensity Session'; plan.icon = '🔥';
-      plan.description = 'Full-intensity session to sharpen match fitness and decision-making under pressure.';
+      plan.description = 'Full-intensity session to sharpen game fitness and decision-making under pressure.';
       plan.warmup = stdWarm;
       plan.main = [
-        'Technical drills at 90–100% intensity',
-        'High-intensity small-sided games (8v8 or 11v11 segments)',
-        'Position-specific drills at full game speed',
-        'Sprint & agility circuit — 8 × 20m sprints, 4 × ladder drills',
-        'Tactical scenarios at match pace — set pieces, transitions',
+        'Ball-handling & finishing at 90–100% game speed',
+        'Competitive 5-on-5 live sets — no stopping on mistakes',
+        'Full-court transition offense and defense drills',
+        'Sprint & conditioning circuit — 8 × court suicides, 4 × defensive-slide circuits',
+        'Late-clock & end-of-game scenario execution at match pace',
       ];
       plan.cooldown = stdCool;
       plan.duration = '75–90 minutes (high intensity)'; break;
@@ -139,23 +132,26 @@ function buildTraining(pos, intensity, fitness, painArea, maxSev) {
 function modifyForPain(plan, area, sev) {
   const mods = [];
   if (['leftThigh', 'rightThigh', 'leftKnee', 'rightKnee', 'leftShin', 'rightShin'].includes(area)) {
-    mods.push('Reduce running & sprinting volume by 40–50%');
-    mods.push('Avoid explosive jumping or plyometric drills');
-    if (['leftKnee', 'rightKnee'].includes(area)) mods.push('No deep squatting or rapid lateral cuts');
-    if (sev > 5) mods.push('Consider non-weight-bearing cardio — swimming or cycling');
+    mods.push('Reduce full-court sprinting and cutting volume by 40–50%');
+    mods.push('Avoid explosive jumping, dunking, or plyometric drills');
+    if (['leftKnee', 'rightKnee'].includes(area)) mods.push('No deep squatting or rapid lateral direction changes');
+    if (sev > 5) mods.push('Consider non-weight-bearing conditioning — swimming or stationary bike');
   } else if (['leftFoot', 'rightFoot'].includes(area)) {
-    mods.push('Wear footwear with adequate arch support & padding');
-    mods.push('Reduce cutting, pivoting and sharp-direction-change movements');
-    mods.push('Consider kinesiology taping for additional support');
+    mods.push('Wear high-top footwear with adequate ankle support');
+    mods.push('Reduce cutting, planting, and sharp pivoting movements');
+    mods.push('Consider kinesiology taping for additional ankle support');
   } else if (area === 'back' || area === 'core') {
-    mods.push('Avoid all heavy load-bearing exercises');
-    mods.push('Focus on core bracing with strict neutral spine');
-    if (area === 'back') mods.push('Limit rotation-based movements if painful');
+    mods.push('Avoid heavy load-bearing or contact drills');
+    mods.push('Focus on core bracing with strict neutral spine throughout');
+    if (area === 'back') mods.push('Limit rotation-heavy movements and post contact drills');
   } else if (['leftShoulder', 'rightShoulder'].includes(area)) {
-    mods.push('Limit throw-ins and goalkeeper-specific diving drills');
-    mods.push('Modify any overhead or push movements as needed');
+    mods.push('Reduce overhead passing and shooting volume as tolerated');
+    mods.push('Modify any overhead or push-off contact movements');
+  } else if (['leftArm', 'rightArm'].includes(area)) {
+    mods.push('Reduce dribbling reps on affected side; emphasize off-hand work');
+    mods.push('Avoid contact drills that stress the injured limb');
   } else if (area === 'hips') {
-    mods.push('Avoid explosive lateral sprints and hip-hinge power movements');
+    mods.push('Avoid explosive lateral cuts and hip-hinge power movements');
     mods.push('Add hip flexor & glute activation to the warm-up');
   }
   if (mods.length) {
@@ -167,19 +163,19 @@ function modifyForPain(plan, area, sev) {
 function buildRecovery(intensity, primaryArea, maxSev, allPainAreas) {
   const plan = {
     title: 'Recovery Protocol',
-    description: 'Optimize recovery to be ready for your next session or match.',
+    description: 'Optimize recovery to be ready for your next practice or game.',
     immediate: [], sameDay: [], nextDay: [], nutrition: [], icon: '🔄',
   };
 
   const si = [
-    '10–15 minutes of cool-down jogging & walking',
+    '10–15 minutes of cool-down light jogging & walking',
     'Hydrate immediately — 500–600ml water or electrolyte drink',
     'Light static stretching of all major muscle groups',
   ];
   const sd = [
     'Full meal within 60 minutes — 4:1 carbohydrate-to-protein ratio',
-    'Wear compression garments if available',
-    '20 minutes of foam rolling — quads, hamstrings, calves, glutes, upper back',
+    'Wear compression tights or sleeves if available',
+    '20 minutes of foam rolling — quads, hamstrings, calves, glutes, IT band',
   ];
   const nd = [
     '10–15 minutes of mobility flow work',
@@ -189,7 +185,7 @@ function buildRecovery(intensity, primaryArea, maxSev, allPainAreas) {
   const nu = [
     'Daily hydration: 2.5–3 litres of water minimum',
     'Protein: 1.6–1.8g per kg of bodyweight per day',
-    'Complex carbohydrates at each meal to maintain glycogen stores',
+    'Complex carbohydrates at each meal to maintain energy stores',
     'Anti-inflammatory foods: berries, fatty fish, turmeric, leafy greens, walnuts',
   ];
 
@@ -203,12 +199,12 @@ function buildRecovery(intensity, primaryArea, maxSev, allPainAreas) {
       plan.immediate = si; plan.sameDay = sd; plan.nextDay = nd; plan.nutrition = nu; break;
     case 'moderate':
       plan.immediate = si;
-      plan.sameDay = [...sd, 'Ice bath or cold shower — 8–12 minutes at 12–15°C'];
+      plan.sameDay = [...sd, 'Cold shower or ice pack on heaviest-worked joints (8–12 min)'];
       plan.nextDay = nd; plan.nutrition = nu; break;
     case 'high':
       plan.immediate = si;
-      plan.sameDay = [...sd, 'Ice bath — 10–15 minutes at 10–15°C', 'Compression boots or garments for 30–45 minutes'];
-      plan.nextDay = [...nd, 'Light recovery session — 20–25 minutes easy movement', 'Sports massage or physio session recommended'];
+      plan.sameDay = [...sd, 'Ice bath — 10–15 minutes at 10–15°C', 'Compression sleeves or boots for 30–45 minutes'];
+      plan.nextDay = [...nd, 'Light recovery session — 20–25 minutes easy shooting & movement', 'Sports massage or physio session recommended'];
       plan.nutrition = [...nu, 'Tart cherry juice — 30ml concentrate for muscle recovery', 'High-GI carbohydrates (banana, rice, fruit) immediately post-session']; break;
   }
 
@@ -220,8 +216,9 @@ function buildRecovery(intensity, primaryArea, maxSev, allPainAreas) {
       if (['leftThigh', 'rightThigh'].includes(a)) extra.push(`Elevate affected leg when resting; ice ${lbl} — 15 min on, 45 min off`);
       if (['leftKnee', 'rightKnee'].includes(a)) { extra.push(`RICE protocol for ${lbl}`); if (sev > 5) extra.push(`Compression sleeve on ${lbl} during activity`); }
       if (['leftShin', 'rightShin'].includes(a)) extra.push(`Ice ${lbl} for 15 minutes after any activity`);
-      if (['leftFoot', 'rightFoot'].includes(a)) extra.push(`Ice foot bath 10–15 minutes; plantar fascia & arch stretches`);
+      if (['leftFoot', 'rightFoot'].includes(a)) extra.push(`Ice ankle/foot 10–15 minutes; ankle alphabet & calf stretches`);
       if (['leftShoulder', 'rightShoulder'].includes(a)) extra.push(`Ice ${lbl} — 15 min on / 45 min off; gentle pendulum mobility drills`);
+      if (['leftArm', 'rightArm'].includes(a)) extra.push(`Rest ${lbl} from dribbling; ice if swollen; wrist/elbow mobility circles`);
       if (a === 'back') extra.push(`Cat-cow and child's pose stretches; heat pad for muscle relaxation; avoid prolonged sitting`);
       if (a === 'hips') extra.push(`Pigeon pose & hip flexor stretches (90-second holds); heat therapy on hips`);
       if (a === 'core') extra.push(`Gentle diaphragmatic breathing exercises; avoid forced abdominal compression`);
@@ -237,54 +234,34 @@ function buildRecovery(intensity, primaryArea, maxSev, allPainAreas) {
 
 function buildPositionDrills(pos, intensity) {
   const map = {
-    goalkeeper: {
-      t: ['Handling drills — high catches, low rolls, diving saves', 'Shot-stopping footwork (set position → dive)', 'Distribution — throws, rolls, driven kicks', '1v1 angle-closing situations'],
-      p: ['Explosive power: box jumps 4×8', 'Reaction time drills — tennis ball drops', 'Core stability: plank series & rotational work', 'Plyometric series: broad jumps, lateral bounds'],
-      ta: ['Positioning for crosses and corners', 'Communication & organisation of backline', 'Starting position based on ball location', 'Distribution decision-making — when to play short vs. long'],
+    pg: {
+      t: ['Two-ball dribbling combos — crossover, between legs, behind back', 'Pick-and-roll reads — attack, pull up, or kick out', 'Floater & pull-up mid-range off live dribble', 'No-look / behind-the-back passing against pressure'],
+      p: ['Lateral quickness ladder drills — 4×30s', 'Change-of-direction circuit: 5-10-5 pro agility 4×', 'Full-court endurance: 4×5min at 80% HR', 'Reactive first step: partner-signal burst drills'],
+      ta: ['Reading the pick-and-roll defender (hedge vs. drop)', 'Pace control — when to push vs. slow the game down', 'Identifying mismatches and attacking them immediately', 'Pressure defense on ball — forcing baseline or middle'],
     },
-    centerback: {
-      t: ['Defensive heading — flick-ons and clearances', 'Tackling technique — standing and sliding', 'Long-range passing — driven and lofted', 'Recovery clearances under pressure'],
-      p: ['Upper body strength: push/pull superset 4×10', 'Jump training: heading approach runs 5×5', 'Short burst acceleration over 5–15m', 'Physical duel shielding drill'],
-      ta: ['Defensive line management — hold vs. step', 'Reading forward runs and anticipating penetration', 'Cover shadow positioning behind pressing partner', 'Building from the back — third-man combinations'],
+    sg: {
+      t: ['Catch-and-shoot off screens — curl, flare, and flat', 'Pull-up jumper off 1–2 dribbles from wing & elbow', 'Off-ball movement — V-cuts, backdoor, zipper cuts', 'Finishing through contact at the rim — both sides'],
+      p: ['Sprint and decelerate circuits — 6×30m', 'Vertical leap: box jumps & depth jumps 4×10', 'Defensive lateral slides — full court 4×', 'Reaction: partner mirror & closeout drills'],
+      ta: ['Reading off-ball screens — when to curl vs. fade', 'Defensive assignment — denying the wing and chasing screens', 'Shot selection — pull up vs. drive vs. kick out', 'Transition offense — fill lanes and spot up on the break'],
     },
-    outsideback: {
-      t: ['Crossing technique — driven, whipped, cutback', '1v1 defending — contain, jockey, tackle', 'Overlapping run with ball carry & decision', 'Progressive passing out from the back'],
-      p: ['Endurance intervals: 4×5min at 80% HR', 'Repeated sprint: 8×30m with 30s recovery', 'Agility: 4×8 cone change-of-direction runs', 'Recovery run technique — backtracking at pace'],
-      ta: ['When to overlap vs. hold width', 'Positioning vs. an attacking winger', 'Supporting the press in the final third', 'Defensive shape when the ball is switched'],
+    sf: {
+      t: ['Mid-range from elbow & wing — off catch and off dribble', 'Drive-and-kick sequences — read the help and make the pass', 'Post-up basics — seal, catch, and simple scoring moves', 'Perimeter closeout & contest defense footwork'],
+      p: ['Full-court conditioning — suicide runs 6×', 'Explosive first step: 6×10m from triple-threat stance', 'Strength for contact: resistance band push-pull 3×12', 'Agility: T-drill & L-drill 4× each'],
+      ta: ['Help-side defensive positioning — see ball and man', 'Transition offense — reading the defense on the break', 'Attacking closeouts — shot fake, one dribble, finish', 'Switching on screens — body position and communication'],
     },
-    cdm: {
-      t: ['Short passing under pressure — triangle drills', 'Receiving with back to goal & turning', 'Screening & interception positioning', 'Tackle and cover shadow exercises'],
-      p: ['Endurance base: 20–25 min tempo run', 'Core stability circuit — 3×15 each exercise', 'Strength in duels: resistance band pushing', 'Agility for transitions: mirror drill 4×45s'],
-      ta: ['Positioning between defensive and midfield lines', 'Screening key passing lanes from opposition', 'Dropping to support centre-backs in build-up', 'First action after winning the ball — protect or progress'],
+    pf: {
+      t: ['Post moves — drop step, up-and-under, baby hook both hands', 'Face-up mid-range from short corner & elbow', 'Offensive rebounding positioning — seal and tip drills', 'Dump-off & kick-out passes from the post'],
+      p: ['Lower body strength: squat & lunge circuit 4×10', 'Box-out battle drills — 1v1 rebounding 5×5', 'Jump training: approach rebound runs & tip-ins 4×8', 'Core stability for post play: plank & anti-rotation holds'],
+      ta: ['Positioning in the pick-and-roll — timing the roll vs. pop', 'Defending on the perimeter vs. switching onto guards', 'Offensive rebounding reads — when to crash vs. stay', 'Setting and re-screening: angle, legality, and timing'],
     },
-    cm: {
-      t: ['Passing range — short, medium and long combinations', 'Receiving under pressure & half-turn', 'Turning in tight spaces — Cruyff, inside, outside', 'Long-range shooting — hit 10 shots each side'],
-      p: ['Box-to-box endurance: 3×8min reps', 'Repeated sprint ability: 10×20m efforts', 'Balance & coordination: single-leg stability work', 'Midfield duel strength: resistance pressing drills'],
-      ta: ['Creating and exploiting space between lines', 'Switching play to find free fullback', 'Supporting both attack and defensive press', 'Tempo control — when to slow down vs. accelerate play'],
-    },
-    cam: {
-      t: ['Creative through-ball passing — curved & disguised', 'Shooting from various angles & distances', 'Dribbling in tight spaces — Rondo 3v1', 'Set-piece delivery — corners, free kicks'],
-      p: ['Agility & balance: 4×30s ladder footwork', 'Acceleration: 6×10m explosive starts', 'Core strength: rotational medicine ball work', 'Reaction drills: partner signal sprints'],
-      ta: ['Finding and exploiting half-spaces', 'Third-man runs to support the striker', 'Transition moments — immediate pressure on loss', 'Final third decision: dribble, pass or shoot'],
-    },
-    outsideMid: {
-      t: ['Crossing from wide — ground, driven, lofted', 'Cutting inside onto strong foot to shoot', 'Combination play with overlapping fullback', 'Defensive pressing & tracking runs'],
-      p: ['Endurance for repeated wide runs: 4×6min', 'Speed over 30–40m: 6 runs with full rest', 'Agility turns at speed: T-drill 4×', 'Recovery capacity: 6×60m at 85% + walk back'],
-      ta: ['Maintaining width to stretch the defence', 'When to come inside vs. stay wide', 'Tracking back to help fullback defensively', 'Positioning during opposition transitions'],
-    },
-    wing: {
-      t: ['1v1 dribbling circuits — beat & beat again', 'Crossing from byline and cut-back positions', 'Cutting inside to shoot — both feet', 'Quick combination & give-and-go sequences'],
-      p: ['Explosive speed: 6×30m sprint (full rest)', 'Repeated sprint: 10×20m (25s recovery)', 'Agility: L-drill and 5-10-5 shuttle (4×each)', 'Balance under pressure: 1v1 strength shielding'],
-      ta: ['Timing the run in behind the fullback', 'Recognising when to isolate vs. combine', 'Defensive press from the front on goal kicks', 'Positioning on set pieces — near post & second ball'],
-    },
-    striker: {
-      t: ['Finishing circuit — volleys, headers, 1v1 vs. GK', 'Heading technique — attacking runs & flick-ons', 'Hold-up play & shielding — back-to-goal', 'One-touch finishing under pressure'],
-      p: ['Explosive power: squat jumps 4×8', 'Strength for hold-up: resistance duel training', 'Acceleration: 8×10m from standing start', 'Jumping & heading approach runs: 4×10'],
-      ta: ['Runs in behind — curved to stay onside', 'Timing with the passer — shoulder check habit', 'Link-up with midfielders — lay-off & move', 'Pressing from the front — angle and trigger'],
+    c: {
+      t: ['Drop step & up-and-under in the post', 'Short hook shot — both hands, both blocks', 'Outlet passing after rebound — quick decision, accurate delivery', 'Rim protection — block technique, verticality, and timing'],
+      p: ['Lower body power: leg press & hip thrust 4×8', 'Jump & rebound circuit — tip-outs, put-backs 4×10', 'Explosive power: depth jumps 4×6', 'Lateral mobility drills — defensive slides & drop steps'],
+      ta: ['Rim protection — reading driver angles & staying vertical', 'Pick-and-roll defense — drop coverage vs. hedge coverage', 'Alley-oop lob timing — footwork and jump point', 'Communicating switches and defensive rotations'],
     },
   };
 
-  const d = map[pos] || map.cm;
+  const d = map[pos] || map.pg;
   let { t, p, ta } = d;
 
   if (['recovery', 'light'].includes(intensity)) {
@@ -360,23 +337,23 @@ const INTENSITY_STYLES = {
 // ─── Body Map SVG ─────────────────────────────────────────────────────────────
 
 const BODY_AREAS = [
-  { id: 'head',          label: 'Head',              shape: 'path',    d: 'M100,12 C82,12 68,26 68,44 C68,60 78,73 92,78 L92,92 L108,92 L108,78 C122,73 132,60 132,44 C132,26 118,12 100,12 Z' },
-  { id: 'neck',          label: 'Neck',              shape: 'rect',    x: 90, y: 92, width: 20, height: 12, rx: 3 },
-  { id: 'leftShoulder',  label: 'Left Shoulder',     shape: 'path',    d: 'M68,103 C52,103 40,114 36,128 L58,133 L68,113 Z' },
-  { id: 'rightShoulder', label: 'Right Shoulder',    shape: 'path',    d: 'M132,103 C148,103 160,114 164,128 L142,133 L132,113 Z' },
-  { id: 'chest',         label: 'Chest',             shape: 'path',    d: 'M70,103 L130,103 L126,142 L74,142 Z' },
-  { id: 'core',          label: 'Core / Abs',        shape: 'path',    d: 'M74,143 L126,143 L122,185 L78,185 Z' },
-  { id: 'hips',          label: 'Hips',              shape: 'path',    d: 'M78,186 L122,186 L128,216 L100,230 L72,216 Z' },
-  { id: 'leftArm',       label: 'Left Arm',          shape: 'path',    d: 'M35,130 L56,135 L48,200 L28,194 Z' },
-  { id: 'rightArm',      label: 'Right Arm',         shape: 'path',    d: 'M165,130 L144,135 L152,200 L172,194 Z' },
-  { id: 'leftThigh',     label: 'Left Thigh',        shape: 'path',    d: 'M72,220 L98,230 L94,278 L68,278 Z' },
-  { id: 'rightThigh',    label: 'Right Thigh',       shape: 'path',    d: 'M128,220 L102,230 L106,278 L132,278 Z' },
-  { id: 'leftKnee',      label: 'Left Knee',         shape: 'ellipse', cx: 81,  cy: 286, rx: 13, ry: 9 },
-  { id: 'rightKnee',     label: 'Right Knee',        shape: 'ellipse', cx: 119, cy: 286, rx: 13, ry: 9 },
-  { id: 'leftShin',      label: 'Left Shin/Calf',    shape: 'path',    d: 'M68,297 L94,297 L91,335 L65,335 Z' },
-  { id: 'rightShin',     label: 'Right Shin/Calf',   shape: 'path',    d: 'M106,297 L132,297 L135,335 L109,335 Z' },
-  { id: 'leftFoot',      label: 'Left Ankle/Foot',   shape: 'path',    d: 'M64,338 L90,338 L93,368 L58,368 Z' },
-  { id: 'rightFoot',     label: 'Right Ankle/Foot',  shape: 'path',    d: 'M110,338 L136,338 L142,368 L107,368 Z' },
+  { id: 'head',          shape: 'path',    d: 'M100,12 C82,12 68,26 68,44 C68,60 78,73 92,78 L92,92 L108,92 L108,78 C122,73 132,60 132,44 C132,26 118,12 100,12 Z' },
+  { id: 'neck',          shape: 'rect',    x: 90, y: 92, width: 20, height: 12, rx: 3 },
+  { id: 'leftShoulder',  shape: 'path',    d: 'M68,103 C52,103 40,114 36,128 L58,133 L68,113 Z' },
+  { id: 'rightShoulder', shape: 'path',    d: 'M132,103 C148,103 160,114 164,128 L142,133 L132,113 Z' },
+  { id: 'chest',         shape: 'path',    d: 'M70,103 L130,103 L126,142 L74,142 Z' },
+  { id: 'core',          shape: 'path',    d: 'M74,143 L126,143 L122,185 L78,185 Z' },
+  { id: 'hips',          shape: 'path',    d: 'M78,186 L122,186 L128,216 L100,230 L72,216 Z' },
+  { id: 'leftArm',       shape: 'path',    d: 'M35,130 L56,135 L48,200 L28,194 Z' },
+  { id: 'rightArm',      shape: 'path',    d: 'M165,130 L144,135 L152,200 L172,194 Z' },
+  { id: 'leftThigh',     shape: 'path',    d: 'M72,220 L98,230 L94,278 L68,278 Z' },
+  { id: 'rightThigh',    shape: 'path',    d: 'M128,220 L102,230 L106,278 L132,278 Z' },
+  { id: 'leftKnee',      shape: 'ellipse', cx: 81,  cy: 286, rx: 13, ry: 9 },
+  { id: 'rightKnee',     shape: 'ellipse', cx: 119, cy: 286, rx: 13, ry: 9 },
+  { id: 'leftShin',      shape: 'path',    d: 'M68,297 L94,297 L91,335 L65,335 Z' },
+  { id: 'rightShin',     shape: 'path',    d: 'M106,297 L132,297 L135,335 L109,335 Z' },
+  { id: 'leftFoot',      shape: 'path',    d: 'M64,338 L90,338 L93,368 L58,368 Z' },
+  { id: 'rightFoot',     shape: 'path',    d: 'M110,338 L136,338 L142,368 L107,368 Z' },
 ];
 
 function BodyMapArea({ area, pain, isActive, onClick }) {
@@ -389,7 +366,6 @@ function BodyMapArea({ area, pain, isActive, onClick }) {
     style: { cursor: 'pointer', transition: 'fill 0.2s, stroke 0.2s' },
     onClick,
   };
-
   if (area.shape === 'path')    return <path    {...common} d={area.d} />;
   if (area.shape === 'rect')    return <rect    {...common} x={area.x} y={area.y} width={area.width} height={area.height} rx={area.rx} />;
   if (area.shape === 'ellipse') return <ellipse {...common} cx={area.cx} cy={area.cy} rx={area.rx} ry={area.ry} />;
@@ -398,8 +374,8 @@ function BodyMapArea({ area, pain, isActive, onClick }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function SoccerTrainingPage() {
-  const [view, setView] = useState('form'); // 'form' | 'results'
+export default function BasketballTrainingPage() {
+  const [view, setView] = useState('form');
   const [form, setForm] = useState({ age: '', position: '', fitness: '', soreness: '' });
   const [painData, setPainData] = useState({});
   const [activeArea, setActiveArea] = useState(null);
@@ -408,13 +384,8 @@ export default function SoccerTrainingPage() {
   const [error, setError] = useState('');
 
   function handleAreaClick(areaId) {
-    if (activeArea === areaId) {
-      setActiveArea(null);
-      setSliderVal(0);
-    } else {
-      setActiveArea(areaId);
-      setSliderVal(painData[areaId] || 0);
-    }
+    if (activeArea === areaId) { setActiveArea(null); setSliderVal(0); }
+    else { setActiveArea(areaId); setSliderVal(painData[areaId] || 0); }
   }
 
   function handleSlider(val) {
@@ -422,8 +393,7 @@ export default function SoccerTrainingPage() {
     if (!activeArea) return;
     setPainData(prev => {
       const next = { ...prev };
-      if (val === 0) delete next[activeArea];
-      else next[activeArea] = val;
+      if (val === 0) delete next[activeArea]; else next[activeArea] = val;
       return next;
     });
   }
@@ -455,8 +425,8 @@ export default function SoccerTrainingPage() {
         {/* Header */}
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">⚽</span>
-            <h1 className="text-2xl font-bold text-white">Soccer Training Plan</h1>
+            <span className="text-2xl">🏀</span>
+            <h1 className="text-2xl font-bold text-white">Basketball Training Plan</h1>
           </div>
           <p className="text-gray-400 text-sm">
             Generate a personalized training &amp; recovery plan tailored to your position and physical condition.
@@ -470,13 +440,13 @@ export default function SoccerTrainingPage() {
             <div>
               <label className="block text-xs text-gray-400 mb-1">Age</label>
               <input
-                type="number" min="10" max="50" placeholder="e.g. 22"
+                type="number" min="10" max="50" placeholder="e.g. 17"
                 value={form.age}
                 onChange={e => setForm(p => ({ ...p, age: e.target.value }))}
                 className="w-full rounded-lg px-3 py-2 text-sm text-white border border-gray-600 bg-[#0f0f1a] focus:outline-none focus:border-blue-500"
               />
             </div>
-            <div className="col-span-1 sm:col-span-1">
+            <div>
               <label className="block text-xs text-gray-400 mb-1">Position</label>
               <select
                 value={form.position}
@@ -499,8 +469,8 @@ export default function SoccerTrainingPage() {
                 <option value="">Select…</option>
                 <option value="beginner">Beginner</option>
                 <option value="moderate">Recreational</option>
-                <option value="high">Club / Semi-Pro</option>
-                <option value="elite">Elite / Professional</option>
+                <option value="high">High School / AAU</option>
+                <option value="elite">College / Elite</option>
               </select>
             </div>
             <div>
@@ -585,10 +555,7 @@ export default function SoccerTrainingPage() {
                       >
                         {AREA_LABELS[id]}
                         <strong>{sev}/10</strong>
-                        <button
-                          onClick={() => removeArea(id)}
-                          className="ml-1 opacity-60 hover:opacity-100 text-xs leading-none"
-                        >✕</button>
+                        <button onClick={() => removeArea(id)} className="ml-1 opacity-60 hover:opacity-100 text-xs leading-none">✕</button>
                       </span>
                     ))}
                   </div>
@@ -598,7 +565,6 @@ export default function SoccerTrainingPage() {
           </div>
         </div>
 
-        {/* Error + Generate */}
         {error && (
           <div className="rounded-lg px-4 py-3 text-sm text-red-300 border border-red-500/30 bg-red-500/10">
             {error}
@@ -621,7 +587,6 @@ export default function SoccerTrainingPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">{s.position} Training Plan</h1>
@@ -656,12 +621,10 @@ export default function SoccerTrainingPage() {
         ))}
       </div>
 
-      {/* Disclaimer */}
       <div className="text-xs text-gray-600 italic px-1">
         This plan is for informational purposes only. Always consult a qualified coach or sports medicine professional before training with pain or injury.
       </div>
 
-      {/* Training card */}
       <PlanCard
         icon={plan.training.icon}
         title={plan.training.title}
@@ -673,20 +636,18 @@ export default function SoccerTrainingPage() {
         ]}
       />
 
-      {/* Recovery card */}
       <PlanCard
         icon={plan.recovery.icon}
         title={plan.recovery.title}
         description={plan.recovery.description}
         sections={[
-          ['Immediate Post-Training', plan.recovery.immediate],
+          ['Immediate Post-Session', plan.recovery.immediate],
           ['Same Day', plan.recovery.sameDay],
           ['Next Day', plan.recovery.nextDay],
           ['Nutrition Focus', plan.recovery.nutrition],
         ]}
       />
 
-      {/* Position drills */}
       <div className="rounded-xl border border-gray-700 p-5" style={{ backgroundColor: '#1e1e30' }}>
         <div className="flex items-center gap-3 mb-2">
           <span className="text-2xl">{plan.positionDrills.icon}</span>
@@ -714,7 +675,6 @@ export default function SoccerTrainingPage() {
         </div>
       </div>
 
-      {/* Back button */}
       <button
         onClick={() => setView('form')}
         className="w-full py-3 rounded-xl font-semibold text-sm transition-all border border-gray-600 text-gray-300 hover:border-gray-400"

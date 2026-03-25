@@ -60,14 +60,12 @@ const Icons = {
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
     </svg>
   ),
-  soccer: (
+  basketball: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/>
-      <path d="M12 2 L9 7 L12 9 L15 7 Z"/>
-      <path d="M9 7 L4 9 L5 14 L9 13 L9 7"/>
-      <path d="M15 7 L20 9 L19 14 L15 13 L15 7"/>
-      <path d="M5 14 L8 19 L12 17 L12 9 L9 13 Z"/>
-      <path d="M19 14 L16 19 L12 17 L12 9 L15 13 Z"/>
+      <path d="M4.93 4.93 C6.58 8.22 6.58 15.78 4.93 19.07"/>
+      <path d="M19.07 4.93 C17.42 8.22 17.42 15.78 19.07 19.07"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
     </svg>
   ),
 };
@@ -83,7 +81,7 @@ const navItems = [
   { label: 'Team',          href: '/dashboard/team',          iconKey: 'team',          tour: 'nav-team' },
   { label: 'Notifications', href: '/dashboard/notifications', iconKey: 'notifications' },
   { label: 'Profile',       href: '/dashboard/profile',       iconKey: 'profile',       tour: 'nav-profile' },
-  { label: 'Soccer Training', href: '/dashboard/soccer-training', iconKey: 'soccer' },
+  { label: 'Basketball Training', href: '/dashboard/basketball-training', iconKey: 'basketball' },
 ];
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
