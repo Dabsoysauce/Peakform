@@ -93,6 +93,23 @@ function drawArrowhead(ctx, x1, y1, x2, y2, size = 11) {
   ctx.fill();
 }
 
+function drawStepBadge(ctx, line) {
+  if (!line.step) return;
+  const mx = (line.x1 + line.x2) / 2;
+  const my = (line.y1 + line.y2) / 2;
+  ctx.save();
+  ctx.fillStyle = '#2563eb';
+  ctx.beginPath();
+  ctx.arc(mx, my, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(line.step, mx, my);
+  ctx.restore();
+}
+
 function drawLine(ctx, line, preview = false) {
   const { type, x1, y1, x2, y2 } = line;
   ctx.save();
@@ -550,8 +567,161 @@ export default function PlaybookPage() {
   const [showPlayGenerator, setShowPlayGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Animation state
+  const [animating, setAnimating] = useState(false);
+  const [animPaused, setAnimPaused] = useState(false);
+  const animRef = useRef(null); // { step, progress, playerPositions, startPositions }
+  const animFrameRef = useRef(null);
+  const ANIM_STEP_DURATION = 800; // ms per step
+
   const nextId = useRef(1);
   function uid() { return nextId.current++; }
+
+  // --- Animation engine ---
+  function getMaxStep() {
+    return lines.reduce((max, l) => Math.max(max, l.step || 0), 0);
+  }
+
+  // Find which player is closest to a line's start point
+  function findPlayerForLine(line, positions) {
+    let closest = null, minDist = Infinity;
+    for (const [pid, pos] of Object.entries(positions)) {
+      const d = Math.hypot(pos.x - line.x1, pos.y - line.y1);
+      if (d < minDist) { minDist = d; closest = pid; }
+    }
+    return minDist < PLAYER_R * 2.5 ? closest : null;
+  }
+
+  function startAnimation() {
+    const maxStep = getMaxStep();
+    if (maxStep === 0) return; // no steps assigned
+
+    // Build initial positions from current player state
+    const positions = {};
+    players.forEach(p => { positions[p.id] = { x: p.x, y: p.y }; });
+
+    animRef.current = { step: 1, progress: 0, playerPositions: positions, startTime: null };
+    setAnimating(true);
+    setAnimPaused(false);
+  }
+
+  function stopAnimation() {
+    setAnimating(false);
+    setAnimPaused(false);
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    animRef.current = null;
+  }
+
+  function togglePause() {
+    if (animPaused) {
+      // Resuming — reset startTime so progress continues from where it was
+      if (animRef.current) animRef.current.startTime = null;
+    }
+    setAnimPaused(prev => !prev);
+  }
+
+  useEffect(() => {
+    if (!animating || animPaused) return;
+
+    const maxStep = getMaxStep();
+
+    function tick(timestamp) {
+      if (!animRef.current) return;
+      const anim = animRef.current;
+
+      if (!anim.startTime) anim.startTime = timestamp;
+      const elapsed = timestamp - anim.startTime;
+      anim.progress = Math.min(elapsed / ANIM_STEP_DURATION, 1);
+
+      // Get lines for current step
+      const stepLines = lines.filter(l => (l.step || 0) === anim.step);
+
+      // Compute current animation positions
+      const currentPositions = { ...anim.playerPositions };
+      const movements = []; // track which players move in this step
+
+      for (const line of stepLines) {
+        const pid = findPlayerForLine(line, anim.stepStartPositions || anim.playerPositions);
+        if (pid) {
+          const start = (anim.stepStartPositions || anim.playerPositions)[pid];
+          const t = anim.progress;
+          // Ease in-out
+          const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          currentPositions[pid] = {
+            x: start.x + (line.x2 - line.x1) * eased,
+            y: start.y + (line.y2 - line.y1) * eased,
+          };
+          movements.push(pid);
+        }
+      }
+
+      // Save step start positions on first frame of each step
+      if (!anim.stepStartPositions) {
+        anim.stepStartPositions = { ...anim.playerPositions };
+      }
+
+      // Redraw with animated positions
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, CW, CH);
+        drawCourt(ctx);
+
+        // Draw lines with step badges (dim future steps, highlight current)
+        lines.forEach(l => {
+          ctx.save();
+          if ((l.step || 0) > anim.step) ctx.globalAlpha = 0.2;
+          else if ((l.step || 0) === anim.step) ctx.globalAlpha = 1;
+          else ctx.globalAlpha = 0.5;
+          drawLine(ctx, l);
+          drawStepBadge(ctx, l);
+          ctx.restore();
+        });
+
+        screens.forEach(s => drawScreenSymbol(ctx, s));
+
+        // Draw players at animated positions
+        players.forEach(p => {
+          const pos = currentPositions[p.id] || { x: p.x, y: p.y };
+          drawPlayer(ctx, { ...p, x: pos.x, y: pos.y });
+        });
+      }
+
+      if (anim.progress >= 1) {
+        // Step complete — update positions and advance
+        for (const line of stepLines) {
+          const pid = findPlayerForLine(line, anim.stepStartPositions);
+          if (pid) {
+            anim.playerPositions[pid] = {
+              x: anim.stepStartPositions[pid].x + (line.x2 - line.x1),
+              y: anim.stepStartPositions[pid].y + (line.y2 - line.y1),
+            };
+          }
+        }
+
+        if (anim.step < maxStep) {
+          anim.step++;
+          anim.progress = 0;
+          anim.startTime = null;
+          anim.stepStartPositions = null;
+          // Small pause between steps
+          setTimeout(() => {
+            animFrameRef.current = requestAnimationFrame(tick);
+          }, 300);
+          return;
+        } else {
+          // Animation complete — pause on final frame for a moment then stop
+          setTimeout(() => stopAnimation(), 600);
+          return;
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [animating, animPaused, lines, players, screens]);
 
   // Load saved plays
   useEffect(() => {
@@ -571,6 +741,7 @@ export default function PlaybookPage() {
       if (isSelected) { ctx.save(); ctx.shadowColor = '#facc15'; ctx.shadowBlur = 8; }
       drawLine(ctx, l);
       if (isSelected) ctx.restore();
+      drawStepBadge(ctx, l);
     });
 
     screens.forEach(s => {
@@ -599,6 +770,7 @@ export default function PlaybookPage() {
   }
 
   function handleMouseDown(e) {
+    if (animating) return; // disable interaction during animation
     const pos = getCanvasPos(e);
 
     if (tool === 'select') {
@@ -606,7 +778,11 @@ export default function PlaybookPage() {
       const l = !p && hitLine(pos.x, pos.y, lines);
       const s = !p && !l && hitScreen(pos.x, pos.y, screens);
       if (p) { setSelected({ type: 'player', id: p.id }); setDragging({ type: 'player', id: p.id, ox: pos.x - p.x, oy: pos.y - p.y }); }
-      else if (l) setSelected({ type: 'line', id: l.id });
+      else if (l) {
+        setSelected({ type: 'line', id: l.id });
+        // Cycle step number on click (1 → 2 → 3 → ... → 6 → 1)
+        setLines(prev => prev.map(li => li.id === l.id ? { ...li, step: ((li.step || 1) % 6) + 1 } : li));
+      }
       else if (s) { setSelected({ type: 'screen', id: s.id }); setDragging({ type: 'screen', id: s.id, ox: pos.x - s.x1, oy: pos.y - s.y1 }); }
       else setSelected(null);
       return;
@@ -664,7 +840,8 @@ export default function PlaybookPage() {
     if (drawingLine) {
       const dx = pos.x - drawingLine.x1, dy = pos.y - drawingLine.y1;
       if (Math.hypot(dx, dy) > 15) {
-        setLines(prev => [...prev, { id: uid(), type: tool, x1: drawingLine.x1, y1: drawingLine.y1, x2: pos.x, y2: pos.y }]);
+        const maxStep = lines.reduce((max, l) => Math.max(max, l.step || 0), 0);
+        setLines(prev => [...prev, { id: uid(), type: tool, x1: drawingLine.x1, y1: drawingLine.y1, x2: pos.x, y2: pos.y, step: maxStep > 0 ? maxStep : 1 }]);
       }
       setDrawingLine(null);
     }
@@ -841,13 +1018,49 @@ export default function PlaybookPage() {
             style={{ cursor: tool === 'select' ? 'default' : tool === 'erase' ? 'crosshair' : 'crosshair', maxWidth: CW }}
           />
 
-          <p className="text-xs text-gray-600 mt-2">
-            {tool === 'select' ? 'Click to select · Drag to move' :
-             tool === 'offense' || tool === 'defense' ? 'Click to place player' :
-             tool === 'screen' ? 'Click to place screen' :
-             tool === 'erase' ? 'Click element to delete' :
-             'Click and drag to draw'}
-          </p>
+          {/* Animation controls */}
+          <div className="flex items-center gap-3 mt-3">
+            {!animating ? (
+              <button onClick={startAnimation}
+                disabled={lines.filter(l => l.step).length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-30 hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#2563eb' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                Animate Play
+              </button>
+            ) : (
+              <>
+                <button onClick={togglePause}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: animPaused ? '#2563eb' : '#f59e0b' }}>
+                  {animPaused ? (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg> Resume</>
+                  ) : (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" /><rect x="15" y="3" width="4" height="18" /></svg> Pause</>
+                  )}
+                </button>
+                <button onClick={stopAnimation}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#ef4444' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
+                  Stop
+                </button>
+                {animRef.current && (
+                  <span className="text-xs text-gray-400">
+                    Step {animRef.current.step} of {getMaxStep()}
+                  </span>
+                )}
+              </>
+            )}
+            <span className="text-xs text-gray-600 ml-auto">
+              {animating ? 'Playing animation...' :
+               tool === 'select' ? 'Click arrow to change step · Drag to move' :
+               tool === 'offense' || tool === 'defense' ? 'Click to place player' :
+               tool === 'screen' ? 'Click to place screen' :
+               tool === 'erase' ? 'Click element to delete' :
+               'Click and drag to draw'}
+            </span>
+          </div>
         </div>
 
         {/* Saved plays */}
