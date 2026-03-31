@@ -12,7 +12,12 @@
       "Bash(npm install:*)",
       "Bash(grep:*)",
       "Bash(curl:*)",
-      "Bash(sudo chown:*)"
+      "Bash(sudo chown:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue 2>&1)",
+      "Bash(GIT_EDITOR=\"true\" git rebase --continue)"
     ]
   }
 }
