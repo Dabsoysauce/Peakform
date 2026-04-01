@@ -31,7 +31,8 @@
       "WebFetch(domain:www.thehoopsgeek.com)",
       "WebFetch(domain:apps.apple.com)",
       "WebFetch(domain:chrome-stats.com)",
-      "Bash(npx -y acorn --ecma2020 --module client/src/app/trainer/playbook/page.js)"
+      "Bash(npx -y acorn --ecma2020 --module client/src/app/trainer/playbook/page.js)",
+      "Bash(npx next:*)"
     ]
   }
 }

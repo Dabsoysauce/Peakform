@@ -119,16 +119,39 @@ function _drawPlayer(ctx, p) {
   ctx.restore();
 }
 
+function _extractV1Objects(data) {
+  // V2 format (phases-based) — extract first phase and convert coords
+  if (data.v === 2 && data.phases && data.phases.length > 0) {
+    const objs = data.phases[0].objects || [];
+    const sx = PCW / 500, sy = PCH / 470; // SVG→canvas scale
+    const players = objs.filter(o => o.type === 'player').map(o => ({
+      type: o.team === 'defense' ? 'defense' : 'offense',
+      x: o.x * sx, y: o.y * sy, label: o.number || '1',
+    }));
+    const lines = objs.filter(o => ['cut', 'pass', 'dribble', 'drive'].includes(o.type)).map(o => ({
+      type: o.type === 'dribble' ? 'drive' : o.type,
+      x1: o.x1 * sx, y1: o.y1 * sy, x2: o.x2 * sx, y2: o.y2 * sy,
+    }));
+    const screens = objs.filter(o => o.type === 'screen').map(o => ({
+      x1: o.x1 * sx, y1: o.y1 * sy, x2: o.x2 * sx, y2: o.y2 * sy,
+    }));
+    return { players, lines, screens };
+  }
+  // V1 format (flat)
+  return { players: data.players || [], lines: data.lines || [], screens: data.screens || [] };
+}
+
 function renderPlayToBase64(canvasJson) {
   try {
     const data = JSON.parse(canvasJson);
+    const { players, lines, screens } = _extractV1Objects(data);
     const canvas = document.createElement('canvas');
     canvas.width = PCW; canvas.height = PCH;
     const ctx = canvas.getContext('2d');
     _drawCourt(ctx);
-    (data.lines || []).forEach(l => _drawLine(ctx, l));
-    (data.screens || []).forEach(s => _drawScreen(ctx, s));
-    (data.players || []).forEach(p => _drawPlayer(ctx, p));
+    lines.forEach(l => _drawLine(ctx, l));
+    screens.forEach(s => _drawScreen(ctx, s));
+    players.forEach(p => _drawPlayer(ctx, p));
     return canvas.toDataURL('image/png').split(',')[1];
   } catch { return null; }
 }

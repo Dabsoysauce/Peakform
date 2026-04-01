@@ -1295,8 +1295,9 @@ export default function PlaybookPage() {
       if (!data.v || data.v < 2) {
         data = migrateV1(data);
       }
-      setPhases(data.phases || [{ id: uid(), title: '', objects: [], links: [] }]);
-      setActivePhaseId(data.phases?.[0]?.id || phases[0]?.id);
+      const loadedPhases = data.phases && data.phases.length > 0 ? data.phases : [{ id: uid(), title: '', objects: [], links: [] }];
+      setPhases(loadedPhases);
+      setActivePhaseId(loadedPhases[0].id);
       if (data.settings) {
         setSettings(prev => ({
           ...prev,
@@ -1373,8 +1374,9 @@ export default function PlaybookPage() {
       shape: 0, color: '#ffffff',
     }));
     const allObjects = [...newPlayers, ...newLines, ...newScreens];
-    setPhases([{ id: uid(), title: '', objects: allObjects, links: [] }]);
-    setActivePhaseId(phases[0]?.id);
+    const newPhaseId = uid();
+    setPhases([{ id: newPhaseId, title: '', objects: allObjects, links: [] }]);
+    setActivePhaseId(newPhaseId);
     if (play.name) setPlayName(play.name);
   }
 
