@@ -693,9 +693,14 @@ export default function LandingPage() {
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', marginBottom: 10 }}>
           © 2026 Peakform. Built for ballers, by ballers.
         </p>
-        <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}>
-          ryan.dhalbisoi@gmail.com
-        </a>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}>
+            ryan.dhalbisoi@gmail.com
+          </a>
+          <a href="mailto:shrey2425@gmail.com" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}>
+            shrey2425@gmail.com
+          </a>
+        </div>
       </footer>
     </div>
   );
