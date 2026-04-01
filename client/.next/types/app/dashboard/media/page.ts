@@ -1,4 +1,4 @@
-// File: /Users/ryanworkandstudy/Documents/GitHub/PeakForm/client/src/app/dashboard/media/page.js
+// File: /Users/ryanworkandstudy/Documents/GitHub/Athletes_Edge/client/src/app/dashboard/media/page.js
 import * as entry from '../../../../../src/app/dashboard/media/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

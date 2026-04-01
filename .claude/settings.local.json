@@ -13,11 +13,25 @@
       "Bash(grep:*)",
       "Bash(curl:*)",
       "Bash(sudo chown:*)",
-      "Bash(git rm:*)",
       "Bash(git add:*)",
-      "Bash(git rebase:*)",
-      "Bash(GIT_EDITOR=true git rebase --continue 2>&1)",
-      "Bash(GIT_EDITOR=\"true\" git rebase --continue)"
+      "Bash(git commit:*)",
+      "Bash(git -C \"/Users/ryanworkandstudy/Documents/GitHub/PeakForm 8.33.58 PM\" add server/routes/auth.js client/src/app/verify/page.js)",
+      "Bash(git -C:*)",
+      "Bash(ssh -T git@github.com)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git remote:*)",
+      "Bash(ssh -T git@github.com -o ConnectTimeout=10)",
+      "Bash(ls ~/.ssh/id_*)",
+      "Bash(ssh-add -l)",
+      "Bash(ssh -T -p 443 git@ssh.github.com -o ConnectTimeout=10)",
+      "Bash(ls ~/.ssh/*.pub)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:app.thehoopsgeek.com)",
+      "WebFetch(domain:www.thehoopsgeek.com)",
+      "WebFetch(domain:apps.apple.com)",
+      "WebFetch(domain:chrome-stats.com)",
+      "Bash(npx -y acorn --ecma2020 --module client/src/app/trainer/playbook/page.js)"
     ]
   }
 }

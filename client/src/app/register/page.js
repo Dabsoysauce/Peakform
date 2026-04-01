@@ -31,7 +31,10 @@ export default function RegisterPage() {
       }
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      router.push(`/dashboard`);
+      localStorage.setItem('role', data.user.role);
+      localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('email', data.user.email);
+      router.push(data.user.role === 'trainer' ? '/trainer' : '/dashboard');
     } catch {
       setError('Network error. Is the server running?');
     } finally {
