@@ -42,15 +42,12 @@ const COLOR_PRESETS = [
   { id: 5, bg: '#111827', lines: 'rgba(156,163,175,0.7)', label: 'Dark' },
 ];
 
+const COURT_H_FULL = COURT_H * 2; // 940 for full court
+
 const TOOL_GROUPS = [
   { label: 'General', tools: [
     { id: 'select', icon: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>), tip: 'Select / Move' },
     { id: 'erase', icon: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>), tip: 'Erase' },
-  ]},
-  { label: 'Players', tools: [
-    { id: 'offense', icon: 'O', tip: 'Offense Player', color: '#ffffff' },
-    { id: 'defense', icon: 'X', tip: 'Defense Player', color: '#ef4444' },
-    { id: 'ball', icon: (<svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="white" stroke="#333" strokeWidth="2.5"/><circle cx="12" cy="12" r="3" fill="#333"/></svg>), tip: 'Ball Handler' },
   ]},
   { label: 'Actions', tools: [
     { id: 'cut', icon: (<svg width="20" height="14" viewBox="0 0 20 14"><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" strokeWidth="2"/><polygon points="18,7 12,3 12,11" fill="currentColor"/></svg>), tip: 'Cut / Movement' },
@@ -65,7 +62,13 @@ const TOOL_GROUPS = [
 ];
 
 const ARROW_SUBTYPES = ['cut', 'pass', 'dribble', 'screen', 'shot'];
-const PLAYER_TEAMS = ['offense', 'defense', 'ball'];
+
+// Parse player tool string like "offense_3" or "ball_1"
+function parsePlayerTool(tool) {
+  const m = tool.match(/^(offense|defense|ball)_(\w+)$/);
+  return m ? { team: m[1], number: m[2] } : null;
+}
+function isPlayerTool(tool) { return parsePlayerTool(tool) !== null; }
 
 // ============================================================
 // UTILITY FUNCTIONS
@@ -217,26 +220,83 @@ function migrateV1(data) {
 // SVG COURT COMPONENT
 // ============================================================
 
-function CourtSVG({ courtType = 'NBA', colors, showGrid, gridSpacing = 5 }) {
+function HalfCourtLines({ c, cx, h, baseline, mirrored = false }) {
+  // baseline = the y of the baseline edge
+  // mirrored: if true, everything flips (basket at top instead of bottom)
+  const dir = mirrored ? -1 : 1;
+  const basketY = baseline - dir * (h - c.basketY);
+  const backboardY = baseline - dir * (h - c.backboardY);
+  const ftY = baseline - dir * c.keyH;
+  const cornerArcDist = Math.sqrt(Math.max(0, c.threeR * c.threeR - c.cornerX * c.cornerX));
+  const cornerArcY = basketY - dir * cornerArcDist;
+
+  // For arcs, sweep direction flips when mirrored
+  const sweep0 = mirrored ? 0 : 1;
+  const sweep1 = mirrored ? 1 : 0;
+
+  return (
+    <g>
+      {/* Key / Paint */}
+      <rect x={cx - c.keyW / 2} y={Math.min(ftY, baseline)} width={c.keyW} height={Math.abs(baseline - ftY)} />
+
+      {/* Free throw circle - solid half (away from basket) */}
+      <path d={`M ${cx - c.ftR} ${ftY} A ${c.ftR} ${c.ftR} 0 0 ${sweep1} ${cx + c.ftR} ${ftY}`} />
+      {/* Free throw circle - dashed half (toward basket) */}
+      <path d={`M ${cx - c.ftR} ${ftY} A ${c.ftR} ${c.ftR} 0 0 ${sweep0} ${cx + c.ftR} ${ftY}`} strokeDasharray="6 5" />
+
+      {/* Backboard */}
+      <line x1={cx - c.backboardHW} y1={backboardY} x2={cx + c.backboardHW} y2={backboardY} strokeWidth={3} />
+
+      {/* Basket / Rim */}
+      <circle cx={cx} cy={basketY} r={9} />
+      {/* Rim connector */}
+      <line x1={cx} y1={backboardY} x2={cx} y2={basketY + (mirrored ? 9 : -9)} strokeWidth={1} />
+
+      {/* Restricted area arc */}
+      <path d={`M ${cx - c.restrictedR} ${baseline} A ${c.restrictedR} ${c.restrictedR} 0 0 ${sweep0} ${cx + c.restrictedR} ${baseline}`} />
+
+      {/* Three-point corner lines */}
+      <line x1={cx - c.cornerX} y1={baseline} x2={cx - c.cornerX} y2={cornerArcY} />
+      <line x1={cx + c.cornerX} y1={baseline} x2={cx + c.cornerX} y2={cornerArcY} />
+
+      {/* Three-point arc */}
+      <path d={`M ${cx - c.cornerX} ${cornerArcY} A ${c.threeR} ${c.threeR} 0 0 ${sweep0} ${cx + c.cornerX} ${cornerArcY}`} />
+
+      {/* Key hash marks */}
+      {[1, 2, 3, 4].map(i => {
+        const y = ftY + dir * i * (Math.abs(baseline - ftY) / 5);
+        const kl = cx - c.keyW / 2;
+        const kr = cx + c.keyW / 2;
+        return (
+          <g key={`hash${mirrored ? 'm' : ''}${i}`}>
+            <line x1={kl - 6} y1={y} x2={kl} y2={y} />
+            <line x1={kr} y1={y} x2={kr + 6} y2={y} />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+function CourtSVG({ courtType = 'NBA', colors, showGrid, gridSpacing = 5, fullCourt = false }) {
   const c = COURT_TYPES[courtType] || COURT_TYPES.NBA;
   const cx = COURT_W / 2;
-  const ftY = COURT_H - c.keyH;
-  const cornerArcY = c.basketY - Math.sqrt(Math.max(0, c.threeR * c.threeR - c.cornerX * c.cornerX));
+  const totalH = fullCourt ? COURT_H_FULL : COURT_H;
   const lineColor = colors?.lines || 'rgba(255,255,255,0.85)';
   const sw = 1.5;
 
   return (
     <g>
       {/* Court background */}
-      <rect x={0} y={0} width={COURT_W} height={COURT_H} fill={colors?.bg || '#1a5c2a'} rx={4} />
+      <rect x={0} y={0} width={COURT_W} height={totalH} fill={colors?.bg || '#1a5c2a'} rx={4} />
 
       {/* Grid */}
       {showGrid && (
         <g stroke={lineColor} strokeWidth={0.3} opacity={0.15}>
           {Array.from({ length: Math.floor(COURT_W / (gridSpacing * 10)) + 1 }, (_, i) => (
-            <line key={`gv${i}`} x1={i * gridSpacing * 10} y1={0} x2={i * gridSpacing * 10} y2={COURT_H} />
+            <line key={`gv${i}`} x1={i * gridSpacing * 10} y1={0} x2={i * gridSpacing * 10} y2={totalH} />
           ))}
-          {Array.from({ length: Math.floor(COURT_H / (gridSpacing * 10)) + 1 }, (_, i) => (
+          {Array.from({ length: Math.floor(totalH / (gridSpacing * 10)) + 1 }, (_, i) => (
             <line key={`gh${i}`} x1={0} y1={i * gridSpacing * 10} x2={COURT_W} y2={i * gridSpacing * 10} />
           ))}
         </g>
@@ -244,52 +304,30 @@ function CourtSVG({ courtType = 'NBA', colors, showGrid, gridSpacing = 5 }) {
 
       <g stroke={lineColor} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round">
         {/* Court boundary */}
-        <rect x={0} y={0} width={COURT_W} height={COURT_H} rx={2} />
+        <rect x={0} y={0} width={COURT_W} height={totalH} rx={2} />
 
-        {/* Half-court line */}
-        <line x1={0} y1={0} x2={COURT_W} y2={0} strokeWidth={sw + 0.5} />
+        {fullCourt ? (
+          <>
+            {/* Half-court line */}
+            <line x1={0} y1={COURT_H} x2={COURT_W} y2={COURT_H} strokeWidth={sw + 0.5} />
+            {/* Full center circle */}
+            <circle cx={cx} cy={COURT_H} r={60} />
 
-        {/* Center circle (bottom half) */}
-        <path d={`M ${cx - 60} 0 A 60 60 0 0 1 ${cx + 60} 0`} />
-
-        {/* Key / Paint */}
-        <rect x={cx - c.keyW / 2} y={ftY} width={c.keyW} height={c.keyH} />
-
-        {/* Free throw circle - solid top half */}
-        <path d={`M ${cx - c.ftR} ${ftY} A ${c.ftR} ${c.ftR} 0 0 0 ${cx + c.ftR} ${ftY}`} />
-        {/* Free throw circle - dashed bottom half */}
-        <path d={`M ${cx - c.ftR} ${ftY} A ${c.ftR} ${c.ftR} 0 0 1 ${cx + c.ftR} ${ftY}`} strokeDasharray="6 5" />
-
-        {/* Backboard */}
-        <line x1={cx - c.backboardHW} y1={c.backboardY} x2={cx + c.backboardHW} y2={c.backboardY} strokeWidth={3} />
-
-        {/* Basket / Rim */}
-        <circle cx={cx} cy={c.basketY} r={9} />
-        {/* Rim connector */}
-        <line x1={cx} y1={c.backboardY} x2={cx} y2={c.basketY - 9} strokeWidth={1} />
-
-        {/* Restricted area arc */}
-        <path d={`M ${cx - c.restrictedR} ${COURT_H} A ${c.restrictedR} ${c.restrictedR} 0 0 1 ${cx + c.restrictedR} ${COURT_H}`} />
-
-        {/* Three-point corner lines */}
-        <line x1={cx - c.cornerX} y1={COURT_H} x2={cx - c.cornerX} y2={cornerArcY} />
-        <line x1={cx + c.cornerX} y1={COURT_H} x2={cx + c.cornerX} y2={cornerArcY} />
-
-        {/* Three-point arc */}
-        <path d={`M ${cx - c.cornerX} ${cornerArcY} A ${c.threeR} ${c.threeR} 0 0 1 ${cx + c.cornerX} ${cornerArcY}`} />
-
-        {/* Key hash marks */}
-        {[1, 2, 3, 4].map(i => {
-          const y = COURT_H - c.keyH + i * (c.keyH / 5);
-          const kl = cx - c.keyW / 2;
-          const kr = cx + c.keyW / 2;
-          return (
-            <g key={`hash${i}`}>
-              <line x1={kl - 6} y1={y} x2={kl} y2={y} />
-              <line x1={kr} y1={y} x2={kr + 6} y2={y} />
-            </g>
-          );
-        })}
+            {/* Bottom half (basket at bottom baseline) */}
+            <HalfCourtLines c={c} cx={cx} h={COURT_H} baseline={COURT_H_FULL} mirrored={false} />
+            {/* Top half (basket at top baseline) */}
+            <HalfCourtLines c={c} cx={cx} h={COURT_H} baseline={0} mirrored={true} />
+          </>
+        ) : (
+          <>
+            {/* Half-court line at top */}
+            <line x1={0} y1={0} x2={COURT_W} y2={0} strokeWidth={sw + 0.5} />
+            {/* Center circle (bottom half only) */}
+            <path d={`M ${cx - 60} 0 A 60 60 0 0 1 ${cx + 60} 0`} />
+            {/* Single half */}
+            <HalfCourtLines c={c} cx={cx} h={COURT_H} baseline={COURT_H} mirrored={false} />
+          </>
+        )}
       </g>
     </g>
   );
@@ -686,6 +724,23 @@ function SettingsPanel({ settings, onChange, onClose }) {
           </div>
         </div>
 
+        {/* Court Size */}
+        <div>
+          <label className="text-xs text-gray-400 font-semibold mb-2 block">Court Size</label>
+          <div className="flex gap-2">
+            <button onClick={() => onChange({ ...s, fullCourt: false })}
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+              style={{ backgroundColor: !s.fullCourt ? '#2563eb' : '#16213e', color: !s.fullCourt ? 'white' : '#9ca3af', border: !s.fullCourt ? '1px solid #3b82f6' : '1px solid #374151' }}>
+              Half Court
+            </button>
+            <button onClick={() => onChange({ ...s, fullCourt: true })}
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+              style={{ backgroundColor: s.fullCourt ? '#2563eb' : '#16213e', color: s.fullCourt ? 'white' : '#9ca3af', border: s.fullCourt ? '1px solid #3b82f6' : '1px solid #374151' }}>
+              Full Court
+            </button>
+          </div>
+        </div>
+
         {/* Court Color */}
         <div>
           <label className="text-xs text-gray-400 font-semibold mb-2 block">Court Color</label>
@@ -909,8 +964,8 @@ function PhaseBar({ phases, activePhaseId, onSelect, onAdd, onDuplicate, onDelet
             className="rounded-lg border-2 overflow-hidden transition-all"
             style={{ borderColor: phase.id === activePhaseId ? '#3b82f6' : '#374151', width: 90 }}>
             {/* Mini preview */}
-            <svg viewBox={`0 0 ${COURT_W} ${COURT_H}`} width={90} height={84} className="block">
-              <rect width={COURT_W} height={COURT_H} fill={settings.courtColor?.bg || '#1a5c2a'} />
+            <svg viewBox={`0 0 ${COURT_W} ${settings.fullCourt ? COURT_H_FULL : COURT_H}`} width={90} height={settings.fullCourt ? 168 : 84} className="block">
+              <rect width={COURT_W} height={settings.fullCourt ? COURT_H_FULL : COURT_H} fill={settings.courtColor?.bg || '#1a5c2a'} />
               {/* Mini objects */}
               {(phase.objects || []).map(obj => {
                 if (obj.type === 'player') {
@@ -978,6 +1033,7 @@ export default function PlaybookPage() {
   const [settings, setSettings] = useState({
     courtType: 'NBA',
     courtColor: COLOR_PRESETS[0],
+    fullCourt: false,
     showGrid: false,
     gridSpacing: 5,
   });
@@ -1144,14 +1200,13 @@ export default function PlaybookPage() {
       return;
     }
 
-    if (PLAYER_TEAMS.includes(tool)) {
-      const count = objects.filter(o => o.type === 'player' && o.team === tool).length;
-      const labels = ['1', '2', '3', '4', '5'];
+    const pt = parsePlayerTool(tool);
+    if (pt) {
       addObject({
-        id: uid(), type: 'player', team: tool,
-        number: labels[count % 5],
+        id: uid(), type: 'player', team: pt.team,
+        number: pt.number,
         x: pos.x, y: pos.y,
-        color: tool === 'defense' ? '#ef4444' : '#ffffff',
+        color: pt.team === 'defense' ? '#ef4444' : '#ffffff',
       });
       return;
     }
@@ -1303,6 +1358,7 @@ export default function PlaybookPage() {
           ...prev,
           courtType: data.settings.courtType || prev.courtType,
           courtColor: data.settings.courtColor || prev.courtColor,
+          fullCourt: data.settings.fullCourt || false,
         }));
       }
       setCurrentPlayId(play.id);
@@ -1387,8 +1443,9 @@ export default function PlaybookPage() {
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     const canvas = document.createElement('canvas');
+    const courtH = settings.fullCourt ? COURT_H_FULL : COURT_H;
     canvas.width = COURT_W * 2;
-    canvas.height = COURT_H * 2;
+    canvas.height = courtH * 2;
     return new Promise(resolve => {
       img.onload = () => {
         const ctx = canvas.getContext('2d');
@@ -1627,10 +1684,11 @@ export default function PlaybookPage() {
 
       <div className="flex gap-4 items-start">
         {/* Toolbar */}
-        <div className="flex-shrink-0 rounded-xl border border-gray-800 p-2 space-y-2" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="flex-shrink-0 rounded-xl border border-gray-800 p-2 space-y-1" style={{ backgroundColor: '#1e1e30' }}>
+          {/* General tools */}
           {TOOL_GROUPS.map((group, gi) => (
             <div key={gi}>
-              {gi > 0 && <div className="border-t border-gray-700/50 my-2" />}
+              {gi > 0 && <div className="border-t border-gray-700/50 my-1.5" />}
               <div className="text-[9px] text-gray-600 font-semibold uppercase tracking-wider px-1 mb-1">{group.label}</div>
               <div className="flex flex-col gap-0.5">
                 {group.tools.map(t => (
@@ -1646,7 +1704,55 @@ export default function PlaybookPage() {
               </div>
             </div>
           ))}
-          <div className="border-t border-gray-700/50 my-2" />
+
+          {/* ---- Player Tokens ---- */}
+          <div className="border-t border-gray-700/50 my-1.5" />
+          <div className="text-[9px] text-gray-600 font-semibold uppercase tracking-wider px-1 mb-1">Offense</div>
+          <div className="grid grid-cols-3 gap-1 px-0.5">
+            {['1','2','3','4','5'].map(n => {
+              const tid = `offense_${n}`;
+              const active = tool === tid;
+              return (
+                <button key={tid} onClick={() => { setTool(tid); setDrawing(null); }} title={`Offense #${n}`}
+                  className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+                  style={{ backgroundColor: active ? '#2563eb' : '#16213e', border: active ? '2px solid #3b82f6' : '1px solid #374151' }}>
+                  <svg width="26" height="26" viewBox="0 0 26 26">
+                    <circle cx="13" cy="13" r="11" fill="white" stroke={active ? '#2563eb' : '#555'} strokeWidth="1.5" />
+                    <text x="13" y="14" textAnchor="middle" dominantBaseline="central" fill="#333" fontSize="11" fontWeight="700">{n}</text>
+                  </svg>
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-[9px] text-gray-600 font-semibold uppercase tracking-wider px-1 mb-1 mt-2">Defense</div>
+          <div className="grid grid-cols-3 gap-1 px-0.5">
+            {['1','2','3','4','5'].map(n => {
+              const tid = `defense_${n}`;
+              const active = tool === tid;
+              return (
+                <button key={tid} onClick={() => { setTool(tid); setDrawing(null); }} title={`Defense #${n}`}
+                  className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+                  style={{ backgroundColor: active ? '#2563eb' : '#16213e', border: active ? '2px solid #3b82f6' : '1px solid #374151' }}>
+                  <svg width="26" height="26" viewBox="0 0 26 26">
+                    <line x1="5" y1="5" x2="21" y2="21" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+                    <line x1="21" y1="5" x2="5" y2="21" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" />
+                    <text x="13" y="13" textAnchor="middle" dominantBaseline="central" fill="white" fontSize="9" fontWeight="800">{n}</text>
+                  </svg>
+                </button>
+              );
+            })}
+          </div>
+          {/* Ball handler */}
+          <div className="mt-1 px-0.5">
+            <button onClick={() => { setTool('ball_1'); setDrawing(null); }} title="Ball Handler"
+              className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all text-[10px] font-bold"
+              style={{ backgroundColor: tool.startsWith('ball_') ? '#2563eb' : '#16213e', color: tool.startsWith('ball_') ? 'white' : '#9ca3af', border: tool.startsWith('ball_') ? '2px solid #3b82f6' : '1px solid #374151' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="white" stroke="#333" strokeWidth="2"/><circle cx="12" cy="12" r="3" fill="#333"/></svg>
+              Ball
+            </button>
+          </div>
+
+          <div className="border-t border-gray-700/50 my-1.5" />
           {/* Undo / Redo */}
           <div className="flex flex-col gap-0.5">
             <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)"
@@ -1658,7 +1764,7 @@ export default function PlaybookPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
             </button>
           </div>
-          <div className="border-t border-gray-700/50 my-2" />
+          <div className="border-t border-gray-700/50 my-1.5" />
           <button onClick={clearCanvas} title="Clear all"
             className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
@@ -1698,7 +1804,7 @@ export default function PlaybookPage() {
           <div className="rounded-xl border border-gray-700 overflow-hidden" style={{ maxWidth: 700 }}>
             <svg
               ref={svgRef}
-              viewBox={`0 0 ${COURT_W} ${COURT_H}`}
+              viewBox={`0 0 ${COURT_W} ${settings.fullCourt ? COURT_H_FULL : COURT_H}`}
               className="w-full block"
               style={{ cursor }}
               onMouseDown={handleMouseDown}
@@ -1711,6 +1817,7 @@ export default function PlaybookPage() {
                 colors={settings.courtColor}
                 showGrid={settings.showGrid}
                 gridSpacing={settings.gridSpacing}
+                fullCourt={settings.fullCourt}
               />
 
               {/* Objects */}
@@ -1770,7 +1877,7 @@ export default function PlaybookPage() {
             <span className="text-[10px] text-gray-600 ml-auto">
               {animating ? 'Playing animation...' :
                tool === 'select' ? 'Click to select \u00b7 Drag to move \u00b7 Delete to remove' :
-               PLAYER_TEAMS.includes(tool) ? 'Click on court to place' :
+               isPlayerTool(tool) ? 'Click on court to place' :
                ARROW_SUBTYPES.includes(tool) ? 'Click and drag to draw' :
                tool === 'text' ? 'Click to place text' :
                tool === 'erase' ? 'Click element to delete' : ''}
