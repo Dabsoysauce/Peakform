@@ -437,6 +437,91 @@ Only include the JSON when you are ready to present a complete play. During the 
   }
 });
 
+// Generate a full workout plan for a player (trainer only)
+router.post('/generate-workout', authMiddleware, requireRole('trainer'), async (req, res) => {
+  try {
+    const { userId, goals, weaknesses, fitness_level, focus_areas, duration_days = 5 } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    // Verify player is on one of this trainer's teams
+    const membership = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2 LIMIT 1`,
+      [userId, req.user.id]
+    );
+    if (!membership.rows[0]) return res.status(403).json({ error: 'Player is not on any of your teams' });
+
+    // Fetch player profile for context
+    const profileRes = await pool.query('SELECT * FROM athlete_profiles WHERE user_id = $1', [userId]);
+    const profile = profileRes.rows[0];
+
+    const playerInfo = profile ? [
+      (profile.first_name || profile.last_name) ? `Name: ${profile.first_name || ''} ${profile.last_name || ''}`.trim() : null,
+      profile.age ? `Age: ${profile.age}` : null,
+      profile.height_inches ? `Height: ${Math.floor(profile.height_inches / 12)}'${profile.height_inches % 12}"` : null,
+      profile.weight_lbs ? `Weight: ${profile.weight_lbs} lbs` : null,
+      profile.primary_goal ? `Primary goal: ${profile.primary_goal}` : null,
+    ].filter(Boolean).join(', ') : 'No profile data available';
+
+    const days = Math.min(Math.max(parseInt(duration_days) || 5, 1), 14);
+
+    const prompt = `You are an elite basketball strength and conditioning coach. Generate a structured ${days}-day workout plan for a basketball player.
+
+Player info: ${playerInfo}
+Coach-specified goals: ${goals || 'General athleticism'}
+Weaknesses to address: ${weaknesses || 'Not specified'}
+Fitness level: ${fitness_level || 'intermediate'}
+Focus areas: ${focus_areas || 'Overall basketball performance'}
+
+Return ONLY a valid JSON object with this exact structure, no markdown, no extra text:
+{
+  "plan_name": "string",
+  "description": "string (2-3 sentences explaining the training approach)",
+  "workouts": [
+    {
+      "day": 1,
+      "session_name": "string",
+      "duration_minutes": number,
+      "focus": "string",
+      "notes": "string (coaching tips for this session)",
+      "exercises": [
+        {
+          "exercise_name": "string",
+          "sets": number,
+          "reps": number,
+          "weight_lbs": number or null,
+          "notes": "string (form cues or intensity guidance)"
+        }
+      ]
+    }
+  ]
+}
+
+Include exactly ${days} workout sessions. Use basketball-specific exercises (box jumps, lateral shuffles, etc.). Be specific with sets/reps. Use null for weight_lbs on bodyweight or band exercises.`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    let plan;
+    try {
+      const text = response.content[0].text.trim();
+      const match = text.match(/\{[\s\S]*\}/);
+      plan = JSON.parse(match ? match[0] : text);
+    } catch {
+      return res.status(500).json({ error: 'Failed to parse generated workout plan' });
+    }
+
+    res.json({ plan });
+  } catch (err) {
+    console.error('Generate workout error:', err?.message || err);
+    res.status(500).json({ error: 'Failed to generate workout plan' });
+  }
+});
+
 // Share an analysis to all team members as a DM
 router.post('/share-to-team', authMiddleware, requireRole('trainer'), async (req, res) => {
   try {

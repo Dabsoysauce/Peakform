@@ -61,6 +61,12 @@ const Icons = {
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
     </svg>
   ),
+  aiworkout: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a5 5 0 0 1 5 5c0 1.5-.6 2.9-1.6 3.9L21 17l-4 4-6.1-6.1A5 5 0 1 1 12 2z"/>
+      <line x1="9" y1="9" x2="9.01" y2="9"/>
+    </svg>
+  ),
 };
 
 const navItems = [
@@ -72,6 +78,7 @@ const navItems = [
   { label: 'Checklists',      href: '/trainer/checklists',      iconKey: 'checklists' },
   { label: 'Depth Chart',     href: '/trainer/depth-chart',     iconKey: 'depth'      },
   { label: 'Schedule',        href: '/trainer/schedule',        iconKey: 'schedule'   },
+  { label: 'AI Workout',       href: '/trainer/ai-workout',      iconKey: 'aiworkout'  },
   { label: 'Messages',        href: '/trainer/messages',        iconKey: 'messages',   tour: 'nav-messages' },
   { label: 'Profile',         href: '/trainer/profile',         iconKey: 'profile',    tour: 'nav-profile'  },
 ];
