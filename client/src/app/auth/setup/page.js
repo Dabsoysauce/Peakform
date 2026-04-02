@@ -1,24 +1,59 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { apiFetch } from '../../lib/api';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 function SetupHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [ready, setReady] = useState(false);
 
-  const token = searchParams.get('token');
-  const email = searchParams.get('email');
+  // Exchange the one-time code for a token on mount
+  useEffect(() => {
+    const code = searchParams.get('code');
+
+    // Legacy support: if token is in URL (old flow), still handle it
+    const legacyToken = searchParams.get('token');
+    if (legacyToken) {
+      localStorage.setItem('token', legacyToken);
+      setEmail(searchParams.get('email') || '');
+      setReady(true);
+      return;
+    }
+
+    if (!code) { router.push('/login'); return; }
+
+    fetch(`${API}/auth/exchange`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.token) {
+          setError('Sign-in link expired. Please try again.');
+          setTimeout(() => router.push('/login'), 2000);
+          return;
+        }
+        localStorage.setItem('token', data.token);
+        setEmail(data.user?.email || '');
+        setReady(true);
+      })
+      .catch(() => {
+        setError('Something went wrong.');
+        setTimeout(() => router.push('/login'), 2000);
+      });
+  }, [searchParams, router]);
 
   async function selectRole(role) {
-    if (!token) { router.push('/login'); return; }
     setLoading(true);
     setError('');
     try {
-      // Temporarily store token so apiFetch can use it
-      localStorage.setItem('token', token);
       const res = await apiFetch('/auth/role', {
         method: 'PUT',
         body: JSON.stringify({ role }),
@@ -40,13 +75,21 @@ function SetupHandler() {
     setLoading(false);
   }
 
+  if (!ready && !error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0f0f1a' }}>
+        <p className="text-gray-400">Verifying...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#0f0f1a' }}>
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-gray-800 p-8 text-center" style={{ backgroundColor: '#1e1e30' }}>
           <div className="text-5xl mb-4">🏀</div>
           <h1 className="text-2xl font-black text-white mb-2">One last step</h1>
-          <p className="text-gray-400 mb-2">Welcome, <span className="text-white">{email}</span></p>
+          {email && <p className="text-gray-400 mb-2">Welcome, <span className="text-white">{email}</span></p>}
           <p className="text-gray-400 mb-8">Are you joining as a player or a coach?</p>
 
           {error && (
@@ -64,7 +107,7 @@ function SetupHandler() {
             >
               <span className="text-4xl">🏀</span>
               <span className="font-bold text-white">Player</span>
-              <span className="text-xs text-gray-400">I'm an athlete</span>
+              <span className="text-xs text-gray-400">I&apos;m an athlete</span>
             </button>
             <button
               onClick={() => selectRole('trainer')}

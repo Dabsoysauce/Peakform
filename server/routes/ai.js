@@ -6,6 +6,38 @@ const pool = require('../config/db');
 const router = express.Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// SSRF protection: only allow fetching images from trusted domains
+const ALLOWED_URL_PATTERNS = [
+  /^https:\/\/.*\.supabase\.co\//,
+  /^https:\/\/.*\.supabase\.in\//,
+  /^https:\/\/lh3\.googleusercontent\.com\//,
+];
+
+function isAllowedUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (!['https:'].includes(parsed.protocol)) return false;
+    return ALLOWED_URL_PATTERNS.some(p => p.test(url));
+  } catch {
+    return false;
+  }
+}
+
+async function fetchAllowedImage(url) {
+  if (!isAllowedUrl(url)) {
+    throw new Error('URL not allowed — only Supabase URLs are accepted');
+  }
+  const imgRes = await fetch(url);
+  if (!imgRes.ok) throw new Error('Could not fetch image');
+  const buffer = await imgRes.arrayBuffer();
+  const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+  return {
+    type: 'base64',
+    media_type: contentType.split(';')[0],
+    data: Buffer.from(buffer).toString('base64'),
+  };
+}
+
 const SYSTEM_PROMPT = `You are Athlete Edge's in-app assistant. Athlete Edge is a sports platform built for high school basketball players and their coaches.
 
 Your only job is to help users navigate the app and understand its features. Be concise, friendly, and direct. Never give long responses — 2-3 sentences max unless listing steps.
@@ -101,16 +133,11 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
         data: base64_frame,
       };
     } else {
-      // Fetch the image from Supabase and convert to base64 to avoid CORS issues
-      const imgRes = await fetch(media_url);
-      if (!imgRes.ok) return res.status(400).json({ error: 'Could not fetch image' });
-      const buffer = await imgRes.arrayBuffer();
-      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
-      imageSource = {
-        type: 'base64',
-        media_type: contentType.split(';')[0],
-        data: Buffer.from(buffer).toString('base64'),
-      };
+      try {
+        imageSource = await fetchAllowedImage(media_url);
+      } catch (err) {
+        return res.status(400).json({ error: err.message || 'Could not fetch image' });
+      }
     }
 
     const userText = [
@@ -194,10 +221,11 @@ router.post('/detect-players', authMiddleware, async (req, res) => {
     if (base64_frame) {
       imageSource = { type: 'base64', media_type: 'image/jpeg', data: base64_frame };
     } else {
-      const imgRes = await fetch(media_url);
-      const buffer = await imgRes.arrayBuffer();
-      const ct = imgRes.headers.get('content-type') || 'image/jpeg';
-      imageSource = { type: 'base64', media_type: ct.split(';')[0], data: Buffer.from(buffer).toString('base64') };
+      try {
+        imageSource = await fetchAllowedImage(media_url);
+      } catch (err) {
+        return res.status(400).json({ error: err.message || 'Could not fetch image' });
+      }
     }
 
     const response = await anthropic.messages.create({
@@ -239,10 +267,11 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
     if (base64_frame) {
       imageSource = { type: 'base64', media_type: 'image/jpeg', data: base64_frame };
     } else {
-      const imgRes = await fetch(media_url);
-      const buffer = await imgRes.arrayBuffer();
-      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
-      imageSource = { type: 'base64', media_type: contentType.split(';')[0], data: Buffer.from(buffer).toString('base64') };
+      try {
+        imageSource = await fetchAllowedImage(media_url);
+      } catch (err) {
+        return res.status(400).json({ error: err.message || 'Could not fetch image' });
+      }
     }
 
     const { focus, player_focus } = req.body;

@@ -77,6 +77,18 @@ const io = new Server(httpServer, {
 setupSocket(io);
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '0'); // disabled in favor of CSP
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
 app.use(express.json({ limit: '25mb' }));
 app.use(session({ secret: process.env.JWT_SECRET, resave: false, saveUninitialized: false }));
 app.use(passport.initialize());

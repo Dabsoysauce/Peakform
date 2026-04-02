@@ -6,10 +6,37 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
 
+const crypto = require('crypto');
 const router = express.Router();
 
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// In-memory store for one-time auth codes (code → { user data, expiry })
+// Codes expire after 60 seconds and are single-use
+const authCodes = new Map();
+
+function issueAuthCode(data) {
+  const code = crypto.randomBytes(32).toString('hex');
+  authCodes.set(code, { ...data, expires: Date.now() + 60_000 });
+  return code;
+}
+
+function consumeAuthCode(code) {
+  const entry = authCodes.get(code);
+  if (!entry) return null;
+  authCodes.delete(code);
+  if (Date.now() > entry.expires) return null;
+  return entry;
+}
+
+// Clean up expired codes every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, entry] of authCodes) {
+    if (now > entry.expires) authCodes.delete(code);
+  }
+}, 5 * 60_000);
 
 function issueToken(user) {
   return jwt.sign(
@@ -57,14 +84,27 @@ router.get('/google/callback',
   async (req, res) => {
     const user = req.user;
     if (!user.role) {
-      // New user — send to role setup
-      const tempToken = issueToken({ id: user.id, email: user.email, role: null });
-      return res.redirect(`${FRONTEND_URL}/auth/setup?token=${tempToken}&email=${encodeURIComponent(user.email)}`);
+      // New user — send short-lived code (not the actual token)
+      const code = issueAuthCode({ id: user.id, email: user.email, role: null, type: 'setup' });
+      return res.redirect(`${FRONTEND_URL}/auth/setup?code=${code}`);
     }
-    const token = issueToken(user);
-    res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}&userId=${user.id}&role=${user.role}&email=${encodeURIComponent(user.email)}`);
+    // Existing user — send short-lived code
+    const code = issueAuthCode({ id: user.id, email: user.email, role: user.role, type: 'login' });
+    res.redirect(`${FRONTEND_URL}/auth/callback?code=${code}`);
   }
 );
+
+// POST /auth/exchange — exchange a one-time code for a JWT token
+router.post('/exchange', async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: 'Code is required' });
+
+  const data = consumeAuthCode(code);
+  if (!data) return res.status(401).json({ error: 'Invalid or expired code' });
+
+  const token = issueToken({ id: data.id, email: data.email, role: data.role });
+  res.json({ token, user: { id: data.id, email: data.email, role: data.role }, type: data.type });
+});
 
 // PUT /auth/role — set role for new Google users
 router.put('/role', authMiddleware, async (req, res) => {
