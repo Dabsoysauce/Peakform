@@ -61,6 +61,48 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT update session
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { session_date, session_name, notes, duration_minutes } = req.body;
+    const result = await pool.query(
+      `UPDATE workout_sessions SET session_date = COALESCE($1, session_date), session_name = $2, notes = $3, duration_minutes = $4
+       WHERE id = $5 AND user_id = $6 RETURNING *`,
+      [session_date, session_name || null, notes || null, duration_minutes || null, req.params.id, req.user.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Session not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update session' });
+  }
+});
+
+// PUT update exercise
+router.put('/:sessionId/exercises/:exerciseId', authMiddleware, async (req, res) => {
+  try {
+    const session = await pool.query(
+      'SELECT id FROM workout_sessions WHERE id = $1 AND user_id = $2',
+      [req.params.sessionId, req.user.id]
+    );
+    if (!session.rows[0]) return res.status(404).json({ error: 'Session not found' });
+
+    const { exercise_name, sets, reps, weight_lbs, rpe, notes } = req.body;
+    if (!exercise_name) return res.status(400).json({ error: 'exercise_name is required' });
+
+    const result = await pool.query(
+      `UPDATE exercises SET exercise_name = $1, sets = $2, reps = $3, weight_lbs = $4, rpe = $5, notes = $6
+       WHERE id = $7 AND session_id = $8 RETURNING *`,
+      [exercise_name, sets || null, reps || null, weight_lbs || null, rpe || null, notes || null, req.params.exerciseId, req.params.sessionId]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Exercise not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update exercise' });
+  }
+});
+
 // DELETE session
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
