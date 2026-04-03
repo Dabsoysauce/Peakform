@@ -134,36 +134,36 @@ export default function TeamPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">My Teams</h1>
-        <p className="text-gray-400 mt-1">Connect with your trainer and teammates</p>
+        <p className="text-white/40 mt-1">Connect with your trainer and teammates</p>
       </div>
 
       {loading ? (
-        <div className="text-gray-400 text-center py-12">Loading teams...</div>
+        <div className="text-white/40 text-center py-12">Loading teams...</div>
       ) : teams.length === 0 ? (
         <div
-          className="rounded-xl p-12 border border-gray-800 text-center"
+          className="rounded-xl p-12 border border-white/[0.06] text-center"
           style={{ backgroundColor: '#1e1e30' }}
         >
           <div className="text-5xl mb-4">💬</div>
           <h3 className="text-xl font-bold text-white mb-2">No teams yet</h3>
-          <p className="text-gray-400 mb-2">Join a team from your trainer using the join code on the Overview page.</p>
+          <p className="text-white/40 mb-2">Join a team from your trainer using the join code on the Overview page.</p>
         </div>
       ) : (
         <div className="flex gap-6 h-[600px]">
           {/* Team list */}
           <div
-            className="w-64 flex-shrink-0 rounded-xl border border-gray-800 overflow-hidden flex flex-col"
+            className="w-64 flex-shrink-0 rounded-xl border border-white/[0.06] overflow-hidden flex flex-col"
             style={{ backgroundColor: '#1e1e30' }}
           >
-            <div className="p-4 border-b border-gray-800">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Teams</h3>
+            <div className="p-4 border-b border-white/[0.06]">
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wide">Teams</h3>
             </div>
             <div className="flex-1 overflow-y-auto">
               {teams.map((t) => (
                 <div key={t.id}>
                   <button
                     onClick={() => selectTeam(t)}
-                    className={`w-full text-left px-4 py-4 border-b border-gray-800/50 transition-colors ${
+                    className={`w-full text-left px-4 py-4 border-b border-white/[0.04] transition-colors ${
                       selectedTeam?.id === t.id ? '' : 'hover:bg-white/5'
                     }`}
                     style={selectedTeam?.id === t.id ? { backgroundColor: 'rgba(232,93,38,0.15)' } : {}}
@@ -174,13 +174,13 @@ export default function TeamPage() {
                     >
                       {t.name}
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs text-white/30 mt-0.5">
                       {t.member_count} member{t.member_count !== 1 ? 's' : ''}
                       {t.trainer_first_name && ` · ${t.trainer_first_name}`}
                     </div>
                   </button>
                   {selectedTeam?.id === t.id && (
-                    <div className="px-4 py-2 border-b border-gray-800">
+                    <div className="px-4 py-2 border-b border-white/[0.06]">
                       <button
                         onClick={() => leaveTeam(t.id)}
                         disabled={leaveLoading === t.id}
@@ -197,20 +197,20 @@ export default function TeamPage() {
 
           {/* Chat panel */}
           <div
-            className="flex-1 rounded-xl border border-gray-800 flex flex-col overflow-hidden"
+            className="flex-1 rounded-xl border border-white/[0.06] flex flex-col overflow-hidden"
             style={{ backgroundColor: '#1e1e30' }}
           >
             {!selectedTeam ? (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
+              <div className="flex-1 flex items-center justify-center text-white/30">
                 Select a team to view chat
               </div>
             ) : (
               <>
                 {/* Chat header */}
-                <div className="px-5 py-4 border-b border-gray-800 flex items-center gap-3">
+                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center gap-3">
                   <div>
                     <h3 className="font-bold text-white">{selectedTeam.name}</h3>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-white/30">
                       {selectedTeam.member_count} member{selectedTeam.member_count !== 1 ? 's' : ''}
                       {selectedTeam.coach_only && ' · Trainer broadcast only'}
                     </div>
@@ -220,9 +220,9 @@ export default function TeamPage() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3" onClick={(e) => { if (e.target === e.currentTarget) setPickerMsg(null); }}>
                   {msgLoading ? (
-                    <div className="text-gray-500 text-center text-sm">Loading messages...</div>
+                    <div className="text-white/30 text-center text-sm">Loading messages...</div>
                   ) : messages.length === 0 ? (
-                    <div className="text-gray-500 text-center text-sm">No messages yet. Start the conversation!</div>
+                    <div className="text-white/30 text-center text-sm">No messages yet. Start the conversation!</div>
                   ) : (
                     messages.map((msg) => {
                       const isOwn = msg.sender_id === userId;
@@ -240,14 +240,14 @@ export default function TeamPage() {
                             <div className="relative flex-shrink-0 mb-5">
                               <button
                                 onClick={() => setPickerMsg(pickerMsg === msg.id ? null : msg.id)}
-                                className="text-gray-600 hover:text-gray-400 transition-colors text-lg leading-none"
+                                className="text-gray-600 hover:text-white/40 transition-colors text-lg leading-none"
                                 style={{ opacity: showDots ? 1 : 0, pointerEvents: showDots ? 'auto' : 'none' }}
                               >
                                 ···
                               </button>
                               {pickerMsg === msg.id && (
                                 <div
-                                  className="absolute bottom-8 right-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-gray-700 shadow-xl z-20"
+                                  className="absolute bottom-8 right-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-white/[0.08] shadow-xl z-20"
                                   style={{ backgroundColor: '#1a1a2e' }}
                                 >
                                   {EMOJIS.map((emoji) => (
@@ -266,7 +266,7 @@ export default function TeamPage() {
 
                           <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
                             {!isOwn && (
-                              <span className="text-xs text-gray-500 mb-1 ml-1">
+                              <span className="text-xs text-white/30 mb-1 ml-1">
                                 {msg.sender_name}
                                 {msg.sender_role === 'trainer' && (
                                   <span className="ml-1 text-blue-400">(Coach)</span>
@@ -318,14 +318,14 @@ export default function TeamPage() {
                             <div className="relative flex-shrink-0 mb-5">
                               <button
                                 onClick={() => setPickerMsg(pickerMsg === msg.id ? null : msg.id)}
-                                className="text-gray-600 hover:text-gray-400 transition-colors text-lg leading-none"
+                                className="text-gray-600 hover:text-white/40 transition-colors text-lg leading-none"
                                 style={{ opacity: showDots ? 1 : 0, pointerEvents: showDots ? 'auto' : 'none' }}
                               >
                                 ···
                               </button>
                               {pickerMsg === msg.id && (
                                 <div
-                                  className="absolute bottom-8 left-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-gray-700 shadow-xl z-20"
+                                  className="absolute bottom-8 left-0 flex gap-1.5 px-3 py-2 rounded-2xl border border-white/[0.08] shadow-xl z-20"
                                   style={{ backgroundColor: '#1a1a2e' }}
                                 >
                                   {EMOJIS.map((emoji) => (
@@ -350,13 +350,13 @@ export default function TeamPage() {
 
                 {/* Input */}
                 {!selectedTeam.coach_only ? (
-                  <form onSubmit={sendMessage} className="p-4 border-t border-gray-800 flex gap-3">
+                  <form onSubmit={sendMessage} className="p-4 border-t border-white/[0.06] flex gap-3">
                     <input
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Type a message..."
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
                       style={{ backgroundColor: '#16213e' }}
                     />
                     <button
@@ -369,7 +369,7 @@ export default function TeamPage() {
                     </button>
                   </form>
                 ) : (
-                  <div className="p-4 border-t border-gray-800 text-center text-sm text-gray-500">
+                  <div className="p-4 border-t border-white/[0.06] text-center text-sm text-white/30">
                     This is a broadcast-only channel. Only the trainer can post.
                   </div>
                 )}

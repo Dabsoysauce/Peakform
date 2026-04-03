@@ -6,12 +6,12 @@ function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
       <div
-        className="w-full max-w-lg rounded-2xl border border-gray-700 p-6 max-h-[90vh] overflow-y-auto"
-        style={{ backgroundColor: '#1e1e30' }}
+        className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+        style={{ background: 'rgba(15,15,35,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-white/40 hover:text-white text-2xl leading-none">×</button>
         </div>
         {children}
       </div>
@@ -23,10 +23,10 @@ function Tooltip({ text, children }) {
   return (
     <div className="relative group inline-flex items-center gap-1">
       {children}
-      <span className="text-gray-500 cursor-help text-xs">(?)</span>
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs text-white bg-gray-900 border border-gray-700 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity whitespace-normal w-56 z-50 shadow-lg">
+      <span style={{ color: 'rgba(255,255,255,0.3)' }} className="cursor-help text-xs">(?)</span>
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-2xl text-xs text-white opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity whitespace-normal w-56 z-50" style={{ background: 'rgba(12,12,32,0.95)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
         {text}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-gray-900 border-b border-r border-gray-700 rotate-45" />
+        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 rotate-45" style={{ background: 'rgba(12,12,32,0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)', borderRight: '1px solid rgba(255,255,255,0.1)' }} />
       </div>
     </div>
   );
@@ -420,7 +420,7 @@ export default function WorkoutsPage() {
     setShowTemplates(false);
   }
 
-  const inputClass = "w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500";
+  const inputClass = "w-full px-4 py-2.5 rounded-lg border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500";
   const inputStyle = { backgroundColor: '#16213e' };
 
   function ExerciseFormFields({ form, setForm, compact }) {
@@ -438,7 +438,7 @@ export default function WorkoutsPage() {
         <div className={`grid ${compact ? 'grid-cols-4' : 'grid-cols-2'} gap-3`}>
           <div>
             <Tooltip text={fieldTooltips.sets}>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Sets</label>
+              <label className="block text-xs font-medium text-white/40 mb-1">Sets</label>
             </Tooltip>
             <input
               type="number"
@@ -452,7 +452,7 @@ export default function WorkoutsPage() {
           </div>
           <div>
             <Tooltip text={fieldTooltips.reps}>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Reps</label>
+              <label className="block text-xs font-medium text-white/40 mb-1">Reps</label>
             </Tooltip>
             <input
               type="number"
@@ -466,7 +466,7 @@ export default function WorkoutsPage() {
           </div>
           <div>
             <Tooltip text={fieldTooltips.weight}>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Weight (lbs)</label>
+              <label className="block text-xs font-medium text-white/40 mb-1">Weight (lbs)</label>
             </Tooltip>
             <input
               type="number"
@@ -481,7 +481,7 @@ export default function WorkoutsPage() {
           </div>
           <div>
             <Tooltip text={fieldTooltips.rpe}>
-              <label className="block text-xs font-medium text-gray-400 mb-1">RPE (1-10)</label>
+              <label className="block text-xs font-medium text-white/40 mb-1">RPE (1-10)</label>
             </Tooltip>
             <input
               type="number"
@@ -513,12 +513,12 @@ export default function WorkoutsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black text-white">Workouts</h1>
-          <p className="text-gray-400 mt-1">Log and track your training sessions</p>
+          <p className="text-white/40 mt-1">Log and track your training sessions</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => { setShowModal(true); setShowTemplates(true); }}
-            className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity border border-blue-500"
+            className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity border border-orange-500"
             style={{ backgroundColor: 'transparent', color: '#60a5fa' }}
           >
             Templates
@@ -526,7 +526,7 @@ export default function WorkoutsPage() {
           <button
             onClick={() => setShowModal(true)}
             className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#2563eb' }}
+            style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
           >
             + Log Workout
           </button>
@@ -535,26 +535,26 @@ export default function WorkoutsPage() {
 
       {/* Sessions list */}
       {loading ? (
-        <div className="text-gray-400 text-center py-12">Loading sessions...</div>
+        <div className="text-white/40 text-center py-12">Loading sessions...</div>
       ) : sessions.length === 0 ? (
         <div
-          className="rounded-xl p-12 border border-gray-800 text-center"
-          style={{ backgroundColor: '#1e1e30' }}
+          className="rounded-2xl p-12 border border-white/5 text-center"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <div className="text-5xl mb-4">🏋️</div>
           <h3 className="text-xl font-bold text-white mb-2">No sessions yet</h3>
-          <p className="text-gray-400 mb-6">Start tracking your workouts to see them here.</p>
+          <p className="text-white/40 mb-6">Start tracking your workouts to see them here.</p>
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => { setShowModal(true); setShowTemplates(true); }}
-              className="px-6 py-3 rounded-lg font-bold text-blue-400 border border-blue-500 hover:bg-blue-900/20"
+              className="px-6 py-3 rounded-lg font-bold text-orange-400 border border-orange-500 hover:bg-orange-900/20"
             >
               Use a Template
             </button>
             <button
               onClick={() => setShowModal(true)}
               className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-              style={{ backgroundColor: '#2563eb' }}
+              style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
             >
               Log First Workout
             </button>
@@ -565,8 +565,8 @@ export default function WorkoutsPage() {
           {sessions.map((s) => (
             <div
               key={s.id}
-              className="rounded-xl border border-gray-800 overflow-hidden"
-              style={{ backgroundColor: '#1e1e30' }}
+              className="rounded-2xl border border-white/5 overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               {/* Session header - either editing or viewing */}
               {editingSession === s.id ? (
@@ -595,7 +595,7 @@ export default function WorkoutsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Tooltip text={fieldTooltips.duration}>
-                        <label className="block text-xs font-medium text-gray-400 mb-1">Duration (min)</label>
+                        <label className="block text-xs font-medium text-white/40 mb-1">Duration (min)</label>
                       </Tooltip>
                       <input
                         type="number"
@@ -617,10 +617,10 @@ export default function WorkoutsPage() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <button type="submit" disabled={editSessionLoading} className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50" style={{ backgroundColor: '#2563eb' }}>
+                    <button type="submit" disabled={editSessionLoading} className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}>
                       {editSessionLoading ? 'Saving...' : 'Save'}
                     </button>
-                    <button type="button" onClick={() => setEditingSession(null)} className="px-4 py-2 rounded-lg border border-gray-700 text-gray-300 text-sm hover:text-white">
+                    <button type="button" onClick={() => setEditingSession(null)} className="px-4 py-2 rounded-lg border border-white/10 text-white/50 text-sm hover:text-white">
                       Cancel
                     </button>
                   </div>
@@ -629,10 +629,10 @@ export default function WorkoutsPage() {
                 <div className="flex items-center justify-between px-5 py-4">
                   <div className="flex items-center gap-4">
                     <button onClick={() => handleExpand(s)} className="text-left">
-                      <div className="text-sm font-bold text-white hover:text-blue-400 transition-colors">
+                      <div className="text-sm font-bold text-white hover:text-orange-400 transition-colors">
                         {s.session_name || 'Unnamed Session'}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-xs text-white/30 mt-0.5">
                         {new Date(s.session_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                         {s.duration_minutes && ` · ${s.duration_minutes} min`}
                         {` · ${s.exercise_count} exercise${s.exercise_count !== 1 ? 's' : ''}`}
@@ -642,13 +642,13 @@ export default function WorkoutsPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleExpand(s)}
-                      className="px-3 py-1.5 text-xs rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+                      className="px-3 py-1.5 text-xs rounded-lg border border-white/10 text-white/50 hover:text-white hover:border-gray-500 transition-colors"
                     >
                       {expandedSession === s.id ? 'Collapse' : 'View'}
                     </button>
                     <button
                       onClick={() => { handleExpand(s); startEditSession(s); }}
-                      className="px-3 py-1.5 text-xs rounded-lg border border-blue-800 text-blue-400 hover:bg-blue-900/20 transition-colors"
+                      className="px-3 py-1.5 text-xs rounded-lg border border-orange-800 text-orange-400 hover:bg-orange-900/20 transition-colors"
                     >
                       Edit
                     </button>
@@ -665,17 +665,17 @@ export default function WorkoutsPage() {
 
               {/* Expanded exercises */}
               {expandedSession === s.id && expandedData && (
-                <div className="border-t border-gray-800 px-5 py-4">
+                <div className="border-t border-white/5 px-5 py-4">
                   {expandedData.notes && (
-                    <p className="text-sm text-gray-400 mb-3 italic">{expandedData.notes}</p>
+                    <p className="text-sm text-white/40 mb-3 italic">{expandedData.notes}</p>
                   )}
                   {expandedData.exercises.length === 0 ? (
-                    <p className="text-sm text-gray-500 mb-4">No exercises logged for this session.</p>
+                    <p className="text-sm text-white/30 mb-4">No exercises logged for this session.</p>
                   ) : (
                     <div className="overflow-x-auto mb-4">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="text-gray-500 text-xs uppercase border-b border-gray-800">
+                          <tr className="text-white/30 text-xs uppercase border-b border-white/5">
                             <th className="text-left py-2 pr-4">Exercise</th>
                             <th className="text-center py-2 px-3">Sets</th>
                             <th className="text-center py-2 px-3">Reps</th>
@@ -688,43 +688,43 @@ export default function WorkoutsPage() {
                         <tbody>
                           {expandedData.exercises.map((ex) => (
                             editingExercise === ex.id ? (
-                              <tr key={ex.id} className="border-b border-gray-800/50">
+                              <tr key={ex.id} className="border-b border-white/5/50">
                                 <td className="py-2 pr-2">
-                                  <input type="text" value={editExerciseForm.exercise_name} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, exercise_name: e.target.value })} className="w-full px-2 py-1 rounded border border-gray-700 text-white text-sm" style={inputStyle} />
+                                  <input type="text" value={editExerciseForm.exercise_name} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, exercise_name: e.target.value })} className="w-full px-2 py-1 rounded border border-white/10 text-white text-sm" style={inputStyle} />
                                 </td>
                                 <td className="py-2 px-1">
-                                  <input type="number" value={editExerciseForm.sets} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, sets: e.target.value })} className="w-full px-2 py-1 rounded border border-gray-700 text-white text-sm text-center" style={inputStyle} min="1" />
+                                  <input type="number" value={editExerciseForm.sets} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, sets: e.target.value })} className="w-full px-2 py-1 rounded border border-white/10 text-white text-sm text-center" style={inputStyle} min="1" />
                                 </td>
                                 <td className="py-2 px-1">
-                                  <input type="number" value={editExerciseForm.reps} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, reps: e.target.value })} className="w-full px-2 py-1 rounded border border-gray-700 text-white text-sm text-center" style={inputStyle} min="1" />
+                                  <input type="number" value={editExerciseForm.reps} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, reps: e.target.value })} className="w-full px-2 py-1 rounded border border-white/10 text-white text-sm text-center" style={inputStyle} min="1" />
                                 </td>
                                 <td className="py-2 px-1">
-                                  <input type="number" value={editExerciseForm.weight_lbs} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, weight_lbs: e.target.value })} className="w-full px-2 py-1 rounded border border-gray-700 text-white text-sm text-center" style={inputStyle} step="0.5" min="0" />
+                                  <input type="number" value={editExerciseForm.weight_lbs} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, weight_lbs: e.target.value })} className="w-full px-2 py-1 rounded border border-white/10 text-white text-sm text-center" style={inputStyle} step="0.5" min="0" />
                                 </td>
                                 <td className="py-2 px-1">
-                                  <input type="number" value={editExerciseForm.rpe} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, rpe: e.target.value })} className="w-full px-2 py-1 rounded border border-gray-700 text-white text-sm text-center" style={inputStyle} step="0.5" min="1" max="10" />
+                                  <input type="number" value={editExerciseForm.rpe} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, rpe: e.target.value })} className="w-full px-2 py-1 rounded border border-white/10 text-white text-sm text-center" style={inputStyle} step="0.5" min="1" max="10" />
                                 </td>
                                 <td className="py-2 px-1">
-                                  <input type="text" value={editExerciseForm.notes} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, notes: e.target.value })} className="w-full px-2 py-1 rounded border border-gray-700 text-white text-sm" style={inputStyle} />
+                                  <input type="text" value={editExerciseForm.notes} onChange={(e) => setEditExerciseForm({ ...editExerciseForm, notes: e.target.value })} className="w-full px-2 py-1 rounded border border-white/10 text-white text-sm" style={inputStyle} />
                                 </td>
                                 <td className="py-2 px-1 text-center">
                                   <div className="flex items-center gap-1 justify-center">
                                     <button onClick={() => handleUpdateExercise(expandedData.id)} className="text-green-400 hover:text-green-300 text-xs font-bold">Save</button>
-                                    <button onClick={() => setEditingExercise(null)} className="text-gray-400 hover:text-white text-xs">Cancel</button>
+                                    <button onClick={() => setEditingExercise(null)} className="text-white/40 hover:text-white text-xs">Cancel</button>
                                   </div>
                                 </td>
                               </tr>
                             ) : (
-                              <tr key={ex.id} className="border-b border-gray-800/50 group">
+                              <tr key={ex.id} className="border-b border-white/5/50 group">
                                 <td className="py-2 pr-4 text-white font-medium">{ex.exercise_name}</td>
-                                <td className="py-2 px-3 text-center text-gray-300">{ex.sets ?? '–'}</td>
-                                <td className="py-2 px-3 text-center text-gray-300">{ex.reps ?? '–'}</td>
-                                <td className="py-2 px-3 text-center text-gray-300">{ex.weight_lbs ? `${ex.weight_lbs} lbs` : '–'}</td>
-                                <td className="py-2 px-3 text-center text-gray-300">{ex.rpe ?? '–'}</td>
-                                <td className="py-2 px-3 text-center text-gray-400 text-xs">{ex.notes || '–'}</td>
+                                <td className="py-2 px-3 text-center text-white/50">{ex.sets ?? '–'}</td>
+                                <td className="py-2 px-3 text-center text-white/50">{ex.reps ?? '–'}</td>
+                                <td className="py-2 px-3 text-center text-white/50">{ex.weight_lbs ? `${ex.weight_lbs} lbs` : '–'}</td>
+                                <td className="py-2 px-3 text-center text-white/50">{ex.rpe ?? '–'}</td>
+                                <td className="py-2 px-3 text-center text-white/40 text-xs">{ex.notes || '–'}</td>
                                 <td className="py-2 px-1 text-center">
                                   <div className="flex items-center gap-1 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => startEditExercise(ex)} className="text-blue-400 hover:text-blue-300 text-xs">Edit</button>
+                                    <button onClick={() => startEditExercise(ex)} className="text-orange-400 hover:text-blue-300 text-xs">Edit</button>
                                     <button onClick={() => handleDeleteExercise(expandedData.id, ex.id)} className="text-red-400 hover:text-red-300 text-xs">Del</button>
                                   </div>
                                 </td>
@@ -737,9 +737,9 @@ export default function WorkoutsPage() {
                   )}
 
                   {/* Add exercise inline */}
-                  <div className="mt-3 pt-3 border-t border-gray-800">
+                  <div className="mt-3 pt-3 border-t border-white/5">
                     <form onSubmit={handleAddExerciseToExpanded} className="space-y-3">
-                      <h4 className="text-xs font-semibold text-gray-400 uppercase">Add Exercise</h4>
+                      <h4 className="text-xs font-semibold text-white/40 uppercase">Add Exercise</h4>
                       {exerciseError && (
                         <div className="px-3 py-1.5 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-xs">{exerciseError}</div>
                       )}
@@ -748,7 +748,7 @@ export default function WorkoutsPage() {
                         type="submit"
                         disabled={exerciseLoading}
                         className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50 hover:opacity-90"
-                        style={{ backgroundColor: '#2563eb' }}
+                        style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
                       >
                         {exerciseLoading ? 'Adding...' : '+ Add Exercise'}
                       </button>
@@ -769,30 +769,30 @@ export default function WorkoutsPage() {
         >
           {showTemplates ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-400 mb-4">Choose a template to quickly start a workout with pre-filled exercises.</p>
+              <p className="text-sm text-white/40 mb-4">Choose a template to quickly start a workout with pre-filled exercises.</p>
               {workoutTemplates.map((t, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelectTemplate(t)}
-                  className="w-full text-left px-4 py-3 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors"
-                  style={{ backgroundColor: '#16213e' }}
+                  className="w-full text-left px-4 py-3 rounded-2xl border border-white/10 hover:border-orange-500 transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-white font-bold text-sm">{t.name}</div>
-                      <div className="text-gray-500 text-xs mt-0.5">{t.exercises.length} exercises · {t.duration_minutes} min</div>
+                      <div className="text-white/30 text-xs mt-0.5">{t.exercises.length} exercises · {t.duration_minutes} min</div>
                     </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30">
                       <polyline points="9 18 15 12 9 6"/>
                     </svg>
                   </div>
-                  <div className="text-gray-400 text-xs mt-1">{t.notes}</div>
+                  <div className="text-white/40 text-xs mt-1">{t.notes}</div>
                 </button>
               ))}
-              <div className="pt-2 border-t border-gray-800">
+              <div className="pt-2 border-t border-white/5">
                 <button
                   onClick={() => setShowTemplates(false)}
-                  className="w-full py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white text-sm"
+                  className="w-full py-2.5 rounded-lg border border-white/10 text-white/50 hover:text-white text-sm"
                 >
                   Create Custom Workout Instead
                 </button>
@@ -804,13 +804,13 @@ export default function WorkoutsPage() {
                 <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{sessionError}</div>
               )}
               {templateExercises && (
-                <div className="px-4 py-3 rounded-lg border border-blue-800 bg-blue-900/20">
-                  <div className="text-blue-400 text-sm font-semibold mb-1">Template: {sessionForm.session_name}</div>
+                <div className="px-4 py-3 rounded-lg border border-orange-800 bg-blue-900/20">
+                  <div className="text-orange-400 text-sm font-semibold mb-1">Template: {sessionForm.session_name}</div>
                   <div className="text-blue-300 text-xs">{templateExercises.length} exercises will be added automatically. You can edit the details below before creating.</div>
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Session Name</label>
+                <label className="block text-sm font-medium text-white/50 mb-1">Session Name</label>
                 <input
                   type="text"
                   value={sessionForm.session_name}
@@ -821,7 +821,7 @@ export default function WorkoutsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Date *</label>
+                <label className="block text-sm font-medium text-white/50 mb-1">Date *</label>
                 <input
                   type="date"
                   value={sessionForm.session_date}
@@ -833,7 +833,7 @@ export default function WorkoutsPage() {
               </div>
               <div>
                 <Tooltip text={fieldTooltips.duration}>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Duration (minutes)</label>
+                  <label className="block text-sm font-medium text-white/50 mb-1">Duration (minutes)</label>
                 </Tooltip>
                 <input
                   type="number"
@@ -846,7 +846,7 @@ export default function WorkoutsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-white/50 mb-1">Notes</label>
                 <textarea
                   value={sessionForm.notes}
                   onChange={(e) => setSessionForm({ ...sessionForm, notes: e.target.value })}
@@ -858,12 +858,12 @@ export default function WorkoutsPage() {
               </div>
               {templateExercises && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase mb-2">Exercises to Add</h3>
+                  <h3 className="text-sm font-semibold text-white/40 uppercase mb-2">Exercises to Add</h3>
                   <div className="space-y-1.5 max-h-40 overflow-y-auto">
                     {templateExercises.map((ex, i) => (
-                      <div key={i} className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs" style={{ backgroundColor: '#16213e' }}>
+                      <div key={i} className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                         <span className="text-white font-medium">{ex.exercise_name}</span>
-                        <span className="text-gray-500">
+                        <span className="text-white/30">
                           {[ex.sets && `${ex.sets}×`, ex.reps, ex.weight_lbs && `${ex.weight_lbs} lbs`, ex.rpe && `RPE ${ex.rpe}`].filter(Boolean).join(' ')}
                         </span>
                       </div>
@@ -872,12 +872,12 @@ export default function WorkoutsPage() {
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={closeModal} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">Cancel</button>
+                <button type="button" onClick={closeModal} className="flex-1 py-2.5 rounded-lg border border-white/10 text-white/50 hover:text-white">Cancel</button>
                 <button
                   type="submit"
                   disabled={sessionLoading}
                   className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                  style={{ backgroundColor: '#2563eb' }}
+                  style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
                 >
                   {sessionLoading ? 'Creating...' : templateExercises ? 'Create from Template' : 'Create Session'}
                 </button>
@@ -887,13 +887,13 @@ export default function WorkoutsPage() {
             <div>
               {activeSession.exercises.length > 0 && (
                 <div className="mb-5">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Exercises Added</h3>
+                  <h3 className="text-sm font-semibold text-white/40 uppercase mb-3">Exercises Added</h3>
                   <div className="space-y-2">
                     {activeSession.exercises.map((ex) => (
-                      <div key={ex.id} className="flex items-center justify-between px-4 py-2 rounded-lg" style={{ backgroundColor: '#16213e' }}>
+                      <div key={ex.id} className="flex items-center justify-between px-4 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                         <div>
                           <span className="text-white font-medium text-sm">{ex.exercise_name}</span>
-                          <span className="text-gray-500 text-xs ml-2">
+                          <span className="text-white/30 text-xs ml-2">
                             {[
                               ex.sets && `${ex.sets}×`,
                               ex.reps && `${ex.reps}`,
@@ -915,7 +915,7 @@ export default function WorkoutsPage() {
               )}
 
               <form onSubmit={handleAddExercise} className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-400 uppercase">Add Exercise</h3>
+                <h3 className="text-sm font-semibold text-white/40 uppercase">Add Exercise</h3>
                 {exerciseError && (
                   <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{exerciseError}</div>
                 )}
@@ -925,7 +925,7 @@ export default function WorkoutsPage() {
                     type="submit"
                     disabled={exerciseLoading}
                     className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50 hover:opacity-90"
-                    style={{ backgroundColor: '#2563eb' }}
+                    style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
                   >
                     {exerciseLoading ? 'Adding...' : '+ Add Exercise'}
                   </button>

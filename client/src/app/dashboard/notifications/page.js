@@ -15,8 +15,22 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString();
 }
 
+const EyeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e85d04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e85d04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
 const TYPE_ICON = {
-  profile_view: '👀',
+  profile_view: <EyeIcon />,
 };
 
 export default function NotificationsPage() {
@@ -48,23 +62,23 @@ export default function NotificationsPage() {
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">Notifications</h1>
-        <p className="text-gray-400 mt-1">See who's been checking out your profile</p>
+        <p className="text-white/40 mt-1">See who's been checking out your profile</p>
       </div>
 
       {loading ? (
-        <div className="text-gray-400 text-center py-12">Loading...</div>
+        <div className="text-white/40 text-center py-12">Loading...</div>
       ) : notifications.length === 0 ? (
-        <div className="rounded-xl border border-gray-800 p-12 text-center" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl border border-white/[0.06] p-12 text-center" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           <div className="text-4xl mb-3">🔔</div>
-          <p className="text-gray-400">No notifications yet.</p>
-          <p className="text-gray-600 text-sm mt-1">When a coach views your profile, you'll see it here.</p>
+          <p className="text-white/40">No notifications yet.</p>
+          <p className="text-white/20 text-sm mt-1">When a coach views your profile, you'll see it here.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-800 overflow-hidden" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl border border-white/[0.06] overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           {notifications.map((n, i) => (
             <div
               key={n.id}
-              className={`flex items-start gap-4 px-6 py-4 ${i !== notifications.length - 1 ? 'border-b border-gray-800' : ''} ${!n.read ? 'bg-blue-500/5' : ''}`}
+              className={`flex items-start gap-4 px-6 py-4 ${i !== notifications.length - 1 ? 'border-b border-white/[0.06]' : ''} ${!n.read ? 'bg-[#e85d04]/5' : ''}`}
             >
               <div className="text-2xl flex-shrink-0 mt-0.5">
                 {TYPE_ICON[n.type] || '🔔'}
@@ -74,7 +88,7 @@ export default function NotificationsPage() {
                   {n.type === 'profile_view' && n.data?.viewer_id ? (
                     <>
                       Coach{' '}
-                      <Link href={`/coach/${n.data.viewer_id}`} className="font-semibold hover:underline" style={{ color: '#2563eb' }}>
+                      <Link href={`/coach/${n.data.viewer_id}`} className="font-semibold hover:underline" style={{ color: '#e85d04' }}>
                         {n.data.coach_name}
                       </Link>
                       {n.data.school_name ? ` from ${n.data.school_name}` : ''} viewed your profile
@@ -83,10 +97,10 @@ export default function NotificationsPage() {
                     n.message
                   )}
                 </p>
-                <p className="text-gray-500 text-xs mt-1">{timeAgo(n.created_at)}</p>
+                <p className="text-white/30 text-xs mt-1">{timeAgo(n.created_at)}</p>
               </div>
               {!n.read && (
-                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ backgroundColor: '#2563eb' }} />
+                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ backgroundColor: '#e85d04' }} />
               )}
             </div>
           ))}

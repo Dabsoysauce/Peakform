@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${rajdhani.variable}`}>
-      <body style={{ backgroundColor: '#0f0f1a', color: 'white', minHeight: '100vh', fontFamily: 'var(--font-inter)' }}>
+      <body style={{ backgroundColor: '#08081a', color: '#f0f0f5', minHeight: '100vh', fontFamily: 'var(--font-inter)' }}>
         {children}
       </body>
     </html>

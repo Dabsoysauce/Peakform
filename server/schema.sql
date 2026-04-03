@@ -221,29 +221,6 @@ CREATE TABLE IF NOT EXISTS practice_plan_blocks (
   sort_order INTEGER DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS checklists (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trainer_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS checklist_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  checklist_id UUID REFERENCES checklists(id) ON DELETE CASCADE,
-  text TEXT NOT NULL,
-  sort_order INTEGER DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS checklist_completions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  item_id UUID REFERENCES checklist_items(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  completed_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(item_id, user_id)
-);
-
 CREATE TABLE IF NOT EXISTS depth_chart_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID REFERENCES teams(id) ON DELETE CASCADE,

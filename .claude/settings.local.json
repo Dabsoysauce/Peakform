@@ -32,7 +32,8 @@
       "WebFetch(domain:apps.apple.com)",
       "WebFetch(domain:chrome-stats.com)",
       "Bash(npx -y acorn --ecma2020 --module client/src/app/trainer/playbook/page.js)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(wc -l /Users/ryanworkandstudy/Documents/GitHub/Athletes_Edge/client/src/app/**/*.js /Users/ryanworkandstudy/Documents/GitHub/Athletes_Edge/client/src/app/*.js /Users/ryanworkandstudy/Documents/GitHub/Athletes_Edge/client/src/app/**/**/*.js)"
     ]
   }
 }

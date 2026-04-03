@@ -10,11 +10,11 @@ function getGreeting() {
   return 'Good evening';
 }
 
-function Skeleton({ width = '100%', height = 20, rounded = 8 }) {
+function Skeleton({ width = '100%', height = 20, rounded = 12 }) {
   return (
     <div style={{
       width, height, borderRadius: rounded,
-      background: 'linear-gradient(90deg, #1e2440 25%, #2a3360 50%, #1e2440 75%)',
+      background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
       backgroundSize: '300% 100%',
       animation: 'shimmer 1.6s ease infinite',
     }} />
@@ -39,23 +39,23 @@ function CountUp({ to = 0, duration = 900 }) {
 
 const StatIcons = {
   teams: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </svg>
   ),
   players: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/><line x1="9" y1="12" x2="15" y2="12"/>
     </svg>
   ),
   chat: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
   ),
   broadcast: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="2"/>
       <path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/>
       <path d="M20.07 4.93a10 10 0 0 1 0 14.14"/><path d="M3.93 4.93a10 10 0 0 0 0 14.14"/>
@@ -118,10 +118,10 @@ export default function TrainerOverview() {
   const displayName = profile?.first_name || userName;
 
   const statsCards = [
-    { label: 'Total Teams',      num: teams.length,                                   suffix: '', iconKey: 'teams',     color: '#2563eb', href: '/trainer/teams'    },
-    { label: 'Total Players',    num: totalAthletes,                                  suffix: '', iconKey: 'players',   color: '#4ade80', href: '/trainer/athletes' },
-    { label: 'Active Rooms',     num: teams.filter((t) => !t.coach_only).length,      suffix: '', iconKey: 'chat',      color: '#60a5fa', href: '/trainer/messages' },
-    { label: 'Broadcast Rooms',  num: teams.filter((t) => t.coach_only).length,       suffix: '', iconKey: 'broadcast', color: '#fbbf24', href: '/trainer/messages' },
+    { label: 'Total Teams',      num: teams.length,                                   iconKey: 'teams',     color: '#3b82f6' },
+    { label: 'Total Players',    num: totalAthletes,                                  iconKey: 'players',   color: '#22c55e' },
+    { label: 'Active Rooms',     num: teams.filter((t) => !t.coach_only).length,      iconKey: 'chat',      color: '#60a5fa' },
+    { label: 'Broadcast Rooms',  num: teams.filter((t) => t.coach_only).length,       iconKey: 'broadcast', color: '#eab308' },
   ];
 
   const quickActions = [
@@ -130,6 +130,12 @@ export default function TrainerOverview() {
     { label: 'Update Profile',  sub: 'Set your specialty and certifications',  href: '/trainer/profile',  iconKey: 'edit'    },
     { label: 'Assign to Player', sub: 'Go to a team and assign goals/workouts', href: '/trainer/teams',   iconKey: 'assign'  },
   ];
+
+  const cardStyle = {
+    background: 'rgba(255,255,255,0.03)',
+    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+    border: '1px solid rgba(255,255,255,0.06)',
+  };
 
   return (
     <>
@@ -149,9 +155,9 @@ export default function TrainerOverview() {
       }}>
         <h1 className="text-3xl font-black text-white">
           {getGreeting()},{' '}
-          <span style={{ color: '#2563eb' }} className="capitalize">{displayName}</span>!
+          <span className="text-gradient-blue capitalize">{displayName}</span>!
         </h1>
-        <p className="text-gray-400 mt-1">Coach dashboard — manage your teams and players</p>
+        <p style={{ color: 'rgba(255,255,255,0.35)' }} className="mt-1">Coach dashboard — manage your teams and players</p>
       </div>
 
       {/* Stat cards */}
@@ -159,22 +165,24 @@ export default function TrainerOverview() {
         {statsCards.map((s, i) => (
           <a
             key={s.label}
-            href={s.href}
-            className="rounded-xl p-5 border border-gray-800 hover:border-blue-700 transition-all cursor-pointer block group"
+            href={s.label.includes('Team') ? '/trainer/teams' : s.label.includes('Player') ? '/trainer/athletes' : '/trainer/messages'}
+            className="rounded-2xl p-5 transition-all cursor-pointer block group"
             style={{
-              backgroundColor: '#1e1e30',
+              ...cardStyle,
               opacity: mounted ? 1 : 0,
               transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-              transition: `opacity 0.5s ease ${i * 0.07 + 0.1}s, transform 0.5s ease ${i * 0.07 + 0.1}s, border-color 0.2s`,
+              transition: `opacity 0.5s ease ${i * 0.07 + 0.1}s, transform 0.5s ease ${i * 0.07 + 0.1}s, border-color 0.3s, box-shadow 0.3s`,
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${s.color}30`; e.currentTarget.style.boxShadow = `0 8px 24px ${s.color}10`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'none'; }}
           >
-            <div className="mb-3 w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${s.color}18`, color: s.color }}>
+            <div className="mb-3 w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${s.color}12`, color: s.color }}>
               {StatIcons[s.iconKey]}
             </div>
-            <div className="text-2xl font-black text-white tabular-nums">
+            <div className="text-2xl font-black text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {loading ? <Skeleton height={28} width={48} /> : <CountUp to={s.num} />}
             </div>
-            <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{s.label}</div>
+            <div className="text-xs mt-1 font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.label}</div>
           </a>
         ))}
       </div>
@@ -182,32 +190,34 @@ export default function TrainerOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Quick Actions */}
         <div
-          className="rounded-xl p-6 border border-gray-800"
+          className="rounded-2xl p-6"
           style={{
-            backgroundColor: '#1e1e30',
+            ...cardStyle,
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
             transition: 'opacity 0.55s ease 0.38s, transform 0.55s ease 0.38s',
           }}
         >
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Quick Actions</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wide mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Quick Actions</h2>
           <div className="space-y-2">
             {quickActions.map((a) => (
               <Link
                 key={a.href + a.label}
                 href={a.href}
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-800 hover:border-blue-700 transition-all group"
-                style={{ backgroundColor: '#12122a' }}
+                className="flex items-center gap-3 p-3 rounded-xl transition-all group"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.2)'; e.currentTarget.style.background = 'rgba(59,130,246,0.04)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
-                  style={{ backgroundColor: 'rgba(37,99,235,0.12)', color: '#60a5fa' }}>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa' }}>
                   {QuickIcons[a.iconKey]}
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{a.label}</div>
-                  <div className="text-xs text-gray-600">{a.sub}</div>
+                  <div className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>{a.sub}</div>
                 </div>
-                <svg className="ml-auto text-gray-700 group-hover:text-blue-600 transition-colors" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="ml-auto transition-colors" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'rgba(255,255,255,0.15)' }}>
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </Link>
@@ -217,36 +227,38 @@ export default function TrainerOverview() {
 
         {/* My Teams */}
         <div
-          className="rounded-xl p-6 border border-gray-800"
+          className="rounded-2xl p-6"
           style={{
-            backgroundColor: '#1e1e30',
+            ...cardStyle,
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
             transition: 'opacity 0.55s ease 0.45s, transform 0.55s ease 0.45s',
           }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide">My Teams</h2>
-            <Link href="/trainer/teams" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">View all</Link>
+            <h2 className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>My Teams</h2>
+            <Link href="/trainer/teams" className="text-xs font-medium transition-colors" style={{ color: '#3b82f6' }}>View all</Link>
           </div>
           {loading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => <Skeleton key={i} height={48} rounded={8} />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} height={48} rounded={10} />)}
             </div>
           ) : teams.length === 0 ? (
-            <p className="text-gray-500 text-sm">No teams yet. Create your first team!</p>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>No teams yet. Create your first team!</p>
           ) : (
             <div className="space-y-1">
               {teams.slice(0, 5).map((t) => (
-                <div key={t.id} className="flex items-center justify-between py-3 border-b border-gray-800/60 last:border-0">
+                <div key={t.id} className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <div>
                     <div className="text-sm font-semibold text-white">{t.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
                       {t.member_count} player{t.member_count !== 1 ? 's' : ''}
-                      {t.coach_only && <span className="ml-1.5 text-yellow-600/70">· Broadcast</span>}
+                      {t.coach_only && <span className="ml-1.5" style={{ color: 'rgba(234,179,8,0.6)' }}>· Broadcast</span>}
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border" style={{ borderColor: 'rgba(37,99,235,0.4)', color: '#60a5fa', backgroundColor: 'rgba(37,99,235,0.08)' }}>
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg" style={{
+                    background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', color: '#60a5fa',
+                  }}>
                     {t.join_key}
                   </span>
                 </div>
@@ -259,24 +271,28 @@ export default function TrainerOverview() {
       {/* Complete profile nudge */}
       {profile && !profile.specialty && (
         <div
-          className="rounded-xl p-5 border border-blue-900/40 flex items-start gap-4"
+          className="rounded-2xl p-5 flex items-start gap-4"
           style={{
-            backgroundColor: 'rgba(37,99,235,0.06)',
+            background: 'rgba(59,130,246,0.04)',
+            border: '1px solid rgba(59,130,246,0.12)',
             opacity: mounted ? 1 : 0,
             transition: 'opacity 0.6s ease 0.6s',
           }}
         >
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#60a5fa' }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
           </div>
           <div>
             <h3 className="font-semibold text-white mb-1">Complete your profile</h3>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Add your specialty and certifications so players can find you.{' '}
-              <Link href="/trainer/profile" className="text-blue-400 hover:text-blue-300 underline transition-colors">
-                Update profile →
+              <Link href="/trainer/profile" className="underline transition-colors" style={{ color: '#60a5fa' }}>
+                Update profile
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', marginLeft: 4 }}>
+                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                </svg>
               </Link>
             </p>
           </div>

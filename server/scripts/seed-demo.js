@@ -359,45 +359,6 @@ async function seed() {
   }
   console.log('   Done.\n');
 
-  // ── Checklists ──
-  console.log('✅ Creating checklists...');
-  for (const team of createdTeams) {
-    const checkRes = await pool.query(
-      `INSERT INTO checklists (trainer_id, team_id, title)
-       VALUES ($1, $2, $3) RETURNING id`,
-      [team.trainerId, team.id, 'Pre-Game Day Checklist']
-    );
-    const checkId = checkRes.rows[0].id;
-    const items = [
-      'Complete morning shoot-around',
-      'Eat a proper pre-game meal (carbs + protein)',
-      'Review scouting report on opponent',
-      'Get 8+ hours of sleep the night before',
-      'Arrive 45 min early for warm-up',
-      'Log yesterday\'s workout in Peakform',
-    ];
-    for (let i = 0; i < items.length; i++) {
-      const itemRes = await pool.query(
-        `INSERT INTO checklist_items (checklist_id, text, sort_order) VALUES ($1, $2, $3) RETURNING id`,
-        [checkId, items[i], i]
-      );
-      // Mark some items complete for the first athlete on the team
-      if (i < 3) {
-        const firstMemberRes = await pool.query(
-          `SELECT user_id FROM team_members WHERE team_id = $1 LIMIT 1`,
-          [team.id]
-        );
-        if (firstMemberRes.rows[0]) {
-          await pool.query(
-            `INSERT INTO checklist_completions (item_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-            [itemRes.rows[0].id, firstMemberRes.rows[0].user_id]
-          );
-        }
-      }
-    }
-  }
-  console.log('   Done.\n');
-
   // ── Summary ──
   console.log('━'.repeat(50));
   console.log('✅ Demo seed complete!\n');

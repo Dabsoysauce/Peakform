@@ -28,21 +28,17 @@ function buildWeeklyChartData(sessions) {
   return weeks;
 }
 
-// Shimmer skeleton block
-function Skeleton({ width = '100%', height = 20, rounded = 8 }) {
+function Skeleton({ width = '100%', height = 20, rounded = 12 }) {
   return (
     <div style={{
-      width,
-      height,
-      borderRadius: rounded,
-      background: 'linear-gradient(90deg, #1e2440 25%, #2a3360 50%, #1e2440 75%)',
+      width, height, borderRadius: rounded,
+      background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
       backgroundSize: '300% 100%',
       animation: 'shimmer 1.6s ease infinite',
     }} />
   );
 }
 
-// Animated count-up number
 function CountUp({ to = 0, duration = 900 }) {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -59,26 +55,25 @@ function CountUp({ to = 0, duration = 900 }) {
   return val;
 }
 
-// SVG icons for stat cards
 const StatIcons = {
   workouts: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/><line x1="9" y1="12" x2="15" y2="12"/>
     </svg>
   ),
   goals: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
     </svg>
   ),
   calendar: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
       <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
     </svg>
   ),
   trophy: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
       <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
       <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
@@ -86,7 +81,7 @@ const StatIcons = {
     </svg>
   ),
   streak: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M13 2L3 14h9l-1 9 10-12h-9l1-9z"/>
     </svg>
   ),
@@ -108,7 +103,6 @@ export default function DashboardOverview() {
     const email = localStorage.getItem('email') || '';
     setUserName(email.split('@')[0]);
     loadData();
-    // slight delay so animations trigger after paint
     const t = setTimeout(() => setMounted(true), 60);
     return () => clearTimeout(t);
   }, []);
@@ -161,12 +155,18 @@ export default function DashboardOverview() {
   const recentWorkouts = workouts.slice(0, 3);
 
   const statsCards = [
-    { label: 'Total Workouts', num: workouts.length,          suffix: '',          iconKey: 'workouts', color: '#2563eb', href: '/dashboard/workouts' },
-    { label: 'Active Goals',   num: activeGoals.length,       suffix: '',          iconKey: 'goals',    color: '#4ade80', href: '/dashboard/goals' },
-    { label: 'This Week',      num: thisWeekSessions.length,  suffix: ' sessions', iconKey: 'calendar', color: '#60a5fa', href: '/dashboard/workouts' },
-    { label: 'Goals Hit',      num: goalsHit,                 suffix: '',          iconKey: 'trophy',   color: '#fbbf24', href: '/dashboard/goals' },
-    { label: 'Streak',         num: profile?.workout_streak || 0, suffix: ' days', iconKey: 'streak',   color: '#f97316', href: '/dashboard/workouts' },
+    { label: 'Total Workouts', num: workouts.length,          suffix: '',          iconKey: 'workouts', color: '#e85d04', gradient: 'linear-gradient(135deg, #e85d04, #f97316)' },
+    { label: 'Active Goals',   num: activeGoals.length,       suffix: '',          iconKey: 'goals',    color: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #4ade80)' },
+    { label: 'This Week',      num: thisWeekSessions.length,  suffix: ' sessions', iconKey: 'calendar', color: '#3b82f6', gradient: 'linear-gradient(135deg, #3b82f6, #60a5fa)' },
+    { label: 'Goals Hit',      num: goalsHit,                 suffix: '',          iconKey: 'trophy',   color: '#eab308', gradient: 'linear-gradient(135deg, #eab308, #fbbf24)' },
+    { label: 'Streak',         num: profile?.workout_streak || 0, suffix: ' days', iconKey: 'streak',   color: '#f97316', gradient: 'linear-gradient(135deg, #f97316, #fb923c)' },
   ];
+
+  const cardStyle = {
+    background: 'rgba(255,255,255,0.03)',
+    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+    border: '1px solid rgba(255,255,255,0.06)',
+  };
 
   return (
     <>
@@ -175,26 +175,20 @@ export default function DashboardOverview() {
           0%   { background-position: 100% 0; }
           100% { background-position: -100% 0; }
         }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
       `}</style>
 
       {/* Header */}
-      <div
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-          transition: 'opacity 0.5s ease, transform 0.5s ease',
-          marginBottom: 32,
-        }}
-      >
+      <div style={{
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? 'translateY(0)' : 'translateY(12px)',
+        transition: 'opacity 0.5s ease, transform 0.5s ease',
+        marginBottom: 32,
+      }}>
         <h1 className="text-3xl font-black text-white">
           {getGreeting()},{' '}
-          <span style={{ color: '#2563eb' }} className="capitalize">{userName}</span>!
+          <span className="text-gradient capitalize">{userName}</span>!
         </h1>
-        <p className="text-gray-400 mt-1">Here's your training overview</p>
+        <p style={{ color: 'rgba(255,255,255,0.35)' }} className="mt-1">Here&apos;s your training overview</p>
       </div>
 
       {/* Stat cards */}
@@ -202,27 +196,29 @@ export default function DashboardOverview() {
         {statsCards.map((s, i) => (
           <a
             key={s.label}
-            href={s.href}
-            className="rounded-xl p-5 border border-gray-800 hover:border-blue-700 transition-all cursor-pointer block group"
+            href={s.label.includes('Goal') ? '/dashboard/goals' : '/dashboard/workouts'}
+            className="rounded-2xl p-5 transition-all cursor-pointer block group"
             style={{
-              backgroundColor: '#1e1e30',
+              ...cardStyle,
               opacity: mounted ? 1 : 0,
               transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-              transition: `opacity 0.5s ease ${i * 0.07 + 0.1}s, transform 0.5s ease ${i * 0.07 + 0.1}s, border-color 0.2s`,
+              transition: `opacity 0.5s ease ${i * 0.07 + 0.1}s, transform 0.5s ease ${i * 0.07 + 0.1}s, border-color 0.3s, box-shadow 0.3s`,
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${s.color}30`; e.currentTarget.style.boxShadow = `0 8px 24px ${s.color}10`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = 'none'; }}
           >
             <div
-              className="mb-3 w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `${s.color}18`, color: s.color }}
+              className="mb-3 w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: `${s.color}12`, color: s.color }}
             >
               {StatIcons[s.iconKey]}
             </div>
-            <div className="text-2xl font-black text-white tabular-nums">
+            <div className="text-2xl font-black text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {loading ? <Skeleton height={28} width={48} /> : (
                 <><CountUp to={s.num} />{s.suffix}</>
               )}
             </div>
-            <div className="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wide">{s.label}</div>
+            <div className="text-xs mt-1 font-medium uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.label}</div>
           </a>
         ))}
       </div>
@@ -230,45 +226,49 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Area chart */}
         <div
-          className="lg:col-span-2 rounded-xl p-6 border border-gray-800"
+          className="lg:col-span-2 rounded-2xl p-6"
           style={{
-            backgroundColor: '#1e1e30',
+            ...cardStyle,
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
             transition: 'opacity 0.55s ease 0.45s, transform 0.55s ease 0.45s',
           }}
         >
-          <h2 className="text-base font-bold text-white mb-5 uppercase tracking-wide text-xs text-gray-400">
-            Sessions / Week <span className="text-gray-600 font-normal normal-case tracking-normal text-sm">— last 8 weeks</span>
+          <h2 className="text-xs font-bold uppercase tracking-wide mb-5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Sessions / Week <span className="font-normal normal-case tracking-normal text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>— last 8 weeks</span>
           </h2>
           {loading ? (
-            <div className="space-y-3 pt-2">
-              <Skeleton height={160} rounded={10} />
-            </div>
+            <Skeleton height={200} rounded={12} />
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={chartData}>
                 <defs>
-                  <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#2563eb" stopOpacity={0.35}/>
-                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0}/>
+                  <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#e85d04" stopOpacity={0.3}/>
+                    <stop offset="100%" stopColor="#e85d04" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                <XAxis dataKey="week" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} axisLine={false} tickLine={false} width={24} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <XAxis dataKey="week" stroke="transparent" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false} />
+                <YAxis stroke="transparent" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)' }} allowDecimals={false} axisLine={false} tickLine={false} width={24} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#12122a', border: '1px solid #1e3a8a', borderRadius: '10px', color: 'white', fontSize: 13 }}
-                  cursor={{ stroke: '#2563eb', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  contentStyle={{
+                    backgroundColor: 'rgba(12,12,32,0.95)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 12, color: 'white', fontSize: 13,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                  }}
+                  cursor={{ stroke: '#e85d04', strokeWidth: 1, strokeDasharray: '4 4' }}
                 />
                 <Area
                   type="monotone"
                   dataKey="sessions"
-                  stroke="#2563eb"
+                  stroke="#e85d04"
                   strokeWidth={2.5}
-                  fill="url(#blueGrad)"
-                  dot={{ fill: '#2563eb', r: 4, strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: '#60a5fa', strokeWidth: 0 }}
+                  fill="url(#orangeGrad)"
+                  dot={{ fill: '#e85d04', r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: '#f97316', strokeWidth: 0 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -277,39 +277,39 @@ export default function DashboardOverview() {
 
         {/* Active Goals */}
         <div
-          className="rounded-xl p-6 border border-gray-800"
+          className="rounded-2xl p-6"
           style={{
-            backgroundColor: '#1e1e30',
+            ...cardStyle,
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
             transition: 'opacity 0.55s ease 0.52s, transform 0.55s ease 0.52s',
           }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Active Goals</h2>
-            <a href="/dashboard/goals" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">View all</a>
+            <h2 className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Active Goals</h2>
+            <a href="/dashboard/goals" className="text-xs font-medium transition-colors" style={{ color: '#e85d04' }}>View all</a>
           </div>
           {loading ? (
             <div className="space-y-3">
-              {[1,2,3].map(i => <Skeleton key={i} height={44} rounded={8} />)}
+              {[1,2,3].map(i => <Skeleton key={i} height={44} rounded={10} />)}
             </div>
           ) : activeGoals.length === 0 ? (
-            <p className="text-gray-500 text-sm">No active goals. Set some in the Goals tab!</p>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>No active goals. Set some in the Goals tab!</p>
           ) : (
             <div className="space-y-3">
               {activeGoals.slice(0, 4).map((g) => (
-                <div key={g.id} className="flex items-start gap-3 py-2 border-b border-gray-800/60 last:border-0">
-                  <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#2563eb' }} />
+                <div key={g.id} className="flex items-start gap-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#e85d04', boxShadow: '0 0 6px rgba(232,93,4,0.4)' }} />
                   <div>
                     <div className="text-sm font-medium text-white leading-snug">{g.title}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
                       {g.metric.replace(/_/g, ' ')} {g.comparison === 'gte' ? '≥' : g.comparison === 'lte' ? '≤' : '='} {g.target_value}
                     </div>
                   </div>
                 </div>
               ))}
               {activeGoals.length > 4 && (
-                <p className="text-xs text-gray-600 pt-1">+{activeGoals.length - 4} more</p>
+                <p className="text-xs pt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>+{activeGoals.length - 4} more</p>
               )}
             </div>
           )}
@@ -319,39 +319,39 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Workouts */}
         <div
-          className="rounded-xl p-6 border border-gray-800"
+          className="rounded-2xl p-6"
           style={{
-            backgroundColor: '#1e1e30',
+            ...cardStyle,
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
             transition: 'opacity 0.55s ease 0.6s, transform 0.55s ease 0.6s',
           }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Recent Workouts</h2>
-            <a href="/dashboard/workouts" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">View all</a>
+            <h2 className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Recent Workouts</h2>
+            <a href="/dashboard/workouts" className="text-xs font-medium transition-colors" style={{ color: '#e85d04' }}>View all</a>
           </div>
           {loading ? (
             <div className="space-y-3">
-              {[1,2,3].map(i => <Skeleton key={i} height={50} rounded={8} />)}
+              {[1,2,3].map(i => <Skeleton key={i} height={50} rounded={10} />)}
             </div>
           ) : recentWorkouts.length === 0 ? (
-            <p className="text-gray-500 text-sm">No workouts yet. Start logging in the Workouts tab!</p>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>No workouts yet. Start logging in the Workouts tab!</p>
           ) : (
             <div className="space-y-1">
               {recentWorkouts.map((w) => (
-                <div
-                  key={w.id}
-                  className="flex items-center justify-between py-3 border-b border-gray-800/60 last:border-0"
-                >
+                <div key={w.id} className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <div>
                     <div className="text-sm font-semibold text-white">{w.session_name || 'Unnamed Session'}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
                       {new Date(w.session_date).toLocaleDateString()} · {w.exercise_count} exercises
                     </div>
                   </div>
                   {w.duration_minutes && (
-                    <span className="text-xs font-medium px-2 py-1 rounded-md text-gray-400" style={{ backgroundColor: '#12122a' }}>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg" style={{
+                      background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+                      color: 'rgba(255,255,255,0.4)',
+                    }}>
                       {w.duration_minutes}m
                     </span>
                   )}
@@ -363,16 +363,16 @@ export default function DashboardOverview() {
 
         {/* Join Team */}
         <div
-          className="rounded-xl p-6 border border-gray-800"
+          className="rounded-2xl p-6"
           style={{
-            backgroundColor: '#1e1e30',
+            ...cardStyle,
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(20px)',
             transition: 'opacity 0.55s ease 0.67s, transform 0.55s ease 0.67s',
           }}
         >
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Join a Team</h2>
-          <p className="text-gray-500 text-sm mb-5">Have a join code from your trainer? Enter it below.</p>
+          <h2 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>Join a Team</h2>
+          <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>Have a join code from your trainer? Enter it below.</p>
           <form onSubmit={handleJoinTeam} className="space-y-3">
             <input
               type="text"
@@ -380,25 +380,29 @@ export default function DashboardOverview() {
               onChange={(e) => setJoinKey(e.target.value.toUpperCase())}
               placeholder="8-CHAR CODE"
               maxLength={8}
-              className="w-full px-4 py-3 rounded-lg border border-gray-700 text-white placeholder-gray-600 focus:outline-none focus:border-blue-600 uppercase tracking-widest font-mono text-sm transition-colors"
-              style={{ backgroundColor: '#12122a' }}
+              className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-600 uppercase tracking-widest font-mono text-sm transition-all focus:outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={(e) => { e.target.style.borderColor = '#e85d04'; e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }}
+              onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
             />
             <button
               type="submit"
               disabled={joinLoading}
-              className="w-full py-3 rounded-lg font-bold text-sm text-white transition-all hover:opacity-90 disabled:opacity-40"
-              style={{ backgroundColor: '#2563eb' }}
+              className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+              onMouseEnter={(e) => { if (!joinLoading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.25)'; }}}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
             >
               {joinLoading ? 'Joining...' : 'Join Team'}
             </button>
           </form>
           {joinMsg && (
             <div
-              className={`mt-3 px-4 py-2.5 rounded-lg text-sm ${
-                joinMsg.includes('Joined')
-                  ? 'bg-green-900/20 border border-green-800/50 text-green-400'
-                  : 'bg-red-900/20 border border-red-800/50 text-red-400'
-              }`}
+              className="mt-3 px-4 py-2.5 rounded-xl text-sm"
+              style={joinMsg.includes('Joined')
+                ? { background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ade80' }
+                : { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }
+              }
             >
               {joinMsg}
             </div>

@@ -44,7 +44,6 @@
 | **Film Coaching** | View/analyze player-uploaded film with AI |
 | **Depth Charts** | Assign players to PG/SG/SF/PF/C positions with ordering |
 | **Schedule/Calendar** | Create game/practice events, share with team via auto-formatted DMs |
-| **Checklists** | Create team checklists; players can check off items |
 | **Player Search** | Browse/search all registered athletes by name, school, goal, email |
 
 ---

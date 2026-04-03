@@ -24,17 +24,23 @@ export default function Error({ error, reset }) {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: '#0f0f1a' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: '#08081a' }}>
+      {/* Background glow */}
+      <div style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 40% 30% at 50% 40%, rgba(239,68,68,0.06) 0%, transparent 70%)',
+      }} />
+
       <div style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(24px)',
         transition: 'all 0.6s ease',
+        position: 'relative',
       }}>
-        {/* Icon */}
         <div style={{
-          width: 72, height: 72, borderRadius: '50%',
-          backgroundColor: 'rgba(239,68,68,0.1)',
-          border: '1px solid rgba(239,68,68,0.3)',
+          width: 72, height: 72, borderRadius: 20,
+          background: 'rgba(239,68,68,0.08)',
+          border: '1px solid rgba(239,68,68,0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px',
         }}>
@@ -45,28 +51,20 @@ export default function Error({ error, reset }) {
         </div>
 
         <h1 style={{
-          fontSize: 'clamp(24px, 4vw, 36px)',
-          fontWeight: 900,
-          color: '#fff',
-          marginBottom: 12,
-          fontFamily: 'var(--font-rajdhani), sans-serif',
-          letterSpacing: '0.02em',
+          fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 900, color: '#fff',
+          marginBottom: 12, fontFamily: 'var(--font-rajdhani), sans-serif',
         }}>
           {pun.heading}
         </h1>
 
-        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', maxWidth: 380, lineHeight: 1.7, margin: '0 auto 12px' }}>
+        <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.35)', maxWidth: 380, lineHeight: 1.7, margin: '0 auto 12px' }}>
           {pun.sub}
         </p>
 
         {error?.message && (
           <p style={{
-            fontSize: 12, color: 'rgba(239,68,68,0.6)',
-            fontFamily: 'monospace',
-            marginBottom: 32,
-            maxWidth: 400,
-            margin: '0 auto 32px',
-            wordBreak: 'break-word',
+            fontSize: 12, color: 'rgba(239,68,68,0.5)', fontFamily: 'monospace',
+            maxWidth: 400, margin: '0 auto 32px', wordBreak: 'break-word',
           }}>
             {error.message}
           </p>
@@ -76,26 +74,24 @@ export default function Error({ error, reset }) {
           <button
             onClick={reset}
             style={{
-              padding: '12px 28px', borderRadius: 99,
-              backgroundColor: '#2563eb', color: '#fff',
-              fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none',
-              transition: 'opacity 0.2s',
+              padding: '12px 28px', borderRadius: 14,
+              background: 'linear-gradient(135deg, #e85d04, #f97316)',
+              color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none',
+              transition: 'all 0.25s ease',
             }}
-            onMouseOver={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseOut={e => e.currentTarget.style.opacity = '1'}
+            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.3)'; }}
+            onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
           >
             Try Again
           </button>
           <a href="/" style={{
-            padding: '12px 28px', borderRadius: 99,
-            backgroundColor: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.7)',
-            fontWeight: 700, fontSize: 14, textDecoration: 'none',
-            transition: 'background 0.2s',
+            padding: '12px 28px', borderRadius: 14,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+            color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 14, textDecoration: 'none',
+            transition: 'all 0.25s ease',
           }}
-            onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-            onMouseOut={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
           >
             Go Home
           </a>

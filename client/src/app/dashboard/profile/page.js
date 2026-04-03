@@ -151,23 +151,23 @@ export default function AthleteProfilePage() {
     return `${Math.floor(inches / 12)}'${inches % 12}"`;
   }
 
-  if (loading) return <div className="text-gray-400 text-center py-12">Loading profile...</div>;
+  if (loading) return <div className="text-white/40 text-center py-12">Loading profile...</div>;
 
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">Player Profile</h1>
-        <p className="text-gray-400 mt-1">Keep your stats and goals up to date</p>
+        <p className="text-white/40 mt-1">Keep your stats and goals up to date</p>
       </div>
 
       {/* Profile header */}
       {profile && (
-        <div className="rounded-xl p-6 border border-gray-800 mb-6 flex items-center gap-4" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl p-6 border border-white/[0.06] mb-6 flex items-center gap-4" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           {/* Avatar / photo upload */}
           <div className="relative flex-shrink-0">
             <div
               className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center text-2xl font-black text-white cursor-pointer"
-              style={{ backgroundColor: '#2563eb' }}
+              style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
               onClick={() => fileInputRef.current?.click()}
             >
               {photoPreview
@@ -191,13 +191,13 @@ export default function AthleteProfilePage() {
                 ? `${profile.first_name} ${profile.last_name}`
                 : profile.first_name || 'Set your name'}
             </h2>
-            {profile.school_name && <p className="text-sm text-gray-400">🏫 {profile.school_name}</p>}
+            {profile.school_name && <p className="text-sm text-white/40">🏫 {profile.school_name}</p>}
             {profile.primary_goal && (
               <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#2563eb' }}>
                 {profile.primary_goal}
               </span>
             )}
-            <p className="text-xs text-gray-500 mt-1">Click photo to change</p>
+            <p className="text-xs text-white/30 mt-1">Click photo to change</p>
             {photoPreview && (
               <button type="button" onClick={handleRemovePhoto} className="text-xs text-red-400 hover:underline mt-0.5">
                 Remove photo
@@ -206,9 +206,9 @@ export default function AthleteProfilePage() {
           </div>
           {profile.weight_lbs && profile.height_inches && (
             <div className="ml-auto text-right hidden sm:block">
-              <div className="text-sm text-gray-400">{profile.weight_lbs} lbs</div>
-              <div className="text-sm text-gray-400">{heightDisplay(profile.height_inches)}</div>
-              {profile.age && <div className="text-sm text-gray-400">{profile.age} yrs</div>}
+              <div className="text-sm text-white/40">{profile.weight_lbs} lbs</div>
+              <div className="text-sm text-white/40">{heightDisplay(profile.height_inches)}</div>
+              {profile.age && <div className="text-sm text-white/40">{profile.age} yrs</div>}
             </div>
           )}
         </div>
@@ -218,61 +218,61 @@ export default function AthleteProfilePage() {
         {error && <div className="px-4 py-3 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>}
         {saved && <div className="px-4 py-3 rounded-lg border border-green-800 bg-green-900/20 text-green-400 text-sm">Profile saved!</div>}
 
-        <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl p-6 border border-white/[0.06] space-y-4" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           <h3 className="font-bold text-white text-sm uppercase tracking-wide">Personal Info</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">First Name</label>
               <input type="text" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} placeholder="John"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">Last Name</label>
               <input type="text" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} placeholder="Smith"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Age</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">Age</label>
               <input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} placeholder="16" min="13" max="100"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Weight (lbs)</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">Weight (lbs)</label>
               <input type="number" value={form.weight_lbs} onChange={(e) => setForm({ ...form, weight_lbs: e.target.value })} placeholder="170" step="0.1" min="50"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Height (inches)</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">Height (inches)</label>
               <input type="number" value={form.height_inches} onChange={(e) => setForm({ ...form, height_inches: e.target.value })} placeholder="72" min="48" max="96"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl p-6 border border-white/[0.06] space-y-4" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           <h3 className="font-bold text-white text-sm uppercase tracking-wide">Training Focus</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Primary Goal</label>
+            <label className="block text-sm font-medium text-white/50 mb-1">Primary Goal</label>
             <select value={form.primary_goal} onChange={(e) => setForm({ ...form, primary_goal: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-blue-500" style={{ backgroundColor: '#16213e' }}>
+              className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}>
               <option value="">Select a goal...</option>
               {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+            <label className="block text-sm font-medium text-white/50 mb-1">Bio</label>
             <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })}
               placeholder="Tell your coach about your background, position, goals..."
-              rows={4} className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none" style={{ backgroundColor: '#16213e' }} />
+              rows={4} className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04] resize-none" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
           </div>
         </div>
 
-        <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl p-6 border border-white/[0.06] space-y-4" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           <h3 className="font-bold text-white text-sm uppercase tracking-wide">School</h3>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">School</label>
+            <label className="block text-sm font-medium text-white/50 mb-1">School</label>
             <SchoolSearch
               value={form.school_name}
               onChange={(val) => setForm({ ...form, school_name: val })}
@@ -280,12 +280,12 @@ export default function AthleteProfilePage() {
           </div>
         </div>
 
-        <div className="rounded-xl p-6 border border-gray-800 space-y-4" style={{ backgroundColor: '#1e1e30' }}>
+        <div className="rounded-2xl p-6 border border-white/[0.06] space-y-4" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
           <h3 className="font-bold text-white text-sm uppercase tracking-wide">Academic Info</h3>
-          <p className="text-xs text-gray-500">Self-reported — visible to coaches</p>
+          <p className="text-xs text-white/30">Self-reported — visible to coaches</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">GPA</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">GPA</label>
               <input
                 type="number"
                 value={form.gpa}
@@ -294,12 +294,12 @@ export default function AthleteProfilePage() {
                 step="0.01"
                 min="0"
                 max="5"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                style={{ backgroundColor: '#16213e' }}
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]"
+                style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Graduation Year</label>
+              <label className="block text-sm font-medium text-white/50 mb-1">Graduation Year</label>
               <input
                 type="number"
                 value={form.graduation_year}
@@ -307,8 +307,8 @@ export default function AthleteProfilePage() {
                 placeholder="2026"
                 min="2020"
                 max="2035"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                style={{ backgroundColor: '#16213e' }}
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]"
+                style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>
@@ -320,9 +320,9 @@ export default function AthleteProfilePage() {
       </form>
 
       {/* Danger Zone */}
-      <div className="mt-8 rounded-xl p-6 border border-red-900/40" style={{ backgroundColor: 'rgba(127,29,29,0.1)' }}>
+      <div className="mt-8 rounded-2xl p-6 border border-red-900/40" style={{ backgroundColor: 'rgba(127,29,29,0.1)' }}>
         <h3 className="font-bold text-red-400 text-sm uppercase tracking-wide mb-1">Danger Zone</h3>
-        <p className="text-sm text-gray-500 mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
+        <p className="text-sm text-white/30 mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
         {!confirmDelete ? (
           <button
             type="button"
@@ -345,7 +345,7 @@ export default function AthleteProfilePage() {
             <button
               type="button"
               onClick={() => setConfirmDelete(false)}
-              className="px-4 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+              className="px-4 py-2.5 rounded-lg text-sm text-white/40 hover:text-white transition-colors"
             >
               Cancel
             </button>
