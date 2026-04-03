@@ -270,10 +270,6 @@ export default function PublicPlayerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [analyzingMedia, setAnalyzingMedia] = useState(null);
-  const [scoutingReportOpen, setScoutingReportOpen] = useState(false);
-  const [scoutingReport, setScoutingReport] = useState('');
-  const [scoutingLoading, setScoutingLoading] = useState(false);
-  const [scoutingError, setScoutingError] = useState('');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -328,24 +324,6 @@ export default function PublicPlayerProfilePage() {
     ? `${profile.first_name} ${profile.last_name || ''}`.trim()
     : 'Unknown Player';
   const initials = (profile.first_name || 'P').charAt(0).toUpperCase();
-
-  async function generateScoutingReport() {
-    setScoutingLoading(true);
-    setScoutingError('');
-    setScoutingReport('');
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`${BASE}/ai/scouting-report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ userId }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setScoutingError(data.error || 'Failed to generate report'); return; }
-      setScoutingReport(data.analysis);
-    } catch { setScoutingError('Failed to generate report. Try again.'); }
-    setScoutingLoading(false);
-  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0f0f1a' }}>
@@ -450,46 +428,6 @@ export default function PublicPlayerProfilePage() {
               >
                 💬 Send Message
               </button>
-              <button
-                onClick={() => { setScoutingReportOpen(true); if (!scoutingReport && !scoutingLoading) generateScoutingReport(); }}
-                className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity text-sm"
-                style={{ backgroundColor: '#7c3aed' }}
-              >
-                🤖 Scouting Report
-              </button>
-            </div>
-          )}
-          {/* Scouting Report Panel */}
-          {scoutingReportOpen && (
-            <div className="mt-4 rounded-xl border border-purple-800 p-5" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-black text-white text-sm uppercase tracking-wide">AI Scouting Report</h3>
-                <div className="flex gap-2">
-                  {scoutingReport && (
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(scoutingReport); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                      className="text-xs px-3 py-1 rounded border font-medium hover:opacity-80"
-                      style={{ borderColor: '#7c3aed', color: '#a78bfa' }}
-                    >
-                      {copied ? '✓ Copied' : '📋 Copy'}
-                    </button>
-                  )}
-                  <button onClick={() => setScoutingReportOpen(false)} className="text-gray-400 hover:text-white text-lg leading-none">×</button>
-                </div>
-              </div>
-              {scoutingLoading ? (
-                <div className="flex items-center gap-3 py-4">
-                  <div className="w-5 h-5 rounded-full border-2 border-purple-500 border-t-transparent animate-spin flex-shrink-0" />
-                  <span className="text-gray-400 text-sm">Generating scouting report...</span>
-                </div>
-              ) : scoutingError ? (
-                <div className="px-4 py-3 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{scoutingError}</div>
-              ) : (
-                <div className="space-y-1">{renderAnalysis(scoutingReport)}</div>
-              )}
-              {!scoutingLoading && (
-                <button onClick={generateScoutingReport} className="text-xs text-purple-400 hover:underline mt-3">Regenerate ↺</button>
-              )}
             </div>
           )}
         </div>
