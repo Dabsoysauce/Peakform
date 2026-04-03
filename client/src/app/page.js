@@ -21,7 +21,7 @@ const features = [
     title: 'Every rep.\nEvery session.\nAll tracked.',
     desc: 'Log workouts with sets, reps, weight, and RPE. Build a complete history coaches can actually see.',
     stat: '54 min avg session',
-    color: '#e85d04',
+    color: '#3b82f6',
   },
   {
     label: 'Achieve',
@@ -35,7 +35,7 @@ const features = [
     title: 'Your game.\nOn tape.\nAI analyzed.',
     desc: 'Upload game and practice film. Get AI-powered breakdowns of your form, footwork, and mechanics.',
     stat: 'AI-powered analysis',
-    color: '#e85d04',
+    color: '#3b82f6',
   },
   {
     label: 'Recruit',
@@ -123,7 +123,7 @@ function PinnedFeatures() {
         }} />
         <div style={{
           position: 'absolute', bottom: '20%', right: '15%', width: 400, height: 400, borderRadius: '50%',
-          background: `radial-gradient(circle, ${f.color === '#e85d04' ? '#3b82f6' : '#e85d04'}08 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${f.color === '#3b82f6' ? '#e85d04' : '#3b82f6'}08 0%, transparent 70%)`,
           transition: 'all 1s ease', pointerEvents: 'none',
           animation: 'orb-float 10s ease-in-out infinite reverse',
         }} />
@@ -223,7 +223,7 @@ function PinnedFeatures() {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, backgroundColor: 'rgba(255,255,255,0.04)' }}>
           <div style={{
             height: '100%', width: `${progress * 100}%`, transition: 'width 0.1s linear',
-            background: `linear-gradient(90deg, #e85d04, #3b82f6)`,
+            background: `linear-gradient(90deg, #3b82f6, #60a5fa)`,
           }} />
         </div>
       </div>
@@ -246,7 +246,7 @@ function StatsSection() {
     }}>
       <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, textAlign: 'center' }}>
         {[
-          { val: workouts, suffix: '+', label: 'Workouts Logged', color: '#e85d04' },
+          { val: workouts, suffix: '+', label: 'Workouts Logged', color: '#3b82f6' },
           { val: prs, suffix: '+', label: 'PRs Broken', color: '#3b82f6' },
           { val: coaches, suffix: '+', label: 'Active Coaches', color: '#22c55e' },
         ].map((s, i) => (
@@ -286,7 +286,7 @@ function HowItWorks() {
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <HeroReveal delay={0}>
           <div style={{ textAlign: 'center', marginBottom: 100 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#e85d04', marginBottom: 20 }}>How It Works</p>
+            <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20 }}>How It Works</p>
             <h2 style={{ fontSize: 'clamp(36px, 6vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>
               From first login<br />to first offer.
             </h2>
@@ -308,7 +308,7 @@ function HowItWorks() {
               }}>
                 <div style={{
                   fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 900, flexShrink: 0, lineHeight: 1, minWidth: 70,
-                  background: 'linear-gradient(135deg, #e85d04, #e85d0430)',
+                  background: 'linear-gradient(135deg, #3b82f6, #3b82f630)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                 }}>
                   {s.num}
@@ -345,7 +345,7 @@ function PlayerCard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div style={{
             width: 52, height: 52, borderRadius: 16,
-            background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 22, fontWeight: 900, color: '#fff', flexShrink: 0,
           }}>M</div>
@@ -369,7 +369,7 @@ function PlayerCard() {
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, padding: '5px 12px', borderRadius: 99, background: 'rgba(232,93,4,0.1)', border: '1px solid rgba(232,93,4,0.2)', color: '#f97316', fontWeight: 600 }}>Scholarship</span>
+          <span style={{ fontSize: 11, padding: '5px 12px', borderRadius: 99, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#60a5fa', fontWeight: 600 }}>Scholarship</span>
           <span style={{ fontSize: 11, padding: '5px 12px', borderRadius: 99, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 600 }}>Class of 2026</span>
         </div>
 
@@ -432,7 +432,7 @@ export default function LandingPage() {
         .ticker-track { display: flex; width: max-content; animation: ticker 36s linear infinite; }
         .ticker-track:hover { animation-play-state: paused; }
         .cta-btn { transition: all 0.25s cubic-bezier(0.16,1,0.3,1); }
-        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,93,4,0.3); }
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.3); }
         .ghost-btn { transition: all 0.25s ease; }
         .ghost-btn:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; }
       `}</style>
@@ -449,7 +449,7 @@ export default function LandingPage() {
         transition: 'all 0.4s ease',
       }}>
         <div style={{ fontWeight: 900, fontSize: 17, letterSpacing: '-0.02em', color: '#fff' }}>
-          ATHLETE<span style={{ color: '#e85d04' }}>EDGE</span>
+          ATHLETE<span style={{ color: '#3b82f6' }}>EDGE</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <Link href="/login" style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }}>
@@ -457,7 +457,7 @@ export default function LandingPage() {
           </Link>
           <Link href="/register" className="cta-btn" style={{
             fontSize: 13, fontWeight: 700, color: '#fff',
-            background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
             padding: '8px 20px', borderRadius: 12, textDecoration: 'none',
           }}>
             Get Started
@@ -475,7 +475,7 @@ export default function LandingPage() {
         {/* Mesh gradient background */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(232,93,4,0.08) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 30% 60%, rgba(59,130,246,0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(59,130,246,0.08) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 30% 60%, rgba(232,93,4,0.06) 0%, transparent 70%)',
         }} />
         {/* Dot grid */}
         <div style={{
@@ -487,7 +487,7 @@ export default function LandingPage() {
         <div style={{
           fontSize: 11, fontWeight: 700, letterSpacing: '0.22em',
           textTransform: 'uppercase',
-          background: 'linear-gradient(90deg, #e85d04, #f97316)',
+          background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           marginBottom: 28,
           opacity: heroVisible ? 1 : 0,
@@ -510,7 +510,7 @@ export default function LandingPage() {
         }}>
           Your season.<br />
           <span style={{
-            background: 'linear-gradient(135deg, #e85d04 0%, #f97316 40%, #fb923c 100%)',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 40%, #93c5fd 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>Activated.</span>
         </h1>
@@ -536,7 +536,7 @@ export default function LandingPage() {
         }}>
           <Link href="/register" className="cta-btn" style={{
             padding: '16px 36px', borderRadius: 16,
-            background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
             color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none',
             display: 'inline-block',
           }}>
@@ -584,7 +584,7 @@ export default function LandingPage() {
             flexShrink: 0, paddingLeft: 24, paddingRight: 16,
             borderRight: '1px solid rgba(255,255,255,0.06)',
             fontSize: 10, fontWeight: 800, letterSpacing: '0.2em',
-            textTransform: 'uppercase', color: '#e85d04',
+            textTransform: 'uppercase', color: '#3b82f6',
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
@@ -622,10 +622,10 @@ export default function LandingPage() {
             <div style={{
               position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)',
               width: 300, height: 300, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(232,93,4,0.1) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)',
               pointerEvents: 'none',
             }} />
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#e85d04', marginBottom: 20, position: 'relative' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20, position: 'relative' }}>
               Ready to be seen?
             </p>
             <h2 style={{ fontSize: 'clamp(32px, 6vw, 56px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 20, position: 'relative' }}>
@@ -637,7 +637,7 @@ export default function LandingPage() {
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
               <Link href="/register" className="cta-btn" style={{
                 padding: '16px 40px', borderRadius: 16,
-                background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
                 color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none',
                 display: 'inline-block',
               }}>
@@ -665,16 +665,16 @@ export default function LandingPage() {
         textAlign: 'center',
       }}>
         <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', color: '#fff', marginBottom: 12 }}>
-          ATHLETE<span style={{ color: '#e85d04' }}>EDGE</span>
+          ATHLETE<span style={{ color: '#3b82f6' }}>EDGE</span>
         </div>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.18)', marginBottom: 10 }}>
           &copy; 2026 Athlete Edge. Built for ballers, by ballers.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#e85d04', textDecoration: 'none' }}>
+          <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#3b82f6', textDecoration: 'none' }}>
             ryan.dhalbisoi@gmail.com
           </a>
-          <a href="mailto:shrey2425@gmail.com" style={{ fontSize: 13, color: '#e85d04', textDecoration: 'none' }}>
+          <a href="mailto:shrey2425@gmail.com" style={{ fontSize: 13, color: '#3b82f6', textDecoration: 'none' }}>
             shrey2425@gmail.com
           </a>
         </div>
