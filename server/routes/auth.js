@@ -251,7 +251,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
     const result = await pool.query(
-      'SELECT id, email, password_hash, role FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, role, email_verified, verification_code FROM users WHERE email = $1',
       [email.toLowerCase()]
     );
     const user = result.rows[0];
@@ -261,7 +261,9 @@ router.post('/login', async (req, res) => {
     if (!(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-    if (!user.email_verified) {
+    // Only enforce verification for users who signed up with the new flow (have a verification_code set)
+    // Existing users who registered before email verification was added are grandfathered in
+    if (!user.email_verified && user.verification_code) {
       return res.status(403).json({ error: 'Please verify your email first. Check your inbox for the verification code.', unverified: true, email: user.email });
     }
     const token = jwt.sign(

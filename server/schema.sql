@@ -257,6 +257,8 @@ ALTER TABLE workout_sessions ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCE
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP;
+-- Grandfather existing users as verified (registered before email verification was added)
+UPDATE users SET email_verified = TRUE WHERE email_verified = FALSE AND verification_code IS NULL;
 
 -- Indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_user_id ON athlete_profiles(user_id);
