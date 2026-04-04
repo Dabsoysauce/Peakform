@@ -156,7 +156,10 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
         media_type: 'image/jpeg',
         data: base64_frame,
       };
-    } else {
+    } else if (base64_frames.length > 0) {
+      // Multiple frames provided — imageSource not needed, frameImages will use base64_frames directly
+      imageSource = null;
+    } else if (media_url) {
       try {
         imageSource = await fetchAllowedImage(media_url);
       } catch (err) {
