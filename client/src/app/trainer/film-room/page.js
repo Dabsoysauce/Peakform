@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../../lib/api';
+import { uploadMediaFile, deleteMediaFile } from '../../lib/supabase';
 
 const PCW = 560, PCH = 440, PCX = PCW / 2;
 const PM = 15;
@@ -543,6 +544,17 @@ export default function TrainerFilmRoomPage() {
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [analyzingMedia, setAnalyzingMedia] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [uploadMode, setUploadMode] = useState('file');
+  const [form, setForm] = useState({ title: '', description: '', url: '', media_type: 'video' });
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const [formError, setFormError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(null);
+  const fileInputRef = useRef(null);
+  const dropRef = useRef(null);
 
   useEffect(() => { loadMedia(); }, []);
 
@@ -555,6 +567,84 @@ export default function TrainerFilmRoomPage() {
     setLoading(false);
   }
 
+  function handleFileSelect(selected) {
+    if (!selected) return;
+    const maxSize = 100 * 1024 * 1024;
+    if (selected.size > maxSize) { setFormError('File must be under 100MB'); return; }
+    setFile(selected);
+    setFormError('');
+    const isVideo = selected.type.startsWith('video/');
+    setForm((f) => ({ ...f, media_type: isVideo ? 'video' : 'image' }));
+    if (!isVideo) {
+      const reader = new FileReader();
+      reader.onload = (e) => setFilePreview(e.target.result);
+      reader.readAsDataURL(selected);
+    } else {
+      setFilePreview(null);
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) handleFileSelect(dropped);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setFormError('');
+    setUploading(true);
+
+    try {
+      let url = form.url;
+      let media_type = form.media_type;
+
+      if (uploadMode === 'file') {
+        if (!file) { setFormError('Please select a file'); setUploading(false); return; }
+        setUploadProgress('Uploading...');
+        const userId = localStorage.getItem('userId');
+        url = await uploadMediaFile(file, userId);
+        media_type = file.type.startsWith('video/') ? 'video' : 'image';
+      }
+
+      const res = await apiFetch('/trainer-media', {
+        method: 'POST',
+        body: JSON.stringify({ title: form.title, description: form.description, url, media_type }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setFormError(data.error || 'Failed to save'); setUploading(false); return; }
+
+      setShowModal(false);
+      resetModal();
+      loadMedia();
+    } catch { setFormError('Upload failed. Try again.'); }
+    setUploading(false);
+    setUploadProgress('');
+  }
+
+  function resetModal() {
+    setForm({ title: '', description: '', url: '', media_type: 'video' });
+    setFile(null);
+    setFilePreview(null);
+    setFormError('');
+    setUploadProgress('');
+  }
+
+  async function handleDelete(m) {
+    if (!confirm('Delete this media?')) return;
+    setDeleteLoading(m.id);
+    try {
+      await apiFetch(`/trainer-media/${m.id}`, { method: 'DELETE' });
+      if (m.url && m.url.includes('supabase')) {
+        await deleteMediaFile(m.url).catch(() => {});
+      }
+      setMedia((prev) => prev.filter((x) => x.id !== m.id));
+    } catch {}
+    setDeleteLoading(null);
+  }
+
+  const isTrainerUpload = (m) => m.user_email === localStorage.getItem('email');
+
   return (
     <div>
       {analyzingMedia && (
@@ -563,8 +653,15 @@ export default function TrainerFilmRoomPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black text-white">Film Room</h1>
-          <p className="text-gray-400 mt-1">View and analyze film uploaded by your players</p>
+          <p className="text-gray-400 mt-1">Upload and analyze film from you and your players</p>
         </div>
+        <button
+          onClick={() => { setShowModal(true); resetModal(); }}
+          className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: '#2563eb' }}
+        >
+          + Add Film
+        </button>
       </div>
 
       {loading ? (
@@ -572,8 +669,11 @@ export default function TrainerFilmRoomPage() {
       ) : media.length === 0 ? (
         <div className="rounded-xl p-12 border border-gray-800 text-center" style={{ backgroundColor: '#1e1e30' }}>
           <div className="text-5xl mb-4">🎬</div>
-          <h3 className="text-xl font-bold text-white mb-2">No film from your players yet</h3>
-          <p className="text-gray-400">When your players upload game film or practice clips, they'll appear here.</p>
+          <h3 className="text-xl font-bold text-white mb-2">No film yet</h3>
+          <p className="text-gray-400 mb-6">Upload game film, practice clips, or highlight reels.</p>
+          <button onClick={() => { setShowModal(true); resetModal(); }} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
+            Upload First Clip
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -606,6 +706,9 @@ export default function TrainerFilmRoomPage() {
                   {playerName && (
                     <p className="text-xs text-blue-400 mb-2">🏀 {playerName}</p>
                   )}
+                  {playerName && !isTrainerUpload(m) && (
+                    <p className="text-xs text-blue-400 mb-2">🏀 {playerName}</p>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">{new Date(m.created_at).toLocaleDateString()}</span>
                     <div className="flex gap-2">
@@ -618,6 +721,11 @@ export default function TrainerFilmRoomPage() {
                           🤖 Analyze
                         </button>
                       )}
+                      {isTrainerUpload(m) && (
+                        <button onClick={() => handleDelete(m)} disabled={deleteLoading === m.id} className="text-xs px-2.5 py-1 rounded border border-red-900 text-red-400 hover:bg-red-900/20 disabled:opacity-50">
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -625,6 +733,110 @@ export default function TrainerFilmRoomPage() {
             );
           })}
         </div>
+      )}
+
+      {showModal && (
+        <Modal title="Add Film" onClose={() => { setShowModal(false); resetModal(); }}>
+          <div className="flex gap-2 mb-5">
+            {['file', 'url'].map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => { setUploadMode(mode); resetModal(); }}
+                className="flex-1 py-2 rounded-lg font-semibold text-sm transition-all"
+                style={{
+                  backgroundColor: uploadMode === mode ? '#2563eb' : '#16213e',
+                  color: uploadMode === mode ? 'white' : '#9ca3af',
+                  border: `1px solid ${uploadMode === mode ? '#2563eb' : '#374151'}`,
+                }}
+              >
+                {mode === 'file' ? '📁 Upload File' : '🔗 Paste URL'}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {formError && <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{formError}</div>}
+
+            {uploadMode === 'file' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">File *</label>
+                <div
+                  ref={dropRef}
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                  style={{ backgroundColor: '#16213e' }}
+                >
+                  {file ? (
+                    <div>
+                      {filePreview
+                        ? <img src={filePreview} alt="preview" className="w-full h-32 object-contain mb-2 rounded" />
+                        : <div className="text-4xl mb-2">🎬</div>
+                      }
+                      <p className="text-sm text-white font-medium">{file.name}</p>
+                      <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-4xl mb-2">📁</div>
+                      <p className="text-sm text-gray-400">Drop file here or click to browse</p>
+                      <p className="text-xs text-gray-600 mt-1">MP4, MOV, JPG, PNG · Max 100MB</p>
+                    </div>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="video/*,image/*" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">URL *</label>
+                <input
+                  type="url"
+                  value={form.url}
+                  onChange={(e) => setForm({ ...form, url: e.target.value })}
+                  placeholder="https://youtube.com/watch?v=... or direct link"
+                  required
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  style={{ backgroundColor: '#16213e' }}
+                />
+                <p className="text-xs text-gray-500 mt-1">YouTube links embed automatically</p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="e.g. Shooting Form - Practice 3/17"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                style={{ backgroundColor: '#16213e' }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Notes about this clip..."
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                style={{ backgroundColor: '#16213e' }}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={() => { setShowModal(false); resetModal(); }} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">
+                Cancel
+              </button>
+              <button type="submit" disabled={uploading} className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50" style={{ backgroundColor: '#2563eb' }}>
+                {uploading ? (uploadProgress || 'Uploading...') : 'Add Film'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );
