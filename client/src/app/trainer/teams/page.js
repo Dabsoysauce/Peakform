@@ -387,7 +387,6 @@ export default function TrainerTeamsPage() {
           onClose={() => setAssignTarget(null)}
         >
           <form onSubmit={handleAssign} className="space-y-3">
-            <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1">Workout Name *</label>
@@ -488,7 +487,7 @@ export default function TrainerTeamsPage() {
                     </div>
                   )}
                 </div>
-            {assignMsg && (
+                {assignMsg && (
               <div
                 className={`px-3 py-2 rounded-lg text-sm ${
                   assignMsg.startsWith('✓')
