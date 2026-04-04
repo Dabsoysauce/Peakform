@@ -86,36 +86,66 @@ router.post('/chat', authMiddleware, async (req, res) => {
   }
 });
 
-const FILM_ANALYSIS_PROMPT = `You are an elite basketball performance analyst and coach with deep expertise in player development, biomechanics, and game film analysis. A player or coach has submitted film for analysis.
+const FILM_ANALYSIS_PROMPT = `You are an elite basketball performance analyst with expertise in biomechanics, game strategy, player development, and film study. You have the analytical eye of a top-tier NBA scout combined with the coaching knowledge of a veteran head coach.
 
-Analyze the image and provide structured feedback in this exact format:
+Your job is to provide the most insightful, specific, and actionable film analysis possible. You are not generic — you notice the small details that separate good players from great ones.
 
-**What's Happening**
-One sentence describing the scene/action captured.
+Analyze the provided film frame(s) and deliver your analysis in this structured format:
 
-**Technique Assessment**
-Analyze the player's form, footwork, body positioning, and mechanics visible in the frame. Be specific about what you observe.
+**🎬 Situation Read**
+Describe exactly what's happening — the game situation, possession type, court spacing, and what moment of the play this captures. Be specific (e.g., "pick-and-roll action at the left elbow" not just "offensive play").
 
-**Strengths**
-2-3 bullet points on what the player is doing well.
+**🔍 Technique Breakdown**
+Deep analysis of the primary player's mechanics:
+- Footwork and base (stance width, pivot foot, weight distribution)
+- Body positioning and balance (hips, shoulders, center of gravity)
+- Hand placement and ball security
+- Eyes and court vision
+- Timing and rhythm of movements
 
-**Areas to Improve**
-2-3 specific, actionable coaching points with corrections.
+**💪 Strengths Identified**
+3-4 specific strengths with basketball terminology. Don't be generic — reference exactly what you see.
 
-**Coaching Note**
-One key drill or focus point the player should work on based on this film.
+**⚠️ Areas for Development**
+3-4 specific, actionable coaching points. Each should include:
+- What you observe
+- Why it matters
+- The specific correction
 
-**Recommended Plays** (only include this section if play diagrams were provided)
-Based on the defense/offense you see in the film, recommend which of the provided play diagrams would be most effective and briefly explain why.
+**📊 Tendency Report** (include ONLY if previous analysis history is provided)
+Based on patterns across multiple film sessions, identify:
+- Recurring strengths the player consistently shows
+- Recurring habits or tendencies that need attention
+- How the player's game has evolved across sessions
 
-Use proper basketball terminology. Be direct, specific, and constructive. If the image is too blurry, too distant, or doesn't clearly show basketball action, say so and give whatever feedback you can.`;
+**🏋️ Training Connection** (include ONLY if recent training data is provided)
+Connect what you see on film to the player's recent workouts:
+- Which exercises are translating to on-court performance
+- What training gaps might explain weaknesses you observe
+- Specific exercises or drills to add based on this film
+
+**📋 Playbook Recommendations** (include ONLY if play diagrams are provided)
+Reference specific plays from the provided playbook BY NAME. Explain:
+- Which play(s) would exploit what you see in this film
+- Why each recommended play fits the situation
+- Any adjustments to the play based on what you observe
+
+**🎯 Priority Action Items**
+Top 3 things this player should focus on immediately, ranked by impact. Each should be a concrete drill or habit change, not vague advice.
+
+IMPORTANT GUIDELINES:
+- Use proper basketball terminology throughout
+- Be specific and reference what you actually see — never give generic advice
+- If the image is blurry or doesn't clearly show basketball action, say so honestly
+- If multiple frames are provided, analyze progression and movement across frames
+- Be constructive but honest — players improve through direct, specific feedback`;
 
 router.post('/analyze-film', authMiddleware, async (req, res) => {
   try {
-    const { media_url, base64_frame, title, description, focus, player_focus, play_images = [] } = req.body;
+    const { media_url, base64_frame, base64_frames = [], title, description, focus, player_focus, play_images = [], play_names = [] } = req.body;
 
-    if (!media_url && !base64_frame) {
-      return res.status(400).json({ error: 'media_url or base64_frame is required' });
+    if (!media_url && !base64_frame && base64_frames.length === 0) {
+      return res.status(400).json({ error: 'media_url, base64_frame, or base64_frames is required' });
     }
 
     let imageSource;
@@ -134,24 +164,62 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
       }
     }
 
+    // Fetch previous analyses for tendency tracking
+    let previousAnalyses = [];
+    try {
+      const prevRes = await pool.query(
+        `SELECT ma.analysis, ma.focus, ma.created_at, m.title
+         FROM media_analyses ma
+         JOIN media m ON ma.media_id = m.id
+         WHERE ma.user_id = $1
+         ORDER BY ma.created_at DESC LIMIT 5`,
+        [req.user.id]
+      );
+      previousAnalyses = prevRes.rows;
+    } catch {}
+
+    // Fetch recent workout data for training context
+    let workoutContext = '';
+    try {
+      const workoutRes = await pool.query(
+        `SELECT ws.created_at, ws.notes,
+                json_agg(json_build_object('name', e.exercise_name, 'sets', e.sets, 'reps', e.reps, 'weight', e.weight_lbs)) as exercises
+         FROM workout_sessions ws
+         LEFT JOIN exercises e ON e.session_id = ws.id
+         WHERE ws.user_id = $1
+         GROUP BY ws.id
+         ORDER BY ws.created_at DESC LIMIT 3`,
+        [req.user.id]
+      );
+      if (workoutRes.rows.length > 0) {
+        workoutContext = `\n--- RECENT TRAINING DATA (reference when making training recommendations) ---\n${workoutRes.rows.map(w => `Session (${new Date(w.created_at).toLocaleDateString()}): ${w.exercises?.map(ex => `${ex.name}: ${ex.sets}x${ex.reps}${ex.weight ? ` @ ${ex.weight}lbs` : ''}`).join(', ') || 'No exercises logged'}`).join('\n')}`;
+      }
+    } catch {}
+
     const userText = [
       title ? `Film title: "${title}"` : null,
       description ? `Player's note: "${description}"` : null,
       focus ? `Analysis focus: ${focus}` : null,
       player_focus ? `The coach wants to focus on the player at approximately position (${Math.round(player_focus.x * 100)}% from left, ${Math.round(player_focus.y * 100)}% from top) of the frame.` : null,
-      play_images.length > 0 ? `The coach has also provided ${play_images.length} play diagram(s) from their playbook. In your analysis, recommend which of these plays would be effective based on what you observe in the film.` : null,
+      play_images.length > 0 ? `The coach has provided ${play_images.length} play diagram(s) from their playbook${play_names.length > 0 ? ` named: ${play_names.map((n, i) => `Play ${i+1}: "${n}"`).join(', ')}` : ''}. Reference these plays BY NAME when recommending which would be effective.` : null,
+      previousAnalyses.length > 0 ? `\n--- PREVIOUS ANALYSIS HISTORY (use to identify tendencies and patterns) ---\n${previousAnalyses.map((a, i) => `[${i+1}] "${a.title || 'Untitled'}" (${a.focus || 'general'}, ${new Date(a.created_at).toLocaleDateString()}):\n${a.analysis.substring(0, 500)}${a.analysis.length > 500 ? '...' : ''}`).join('\n\n')}` : null,
+      workoutContext || null,
     ].filter(Boolean).join('\n') || 'Please analyze this basketball film.';
 
-    // Build content array — film frame first, then play diagrams
+    // Build content array — film frame(s) first, then play diagrams
+    const frameImages = base64_frames.length > 0
+      ? base64_frames.map((f, i) => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: f } }))
+      : [{ type: 'image', source: imageSource }];
+
     const contentItems = [
-      { type: 'image', source: imageSource },
+      ...frameImages,
       ...play_images.map(png => ({ type: 'image', source: { type: 'base64', media_type: 'image/png', data: png } })),
-      { type: 'text', text: userText },
+      { type: 'text', text: base64_frames.length > 1 ? `[${base64_frames.length} frames extracted at intervals across the video]\n${userText}` : userText },
     ];
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
+      model: 'claude-opus-4-6',
+      max_tokens: 2500,
       system: FILM_ANALYSIS_PROMPT,
       messages: [{ role: 'user', content: contentItems }],
     });
@@ -223,15 +291,23 @@ router.post('/detect-players', authMiddleware, async (req, res) => {
     }
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 400,
+      model: 'claude-opus-4-6',
+      max_tokens: 800,
       messages: [{
         role: 'user',
         content: [
           { type: 'image', source: imageSource },
-          { type: 'text', text: `Identify all visible basketball players in this image. For each player, estimate their position as a fraction (0.0 to 1.0) of the image width (x) and height (y) from the top-left corner. Return ONLY a JSON array like this, no other text:
-[{"id":1,"x":0.3,"y":0.5,"team":"offense"},{"id":2,"x":0.6,"y":0.4,"team":"defense"}]
-If you cannot identify any players, return an empty array: []` },
+          { type: 'text', text: `You are analyzing a basketball game frame to identify all visible players. For each player you can identify:
+
+1. Estimate their position as a fraction (0.0 to 1.0) of the image width (x) and height (y) from the top-left corner
+2. Determine their team based on jersey color/uniform (use "light" and "dark" if you can't determine offense/defense)
+3. Estimate their position role if possible (guard, forward, center) based on their court location and build
+4. Note what action they appear to be doing (standing, running, shooting, defending, screening, etc.)
+
+Return ONLY a JSON array with this structure, no other text:
+[{"id":1,"x":0.3,"y":0.5,"team":"light","role":"guard","action":"dribbling"},{"id":2,"x":0.6,"y":0.4,"team":"dark","role":"forward","action":"defending"}]
+
+Be precise with coordinates — place the marker at the player's center mass. If you cannot identify any players, return an empty array: []` },
         ],
       }],
     });
@@ -289,8 +365,8 @@ router.post('/film-chat', authMiddleware, async (req, res) => {
     ];
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 600,
+      model: 'claude-opus-4-6',
+      max_tokens: 1200,
       system: FILM_ANALYSIS_PROMPT,
       messages,
     });

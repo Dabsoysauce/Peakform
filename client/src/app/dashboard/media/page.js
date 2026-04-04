@@ -293,12 +293,12 @@ function AnalysisModal({ media, onClose }) {
     setStep('done');
   }
 
-  async function extractVideoFrame(videoUrl) {
+  async function extractVideoFrame(videoUrl, timeSeconds = 2) {
     return new Promise((resolve, reject) => {
       const video = document.createElement('video');
       video.crossOrigin = 'anonymous';
       video.src = videoUrl;
-      video.currentTime = 2;
+      video.currentTime = timeSeconds;
       video.onseeked = () => {
         try {
           const canvas = document.createElement('canvas');
@@ -309,6 +309,31 @@ function AnalysisModal({ media, onClose }) {
         } catch { reject(new Error('Canvas extraction failed')); }
       };
       video.onerror = () => reject(new Error('Video load failed'));
+      video.load();
+    });
+  }
+
+  async function extractMultipleFrames(videoUrl) {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.crossOrigin = 'anonymous';
+      video.src = videoUrl;
+      video.onloadedmetadata = async () => {
+        const duration = video.duration || 10;
+        const times = duration > 6
+          ? [1, duration * 0.25, duration * 0.5, duration * 0.75, Math.max(duration - 1, 1)]
+          : [1, Math.max(duration / 2, 1)];
+        const unique = [...new Set(times.map(t => Math.min(Math.round(t * 10) / 10, duration - 0.5)))];
+        const frames = [];
+        for (const t of unique) {
+          try {
+            const f = await extractVideoFrame(videoUrl, t);
+            frames.push(f);
+          } catch {}
+        }
+        resolve(frames);
+      };
+      video.onerror = () => resolve([]);
       video.load();
     });
   }
@@ -356,7 +381,14 @@ function AnalysisModal({ media, onClose }) {
 
       if (isVideo) {
         if (!frameBase64) { setError('Could not extract video frame.'); setStep('pre'); return; }
-        payload = { base64_frame: frameBase64 };
+        // Extract multiple frames for richer analysis
+        let multiFrames = [];
+        try { multiFrames = await extractMultipleFrames(media.url); } catch {}
+        if (multiFrames.length > 1) {
+          payload = { base64_frames: multiFrames };
+        } else {
+          payload = { base64_frame: frameBase64 };
+        }
         setImagePayload({ base64_frame: frameBase64 });
       } else if (isImg) {
         payload = { media_url: media.url };
@@ -368,16 +400,18 @@ function AnalysisModal({ media, onClose }) {
       }
 
       let play_images = [];
+      let play_names = [];
       try {
         const role = localStorage.getItem('role');
         if (role === 'trainer') {
           const playsRes = await apiFetch('/plays');
           if (playsRes.ok) {
             const plays = await playsRes.json();
-            play_images = plays
-              .slice(0, 3)
+            const topPlays = plays.slice(0, 3);
+            play_images = topPlays
               .map(p => renderPlayToBase64(p.canvas_json))
               .filter(Boolean);
+            play_names = topPlays.map(p => p.name || 'Unnamed Play');
           }
         }
       } catch {}
@@ -389,6 +423,7 @@ function AnalysisModal({ media, onClose }) {
         focus,
         player_focus: playerFocus,
         play_images,
+        play_names,
       };
 
       const res = await apiFetch('/ai/analyze-film', { method: 'POST', body: JSON.stringify(body) });
