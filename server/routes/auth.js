@@ -5,6 +5,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('../config/db');
 const { authMiddleware } = require('../middleware/auth');
+const { generateCode, sendVerificationEmail } = require('../utils/email');
 
 const crypto = require('crypto');
 const router = express.Router();
@@ -137,6 +138,7 @@ router.put('/role', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /auth/register — creates user, sends verification code, returns user without token
 router.post('/register', async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -146,10 +148,14 @@ router.post('/register', async (req, res) => {
     if (!['athlete', 'trainer'].includes(role)) {
       return res.status(400).json({ error: 'Role must be athlete or trainer' });
     }
+
     const password_hash = await bcrypt.hash(password, 10);
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role',
-      [email.toLowerCase(), password_hash, role]
+      'INSERT INTO users (email, password_hash, role, verification_code, verification_expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, role',
+      [email.toLowerCase(), password_hash, role, code, expiresAt]
     );
     const user = result.rows[0];
 
@@ -159,12 +165,75 @@ router.post('/register', async (req, res) => {
       await pool.query('INSERT INTO trainer_profiles (user_id, first_name) VALUES ($1, $2)', [user.id, email.split('@')[0]]);
     }
 
-    const token = issueToken(user);
-    res.status(201).json({ user: { id: user.id, email: user.email, role: user.role }, token });
+    await sendVerificationEmail(email, code);
+
+    res.status(201).json({ message: 'Verification code sent', userId: user.id, email: user.email, role: user.role });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already registered' });
     console.error(err);
     res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// POST /auth/verify-email — verify code, mark user as verified, issue token
+router.post('/verify-email', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
+
+    const result = await pool.query(
+      'SELECT id, email, role, verification_code, verification_expires_at FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(400).json({ error: 'User not found' });
+    if (user.email_verified) return res.status(400).json({ error: 'Email already verified' });
+    if (!user.verification_code || user.verification_code !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+    if (new Date() > new Date(user.verification_expires_at)) {
+      return res.status(400).json({ error: 'Verification code expired. Please register again.' });
+    }
+
+    await pool.query(
+      'UPDATE users SET email_verified = TRUE, verification_code = NULL, verification_expires_at = NULL WHERE id = $1',
+      [user.id]
+    );
+
+    const token = issueToken(user);
+    res.json({ user: { id: user.id, email: user.email, role: user.role }, token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// POST /auth/resend-code — resend verification code
+router.post('/resend-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const result = await pool.query(
+      'SELECT id, email, role, email_verified FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(400).json({ error: 'User not found' });
+    if (user.email_verified) return res.status(400).json({ error: 'Email already verified' });
+
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await pool.query(
+      'UPDATE users SET verification_code = $1, verification_expires_at = $2 WHERE id = $3',
+      [code, expiresAt, user.id]
+    );
+
+    await sendVerificationEmail(email, code);
+    res.json({ message: 'Verification code resent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to resend code' });
   }
 });
 
@@ -180,11 +249,13 @@ router.post('/login', async (req, res) => {
     );
     const user = result.rows[0];
     if (!user || !user.password_hash) {
-      // No account or Google-only account (no password set)
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     if (!(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    if (!user.email_verified) {
+      return res.status(403).json({ error: 'Please verify your email first. Check your inbox for the verification code.', unverified: true, email: user.email });
     }
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },

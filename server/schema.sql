@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(20) CHECK (role IN ('athlete', 'trainer')),
   google_id VARCHAR(255) UNIQUE,
   email_verified BOOLEAN DEFAULT FALSE,
+  verification_code VARCHAR(6),
+  verification_expires_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
