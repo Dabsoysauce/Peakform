@@ -314,4 +314,94 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /auth/forgot-password — send reset code
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const result = await pool.query(
+      'SELECT id, email, password_hash, google_id FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(400).json({ error: 'Email not found' });
+    if (user.google_id && !user.password_hash) {
+      return res.status(400).json({ error: 'This account uses Google sign-in. Log in with Google instead.' });
+    }
+
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await pool.query(
+      'UPDATE users SET verification_code = $1, verification_expires_at = $2 WHERE id = $3',
+      [code, expiresAt, user.id]
+    );
+
+    await sendVerificationEmail(email, code);
+    res.json({ message: 'Reset code sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send reset code' });
+  }
+});
+
+// POST /auth/verify-reset-code — verify the reset code
+router.post('/verify-reset-code', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
+
+    const result = await pool.query(
+      'SELECT id, verification_code, verification_expires_at FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(400).json({ error: 'User not found' });
+    if (!user.verification_code || user.verification_code !== code) {
+      return res.status(400).json({ error: 'Invalid code' });
+    }
+    if (new Date() > new Date(user.verification_expires_at)) {
+      return res.status(400).json({ error: 'Code expired. Request a new one.' });
+    }
+
+    res.json({ message: 'Code verified' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// POST /auth/reset-password — reset password after code verification
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) return res.status(400).json({ error: 'Email, code, and new password are required' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    const result = await pool.query(
+      'SELECT id, verification_code, verification_expires_at FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(400).json({ error: 'User not found' });
+    if (!user.verification_code || user.verification_code !== code) {
+      return res.status(400).json({ error: 'Invalid code' });
+    }
+    if (new Date() > new Date(user.verification_expires_at)) {
+      return res.status(400).json({ error: 'Code expired. Request a new one.' });
+    }
+
+    const password_hash = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, verification_code = NULL, verification_expires_at = NULL WHERE id = $2',
+      [password_hash, user.id]
+    );
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Password reset failed' });
+  }
+});
+
 module.exports = router;
