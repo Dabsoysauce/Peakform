@@ -70,10 +70,13 @@ const navItems = [
   { label: 'Profile',         href: '/trainer/profile',         iconKey: 'profile',    tour: 'nav-profile'  },
 ];
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
 export default function TrainerLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -81,9 +84,37 @@ export default function TrainerLayout({ children }) {
     const role = localStorage.getItem('role');
     if (!token) { router.push('/'); return; }
     if (role === 'athlete') { router.push('/dashboard'); return; }
-    const email = localStorage.getItem('email') || '';
-    setUserName(email.split('@')[0]);
+    const storedName = localStorage.getItem('displayName');
+    if (storedName) setUserName(storedName);
+    else {
+      const email = localStorage.getItem('email') || '';
+      setUserName(email.split('@')[0]);
+    }
+    loadProfile(token);
+
+    function handleProfileUpdate() { loadProfile(token); }
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, [router]);
+
+  async function loadProfile(token) {
+    try {
+      const res = await fetch(`${API_URL}/trainer-profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const name = [data.first_name, data.last_name].filter(Boolean).join(' ');
+        if (name) {
+          setUserName(name);
+          localStorage.setItem('displayName', name);
+        }
+        if (data.photo_url) {
+          setUserPhoto(data.photo_url);
+        }
+      }
+    } catch {}
+  }
 
   function handleLogout() {
     localStorage.clear();
@@ -117,9 +148,11 @@ export default function TrainerLayout({ children }) {
         {/* User */}
         <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white"
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center text-sm font-bold text-white"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #60a5fa)' }}>
-              {userName.charAt(0).toUpperCase()}
+              {userPhoto
+                ? <img src={userPhoto} alt="" className="w-full h-full object-cover" />
+                : userName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="text-sm font-semibold text-white capitalize">{userName}</div>

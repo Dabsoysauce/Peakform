@@ -115,6 +115,7 @@ export default function TrainerProfilePage() {
       if (!res.ok) { setError(data.error || 'Failed to save profile'); return; }
       setProfile(data);
       setSaved(true);
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
       setTimeout(() => setSaved(false), 3000);
     } catch { setError('Network error'); }
     setSaving(false);
