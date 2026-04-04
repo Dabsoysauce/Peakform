@@ -254,6 +254,9 @@ CREATE TABLE IF NOT EXISTS depth_chart_entries (
 -- Migrations for existing databases (safe to re-run)
 ALTER TABLE goals ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE workout_sessions ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP;
 
 -- Indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_user_id ON athlete_profiles(user_id);

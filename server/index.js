@@ -67,7 +67,7 @@ const passport = require('passport');
 const app = express();
 const httpServer = createServer(app);
 
-const allowedOrigins = ['http://localhost:3000', 'https://peakformnow.vercel.app'];
+const allowedOrigins = ['http://localhost:3000', 'https://peakformnow.vercel.app', 'https://athleteedge.pro', 'https://www.athleteedge.pro'];
 
 const io = new Server(httpServer, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true },
