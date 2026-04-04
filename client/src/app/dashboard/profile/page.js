@@ -72,6 +72,7 @@ export default function AthleteProfilePage() {
       const url = await uploadProfilePicture(file, userId);
       setPhotoPreview(url);
       await apiFetch('/athlete-profile', { method: 'PUT', body: JSON.stringify({ photo_url: url }) });
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
     } catch { setError('Failed to upload photo'); }
     setPhotoUploading(false);
   }
@@ -124,6 +125,7 @@ export default function AthleteProfilePage() {
       if (!res.ok) { setError(data.error || 'Failed to save profile'); return; }
       setProfile(data);
       setSaved(true);
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
       setTimeout(() => setSaved(false), 3000);
     } catch { setError('Network error'); }
     setSaving(false);
