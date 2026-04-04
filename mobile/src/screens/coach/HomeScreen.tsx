@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { fetchAthletes } from '../../store/slices/teamsSlice';
-import { fetchGoals } from '../../store/slices/goalsSlice';
 import { fetchTeam } from '../../store/slices/teamsSlice';
 import StatCard from '../../components/StatCard';
 import { colors, spacing } from '../../theme';
@@ -12,16 +11,13 @@ export default function CoachHomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const email = useSelector((state: RootState) => state.auth.email) ?? '';
   const athletes = useSelector((state: RootState) => state.teams.athletes);
-  const goals = useSelector((state: RootState) => state.goals.list);
   const team = useSelector((state: RootState) => state.teams.team);
   const members = useSelector((state: RootState) => state.teams.members);
 
   const name = email.split('@')[0];
-  const activeGoals = goals.filter((g) => !g.completed && g.status !== 'completed').length;
 
   useEffect(() => {
     dispatch(fetchAthletes());
-    dispatch(fetchGoals());
     dispatch(fetchTeam());
   }, []);
 
@@ -32,7 +28,6 @@ export default function CoachHomeScreen() {
 
       <View style={styles.statsRow}>
         <StatCard label="Players" value={members.length || athletes.length} />
-        <StatCard label="Active Goals" value={activeGoals} />
         <StatCard label="Team" value={team ? 1 : 0} />
       </View>
 
@@ -49,16 +44,6 @@ export default function CoachHomeScreen() {
         <View style={styles.quickItem}>
           <Text style={styles.quickNum}>{members.length}</Text>
           <Text style={styles.quickLabel}>Team Members</Text>
-        </View>
-        <View style={styles.quickItem}>
-          <Text style={styles.quickNum}>{goals.length}</Text>
-          <Text style={styles.quickLabel}>Total Goals</Text>
-        </View>
-        <View style={styles.quickItem}>
-          <Text style={[styles.quickNum, { color: colors.success }]}>
-            {goals.filter((g) => g.completed).length}
-          </Text>
-          <Text style={styles.quickLabel}>Completed</Text>
         </View>
       </View>
     </ScrollView>

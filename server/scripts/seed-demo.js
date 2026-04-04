@@ -2,7 +2,7 @@
  * Peakform Demo Seed Script
  *
  * Populates the database with realistic fake data for demos.
- * Creates trainers, athletes, teams, workouts, goals, messages, media, and more.
+ * Creates trainers, athletes, teams, workouts, messages, media, and more.
  *
  * Usage:
  *   node server/scripts/seed-demo.js
@@ -96,13 +96,6 @@ const mediaItems = [
   { title: 'Game Highlights vs Roosevelt', description: 'Cut of my best plays from Friday\'s game.', url: 'https://www.youtube.com/watch?v=ultWZbUMPL8', media_type: 'video' },
 ];
 
-const goalTemplates = [
-  { title: 'Bench Press 225lbs', metric: 'bench_pr', target_value: 225, comparison: 'gte' },
-  { title: 'Squat 315lbs', metric: 'squat_pr', target_value: 315, comparison: 'gte' },
-  { title: 'Deadlift 405lbs', metric: 'deadlift_pr', target_value: 405, comparison: 'gte' },
-  { title: 'Reach 185lbs bodyweight', metric: 'bodyweight', target_value: 185, comparison: 'gte' },
-  { title: 'Cut to 175lbs', metric: 'bodyweight', target_value: 175, comparison: 'lte' },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -254,23 +247,6 @@ async function seed() {
     }
   }
   console.log(`   Created workouts for ${athleteUsers.length} athletes.\n`);
-
-  // ── Goals ──
-  console.log('🎯 Creating goals...');
-  for (const athlete of athleteUsers) {
-    const numGoals = randomInt(2, 3);
-    const shuffled = [...goalTemplates].sort(() => Math.random() - 0.5).slice(0, numGoals);
-    for (const g of shuffled) {
-      const achieved = Math.random() > 0.6; // 40% already achieved
-      const deadline = daysAgo(-randomInt(30, 120)); // future deadline
-      await pool.query(
-        `INSERT INTO goals (user_id, title, metric, target_value, comparison, achieved, deadline)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [athlete.id, g.title, g.metric, g.target_value, g.comparison, achieved, deadline]
-      );
-    }
-  }
-  console.log('   Done.\n');
 
   // ── Messages ──
   console.log('💬 Creating team messages...');

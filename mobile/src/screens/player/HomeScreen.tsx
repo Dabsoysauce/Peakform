@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { fetchWorkouts } from '../../store/slices/workoutsSlice';
-import { fetchGoals } from '../../store/slices/goalsSlice';
 import { fetchTeam } from '../../store/slices/teamsSlice';
 import StatCard from '../../components/StatCard';
 import { colors, spacing } from '../../theme';
@@ -12,15 +11,12 @@ export default function PlayerHomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const email = useSelector((state: RootState) => state.auth.email) ?? '';
   const workouts = useSelector((state: RootState) => state.workouts.list);
-  const goals = useSelector((state: RootState) => state.goals.list);
   const members = useSelector((state: RootState) => state.teams.members);
 
   const name = email.split('@')[0];
-  const completedGoals = goals.filter((g) => g.completed || g.status === 'completed').length;
 
   useEffect(() => {
     dispatch(fetchWorkouts());
-    dispatch(fetchGoals());
     dispatch(fetchTeam());
   }, []);
 
@@ -31,7 +27,6 @@ export default function PlayerHomeScreen() {
 
       <View style={styles.statsRow}>
         <StatCard label="Workouts" value={workouts.length} />
-        <StatCard label="Goals" value={goals.length} sub={`${completedGoals} done`} />
         <StatCard label="Teammates" value={members.length} />
       </View>
 

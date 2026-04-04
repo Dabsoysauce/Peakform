@@ -4,23 +4,12 @@ import { apiFetch } from '../../lib/api';
 import { uploadProfilePicture, deleteProfilePicture } from '../../lib/supabase';
 import SchoolSearch from '../../components/SchoolSearch';
 
-const PRIMARY_GOALS = [
-  'Make Varsity',
-  'Improve Athleticism',
-  'Increase Strength',
-  'Improve Speed & Quickness',
-  'Increase Vertical Jump',
-  'Improve Conditioning',
-  'Injury Recovery',
-  'Get a Scholarship',
-  'General Fitness',
-];
 
 export default function AthleteProfilePage() {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
     first_name: '', last_name: '', age: '', weight_lbs: '', height_inches: '',
-    primary_goal: '', bio: '', school_name: '', gpa: '', graduation_year: '',
+    bio: '', school_name: '', gpa: '', graduation_year: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,7 +39,6 @@ export default function AthleteProfilePage() {
           age: data.age || '',
           weight_lbs: data.weight_lbs || '',
           height_inches: data.height_inches || '',
-          primary_goal: data.primary_goal || '',
           bio: data.bio || '',
           school_name: data.school_name || '',
           gpa: data.gpa != null ? String(data.gpa) : '',
@@ -159,7 +147,7 @@ export default function AthleteProfilePage() {
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">Player Profile</h1>
-        <p className="text-white/40 mt-1">Keep your stats and goals up to date</p>
+        <p className="text-white/40 mt-1">Keep your stats up to date</p>
       </div>
 
       {/* Profile header */}
@@ -194,11 +182,6 @@ export default function AthleteProfilePage() {
                 : profile.first_name || 'Set your name'}
             </h2>
             {profile.school_name && <p className="text-sm text-white/40">🏫 {profile.school_name}</p>}
-            {profile.primary_goal && (
-              <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(37,99,235,0.15)', color: '#2563eb' }}>
-                {profile.primary_goal}
-              </span>
-            )}
             <p className="text-xs text-white/30 mt-1">Click photo to change</p>
             {photoPreview && (
               <button type="button" onClick={handleRemovePhoto} className="text-xs text-red-400 hover:underline mt-0.5">
@@ -254,19 +237,11 @@ export default function AthleteProfilePage() {
         </div>
 
         <div className="rounded-2xl p-6 border border-white/[0.06] space-y-4" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
-          <h3 className="font-bold text-white text-sm uppercase tracking-wide">Training Focus</h3>
-          <div>
-            <label className="block text-sm font-medium text-white/50 mb-1">Primary Goal</label>
-            <select value={form.primary_goal} onChange={(e) => setForm({ ...form, primary_goal: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}>
-              <option value="">Select a goal...</option>
-              {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </div>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide">About</h3>
           <div>
             <label className="block text-sm font-medium text-white/50 mb-1">Bio</label>
             <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              placeholder="Tell your coach about your background, position, goals..."
+              placeholder="Tell your coach about your background and position..."
               rows={4} className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04] resize-none" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
           </div>
         </div>

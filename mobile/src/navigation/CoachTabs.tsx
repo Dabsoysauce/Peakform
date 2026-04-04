@@ -5,7 +5,6 @@ import { colors } from '../theme';
 
 import HomeScreen from '../screens/coach/HomeScreen';
 import PlayersScreen from '../screens/coach/PlayersScreen';
-import GoalsScreen from '../screens/coach/GoalsScreen';
 import TeamScreen from '../screens/coach/TeamScreen';
 import MessagesScreen from '../screens/coach/MessagesScreen';
 
@@ -14,7 +13,6 @@ const Tab = createBottomTabNavigator();
 const icons: Record<string, string> = {
   Home: '⊞',
   Players: '🏃',
-  Goals: '🎯',
   Team: '👥',
   Messages: '💬',
 };
@@ -41,7 +39,6 @@ export default function CoachTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Players" component={PlayersScreen} />
-      <Tab.Screen name="Goals" component={GoalsScreen} />
       <Tab.Screen name="Team" component={TeamScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
     </Tab.Navigator>

@@ -43,7 +43,7 @@ const authRoutes = require('./routes/auth');
 const athleteProfileRoutes = require('./routes/athlete-profile');
 const trainerProfileRoutes = require('./routes/trainer-profile');
 const workoutsRoutes = require('./routes/workouts');
-const goalsRoutes = require('./routes/goals');
+
 const mediaRoutes = require('./routes/media');
 const teamsRoutes = require('./routes/teams');
 const messagesRoutes = require('./routes/messages');
@@ -99,7 +99,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/athlete-profile', athleteProfileRoutes);
 app.use('/api/trainer-profile', trainerProfileRoutes);
 app.use('/api/workouts', workoutsRoutes);
-app.use('/api/goals', goalsRoutes);
+
 app.use('/api/media', mediaRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/messages', messagesRoutes);

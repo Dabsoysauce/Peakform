@@ -72,18 +72,6 @@ CREATE TABLE IF NOT EXISTS exercises (
   notes TEXT
 );
 
-CREATE TABLE IF NOT EXISTS goals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  metric VARCHAR(100) NOT NULL,
-  target_value DECIMAL(10,2) NOT NULL,
-  comparison VARCHAR(10) NOT NULL CHECK (comparison IN ('gte', 'lte', 'eq')),
-  achieved BOOLEAN DEFAULT FALSE,
-  deadline DATE,
-  assigned_by UUID REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
 
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -264,7 +252,7 @@ CREATE TABLE IF NOT EXISTS depth_chart_entries (
 );
 
 -- Migrations for existing databases (safe to re-run)
-ALTER TABLE goals ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
+
 ALTER TABLE workout_sessions ADD COLUMN IF NOT EXISTS assigned_by UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
@@ -278,7 +266,7 @@ CREATE INDEX IF NOT EXISTS idx_athlete_profiles_user_id ON athlete_profiles(user
 CREATE INDEX IF NOT EXISTS idx_trainer_profiles_user_id ON trainer_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_user_id ON workout_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(session_date);
-CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id);
+
 CREATE INDEX IF NOT EXISTS idx_messages_team_id ON messages(team_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_direct_messages_sender ON direct_messages(sender_id);

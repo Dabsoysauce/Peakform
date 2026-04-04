@@ -61,11 +61,6 @@ const StatIcons = {
       <path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/><line x1="9" y1="12" x2="15" y2="12"/>
     </svg>
   ),
-  goals: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-    </svg>
-  ),
   calendar: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
@@ -91,7 +86,6 @@ export default function DashboardOverview() {
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [workouts, setWorkouts] = useState([]);
-  const [goals, setGoals] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [joinKey, setJoinKey] = useState('');
@@ -109,13 +103,11 @@ export default function DashboardOverview() {
 
   async function loadData() {
     try {
-      const [wRes, gRes, pRes] = await Promise.all([
+      const [wRes, pRes] = await Promise.all([
         apiFetch('/workouts'),
-        apiFetch('/goals'),
         apiFetch('/athlete-profile'),
       ]);
       if (wRes.ok) setWorkouts(await wRes.json());
-      if (gRes.ok) setGoals(await gRes.json());
       if (pRes.ok) setProfile(await pRes.json());
     } catch {}
     setLoading(false);
@@ -150,15 +142,11 @@ export default function DashboardOverview() {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     return d >= weekAgo;
   });
-  const activeGoals = goals.filter((g) => !g.achieved);
-  const goalsHit = goals.filter((g) => g.achieved).length;
   const recentWorkouts = workouts.slice(0, 3);
 
   const statsCards = [
     { label: 'Total Workouts', num: workouts.length,          suffix: '',          iconKey: 'workouts', color: '#e85d04', gradient: 'linear-gradient(135deg, #e85d04, #f97316)' },
-    { label: 'Active Goals',   num: activeGoals.length,       suffix: '',          iconKey: 'goals',    color: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #4ade80)' },
     { label: 'This Week',      num: thisWeekSessions.length,  suffix: ' sessions', iconKey: 'calendar', color: '#3b82f6', gradient: 'linear-gradient(135deg, #3b82f6, #60a5fa)' },
-    { label: 'Goals Hit',      num: goalsHit,                 suffix: '',          iconKey: 'trophy',   color: '#eab308', gradient: 'linear-gradient(135deg, #eab308, #fbbf24)' },
     { label: 'Streak',         num: profile?.workout_streak || 0, suffix: ' days', iconKey: 'streak',   color: '#f97316', gradient: 'linear-gradient(135deg, #f97316, #fb923c)' },
   ];
 
@@ -196,7 +184,7 @@ export default function DashboardOverview() {
         {statsCards.map((s, i) => (
           <a
             key={s.label}
-            href={s.label.includes('Goal') ? '/dashboard/goals' : '/dashboard/workouts'}
+            href="/dashboard/workouts"
             className="rounded-2xl p-5 transition-all cursor-pointer block group"
             style={{
               ...cardStyle,
@@ -223,10 +211,10 @@ export default function DashboardOverview() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8">
         {/* Area chart */}
         <div
-          className="lg:col-span-2 rounded-2xl p-6"
+          className="rounded-2xl p-6"
           style={{
             ...cardStyle,
             opacity: mounted ? 1 : 0,
@@ -272,46 +260,6 @@ export default function DashboardOverview() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          )}
-        </div>
-
-        {/* Active Goals */}
-        <div
-          className="rounded-2xl p-6"
-          style={{
-            ...cardStyle,
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'opacity 0.55s ease 0.52s, transform 0.55s ease 0.52s',
-          }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Active Goals</h2>
-            <a href="/dashboard/goals" className="text-xs font-medium transition-colors" style={{ color: '#e85d04' }}>View all</a>
-          </div>
-          {loading ? (
-            <div className="space-y-3">
-              {[1,2,3].map(i => <Skeleton key={i} height={44} rounded={10} />)}
-            </div>
-          ) : activeGoals.length === 0 ? (
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>No active goals. Set some in the Goals tab!</p>
-          ) : (
-            <div className="space-y-3">
-              {activeGoals.slice(0, 4).map((g) => (
-                <div key={g.id} className="flex items-start gap-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#e85d04', boxShadow: '0 0 6px rgba(232,93,4,0.4)' }} />
-                  <div>
-                    <div className="text-sm font-medium text-white leading-snug">{g.title}</div>
-                    <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                      {g.metric.replace(/_/g, ' ')} {g.comparison === 'gte' ? '≥' : g.comparison === 'lte' ? '≤' : '='} {g.target_value}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {activeGoals.length > 4 && (
-                <p className="text-xs pt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>+{activeGoals.length - 4} more</p>
-              )}
-            </div>
           )}
         </div>
       </div>

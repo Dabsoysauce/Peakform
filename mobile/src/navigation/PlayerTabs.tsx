@@ -5,7 +5,6 @@ import { colors } from '../theme';
 
 import HomeScreen from '../screens/player/HomeScreen';
 import WorkoutsScreen from '../screens/player/WorkoutsScreen';
-import GoalsScreen from '../screens/player/GoalsScreen';
 import TeamScreen from '../screens/player/TeamScreen';
 import MessagesScreen from '../screens/player/MessagesScreen';
 
@@ -14,7 +13,6 @@ const Tab = createBottomTabNavigator();
 const icons: Record<string, string> = {
   Home: '⊞',
   Workouts: '🏋️',
-  Goals: '🎯',
   Team: '👥',
   Messages: '💬',
 };
@@ -36,7 +34,6 @@ export default function PlayerTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Workouts" component={WorkoutsScreen} />
-      <Tab.Screen name="Goals" component={GoalsScreen} />
       <Tab.Screen name="Team" component={TeamScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
     </Tab.Navigator>
