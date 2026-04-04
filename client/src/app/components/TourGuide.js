@@ -66,12 +66,6 @@ const COACH_STEPS = [
     position: 'right',
   },
   {
-    target: '[data-tour="nav-athletes"]',
-    title: '🔍 Browse Players',
-    body: 'Search and view player profiles across the platform. See their stats, goals, film, and training history.',
-    position: 'right',
-  },
-  {
     target: '[data-tour="nav-playbook"]',
     title: '📋 Playbook',
     body: 'Draw up plays on an interactive court. Hit "Ask AI For Help" and describe your team — the AI will design a custom play for you.',

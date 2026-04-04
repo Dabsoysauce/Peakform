@@ -29,9 +29,7 @@ const BellIcon = () => (
   </svg>
 );
 
-const TYPE_ICON = {
-  profile_view: <EyeIcon />,
-};
+const TYPE_ICON = {};
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -84,19 +82,9 @@ export default function NotificationsPage() {
                 {TYPE_ICON[n.type] || '🔔'}
               </div>
               <div className="flex-1">
-                <p className="text-white text-sm">
-                  {n.type === 'profile_view' && n.data?.viewer_id ? (
-                    <>
-                      Coach{' '}
-                      <Link href={`/coach/${n.data.viewer_id}`} className="font-semibold hover:underline" style={{ color: '#e85d04' }}>
-                        {n.data.coach_name}
-                      </Link>
-                      {n.data.school_name ? ` from ${n.data.school_name}` : ''} viewed your profile
-                    </>
-                  ) : (
-                    n.message
-                  )}
-                </p>
+              <p className="text-white text-sm">
+                {n.message}
+              </p>
                 <p className="text-white/30 text-xs mt-1">{timeAgo(n.created_at)}</p>
               </div>
               {!n.read && (

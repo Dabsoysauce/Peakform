@@ -44,11 +44,6 @@ const StatIcons = {
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </svg>
   ),
-  players: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/><line x1="9" y1="12" x2="15" y2="12"/>
-    </svg>
-  ),
   chat: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -67,11 +62,6 @@ const QuickIcons = {
   create: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-    </svg>
-  ),
-  browse: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
     </svg>
   ),
   edit: (
@@ -119,14 +109,13 @@ export default function TrainerOverview() {
 
   const statsCards = [
     { label: 'Total Teams',      num: teams.length,                                   iconKey: 'teams',     color: '#3b82f6' },
-    { label: 'Total Players',    num: totalAthletes,                                  iconKey: 'players',   color: '#22c55e' },
+    { label: 'Total Athletes',   num: totalAthletes,                                  iconKey: 'teams',   color: '#22c55e' },
     { label: 'Active Rooms',     num: teams.filter((t) => !t.coach_only).length,      iconKey: 'chat',      color: '#60a5fa' },
     { label: 'Broadcast Rooms',  num: teams.filter((t) => t.coach_only).length,       iconKey: 'broadcast', color: '#eab308' },
   ];
 
   const quickActions = [
     { label: 'Create a Team',   sub: 'Set up a new team',                     href: '/trainer/teams',    iconKey: 'create'  },
-    { label: 'Browse Players',  sub: 'Find players by school or name',         href: '/trainer/athletes', iconKey: 'browse'  },
     { label: 'Update Profile',  sub: 'Set your specialty and certifications',  href: '/trainer/profile',  iconKey: 'edit'    },
     { label: 'Assign to Player', sub: 'Go to a team and assign goals/workouts', href: '/trainer/teams',   iconKey: 'assign'  },
   ];
@@ -165,7 +154,7 @@ export default function TrainerOverview() {
         {statsCards.map((s, i) => (
           <a
             key={s.label}
-            href={s.label.includes('Team') ? '/trainer/teams' : s.label.includes('Player') ? '/trainer/athletes' : '/trainer/messages'}
+            href={s.label.includes('Team') || s.label.includes('Athlete') ? '/trainer/teams' : '/trainer/messages'}
             className="rounded-2xl p-5 transition-all cursor-pointer block group"
             style={{
               ...cardStyle,

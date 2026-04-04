@@ -44,7 +44,6 @@
 | **Film Coaching** | View/analyze player-uploaded film with AI |
 | **Depth Charts** | Assign players to PG/SG/SF/PF/C positions with ordering |
 | **Schedule/Calendar** | Create game/practice events, share with team via auto-formatted DMs |
-| **Player Search** | Browse/search all registered athletes by name, school, goal, email |
 
 ---
 
@@ -66,8 +65,8 @@
 - `media`, `progress_photos`
 - `teams`, `team_members`
 - `messages`, `direct_messages`, `notifications`
-- `profile_views`, `schools`, `events`
-- `plays`, `practice_plans`, `checklists`, `depth_chart_entries`
+- `schools`, `events`
+- `plays`, `practice_plans`, `practice_plan_templates`, `practice_plan_template_blocks`, `depth_chart_entries`
 
 ## Color Scheme
 - Primary: `#e85d26` (orange-red)
