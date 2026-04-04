@@ -1,6 +1,6 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -14,7 +14,7 @@ async function sendVerificationEmail(email, code) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Athlete Edge <onboarding@resend.dev>',
+      from: 'Athlete Edge <noreply@athleteedge.pro>',
       to: [email],
       subject: 'Verify your Athlete Edge account',
       html: `

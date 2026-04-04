@@ -26,7 +26,8 @@ export default function ForgotPasswordPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) { setError(data.error || 'Failed to send code'); return; }
       setStep('code');
     } catch { setError('Network error'); }
@@ -44,7 +45,8 @@ export default function ForgotPasswordPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) { setError(data.error || 'Invalid code'); return; }
       setStep('reset');
     } catch { setError('Network error'); }
@@ -63,7 +65,8 @@ export default function ForgotPasswordPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code, newPassword }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) { setError(data.error || 'Reset failed'); return; }
       setSuccess('Password reset successfully!');
       setTimeout(() => router.push('/login'), 2000);
@@ -80,7 +83,8 @@ export default function ForgotPasswordPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) setError(data.error || 'Failed to resend');
     } catch { setError('Network error'); }
     setResending(false);

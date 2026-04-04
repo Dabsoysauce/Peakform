@@ -27,7 +27,8 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, password: form.password, role: form.role }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) {
         setError(data.error || 'Registration failed');
         return;
@@ -54,7 +55,8 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, code: verifyCode }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) {
         setError(data.error || 'Verification failed');
         return;
@@ -81,7 +83,8 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email }),
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
       if (!res.ok) setError(data.error || 'Failed to resend');
     } catch {
       setError('Network error');

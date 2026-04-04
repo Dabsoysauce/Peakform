@@ -165,7 +165,10 @@ router.post('/register', async (req, res) => {
       await pool.query('INSERT INTO trainer_profiles (user_id, first_name) VALUES ($1, $2)', [user.id, email.split('@')[0]]);
     }
 
-    await sendVerificationEmail(email, code);
+    const emailResult = await sendVerificationEmail(email, code);
+    if (!emailResult.success) {
+      console.error('Failed to send verification email:', emailResult.error);
+    }
 
     res.status(201).json({ message: 'Verification code sent', userId: user.id, email: user.email, role: user.role });
   } catch (err) {
@@ -229,7 +232,11 @@ router.post('/resend-code', async (req, res) => {
       [code, expiresAt, user.id]
     );
 
-    await sendVerificationEmail(email, code);
+    const emailResult = await sendVerificationEmail(email, code);
+    if (!emailResult.success) {
+      console.error('Failed to resend verification email:', emailResult.error);
+      return res.status(500).json({ error: 'Failed to send verification email. Please try again later.' });
+    }
     res.json({ message: 'Verification code resent' });
   } catch (err) {
     console.error(err);
@@ -337,7 +344,11 @@ router.post('/forgot-password', async (req, res) => {
       [code, expiresAt, user.id]
     );
 
-    await sendVerificationEmail(email, code);
+    const emailResult = await sendVerificationEmail(email, code);
+    if (!emailResult.success) {
+      console.error('Failed to send reset email:', emailResult.error);
+      return res.status(500).json({ error: 'Failed to send reset code. Please try again later.' });
+    }
     res.json({ message: 'Reset code sent' });
   } catch (err) {
     console.error(err);
