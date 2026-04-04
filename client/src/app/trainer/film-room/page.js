@@ -159,7 +159,7 @@ function Modal({ title, onClose, children }) {
       <div className="w-full max-w-lg rounded-2xl border border-gray-700 p-6" style={{ backgroundColor: '#1e1e30' }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
         </div>
         {children}
       </div>
@@ -189,8 +189,57 @@ function isSupabaseImage(url) {
   );
 }
 
+// ── Tag Input Component ──────────────────────────────────────────────────────
+function TagInput({ tags, onChange }) {
+  const [input, setInput] = useState('');
+
+  function addTag(val) {
+    const tag = val.trim().toLowerCase();
+    if (tag && !tags.includes(tag)) onChange([...tags, tag]);
+    setInput('');
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(input);
+    }
+    if (e.key === 'Backspace' && !input && tags.length > 0) {
+      onChange(tags.slice(0, -1));
+    }
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-300 mb-1">Tags</label>
+      <div className="flex flex-wrap gap-1.5 px-3 py-2 rounded-lg border border-gray-700 min-h-[40px] items-center cursor-text"
+        style={{ backgroundColor: '#16213e' }}
+        onClick={(e) => e.currentTarget.querySelector('input')?.focus()}>
+        {tags.map(tag => (
+          <span key={tag} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-200">
+            {tag}
+            <button type="button" onClick={() => onChange(tags.filter(t => t !== tag))}
+              className="text-gray-400 hover:text-white leading-none">&times;</button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => { if (input.trim()) addTag(input); }}
+          placeholder={tags.length === 0 ? 'Type a tag and press Enter...' : ''}
+          className="flex-1 min-w-[80px] bg-transparent text-white text-sm placeholder-gray-500 outline-none"
+        />
+      </div>
+      <p className="text-xs text-gray-600 mt-1">Press Enter or comma to add a tag</p>
+    </div>
+  );
+}
+
+// ── Analysis Modal ───────────────────────────────────────────────────────────
 function AnalysisModal({ media, onClose }) {
-  const [step, setStep] = useState('pre');
+  const [step, setStep] = useState('loading');
   const [focus, setFocus] = useState('both');
   const [frameBase64, setFrameBase64] = useState(null);
   const [frameLoading, setFrameLoading] = useState(false);
@@ -208,8 +257,38 @@ function AnalysisModal({ media, onClose }) {
   const [shareMsg, setShareMsg] = useState('');
   const bottomRef = useRef(null);
 
-  useEffect(() => { loadFrame(); }, []);
+  const [savedAnalyses, setSavedAnalyses] = useState([]);
+  const [activeAnalysisId, setActiveAnalysisId] = useState(null);
+
+  useEffect(() => {
+    loadFrame();
+    loadSavedAnalyses();
+  }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, analysis]);
+
+  async function loadSavedAnalyses() {
+    try {
+      const res = await apiFetch(`/trainer-media/${media.id}/analyses`);
+      if (res.ok) {
+        const data = await res.json();
+        setSavedAnalyses(data);
+        setStep(data.length > 0 ? 'history' : 'pre');
+      } else {
+        setStep('pre');
+      }
+    } catch {
+      setStep('pre');
+    }
+  }
+
+  function loadSavedAnalysis(saved) {
+    setAnalysis(saved.analysis);
+    setChatHistory(saved.chat_history || []);
+    setActiveAnalysisId(saved.id);
+    setFocus(saved.focus || 'both');
+    setPlayerFocus(saved.player_focus || null);
+    setStep('done');
+  }
 
   async function extractVideoFrame(videoUrl) {
     return new Promise((resolve, reject) => {
@@ -266,6 +345,7 @@ function AnalysisModal({ media, onClose }) {
     setStep('analyzing');
     setError('');
     setChatHistory([]);
+    setActiveAnalysisId(null);
     try {
       const isVideo = isSupabaseVideo(media.url);
       const isImg = isSupabaseImage(media.url);
@@ -310,6 +390,19 @@ function AnalysisModal({ media, onClose }) {
       if (!res.ok) { setError(data.error || 'Analysis failed'); setStep('pre'); return; }
       setAnalysis(data.analysis);
       setStep('done');
+
+      // Auto-save the new analysis
+      try {
+        const saveRes = await apiFetch(`/trainer-media/${media.id}/analyses`, {
+          method: 'POST',
+          body: JSON.stringify({ analysis: data.analysis, focus, player_focus: playerFocus, chat_history: [] }),
+        });
+        if (saveRes.ok) {
+          const saved = await saveRes.json();
+          setActiveAnalysisId(saved.id);
+          setSavedAnalyses(prev => [saved, ...prev]);
+        }
+      } catch {}
     } catch (err) { setError(err?.message || 'Analysis failed.'); setStep('pre'); }
   }
 
@@ -322,7 +415,7 @@ function AnalysisModal({ media, onClose }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setShareMsg(`Shared to ${data.sent} player${data.sent !== 1 ? 's' : ''} ✓`);
+        setShareMsg(`Shared to ${data.sent} player${data.sent !== 1 ? 's' : ''}`);
       } else {
         setShareMsg(data.error || `Error ${res.status}`);
       }
@@ -350,10 +443,22 @@ function AnalysisModal({ media, onClose }) {
         body: JSON.stringify({ ...imagePayload, history: historyForApi, message }),
       });
       const data = await res.json();
+      let updatedHistory;
       if (!res.ok) {
-        setChatHistory([...newHistory, { role: 'assistant', content: `Error: ${data.error}` }]);
+        updatedHistory = [...newHistory, { role: 'assistant', content: `Error: ${data.error}` }];
       } else {
-        setChatHistory([...newHistory, { role: 'assistant', content: data.reply }]);
+        updatedHistory = [...newHistory, { role: 'assistant', content: data.reply }];
+      }
+      setChatHistory(updatedHistory);
+
+      // Persist chat history
+      if (activeAnalysisId) {
+        try {
+          await apiFetch(`/trainer-media/analyses/${activeAnalysisId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ chat_history: updatedHistory }),
+          });
+        } catch {}
       }
     } catch {
       setChatHistory([...newHistory, { role: 'assistant', content: 'Something went wrong. Try again.' }]);
@@ -395,23 +500,64 @@ function AnalysisModal({ media, onClose }) {
               <button onClick={handleShare}
                 className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex-shrink-0"
                 style={{ backgroundColor: '#16a34a', color: 'white' }}>
-                {shareMsg || '📤 Share to Team'}
+                {shareMsg || 'Share to Team'}
               </button>
             )}
-            <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+            <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
+          {step === 'loading' && (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+            </div>
+          )}
+
+          {step === 'history' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-white">Previous Analyses ({savedAnalyses.length})</p>
+                <button onClick={() => setStep('pre')}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold text-white"
+                  style={{ backgroundColor: '#2563eb' }}>
+                  + New Analysis
+                </button>
+              </div>
+              <div className="space-y-2">
+                {savedAnalyses.map(sa => (
+                  <button key={sa.id} onClick={() => loadSavedAnalysis(sa)}
+                    className="w-full text-left p-3 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors"
+                    style={{ backgroundColor: '#16213e' }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-white capitalize">{sa.focus || 'General'} Analysis</span>
+                      <span className="text-xs text-gray-500">{new Date(sa.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-xs text-gray-400 line-clamp-2">{sa.analysis.slice(0, 150)}...</p>
+                    {sa.chat_history?.length > 0 && (
+                      <span className="text-xs text-blue-400 mt-1 inline-block">{sa.chat_history.length} follow-up messages</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {(step === 'pre') && (
             <div className="space-y-5">
+              {savedAnalyses.length > 0 && (
+                <button onClick={() => setStep('history')}
+                  className="text-xs text-blue-400 hover:underline">
+                  &larr; View previous analyses ({savedAnalyses.length})
+                </button>
+              )}
               {error && <div className="px-3 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>}
 
               <div>
                 <p className="text-sm font-bold text-white mb-2">What's the focus?</p>
                 <div className="flex gap-2">
-                  {[['offense', '⚔️ Offense'], ['defense', '🛡️ Defense'], ['both', '🔄 Both']].map(([val, label]) => (
+                  {[['offense', 'Offense'], ['defense', 'Defense'], ['both', 'Both']].map(([val, label]) => (
                     <button key={val} onClick={() => setFocus(val)}
                       className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
                       style={focus === val
@@ -429,7 +575,7 @@ function AnalysisModal({ media, onClose }) {
                   {!detectedPlayers.length && frameUrl && (
                     <button onClick={detectPlayers} disabled={detecting}
                       className="text-xs text-blue-400 hover:underline disabled:opacity-50">
-                      {detecting ? 'Detecting...' : '🤖 Auto-detect players'}
+                      {detecting ? 'Detecting...' : 'Auto-detect players'}
                     </button>
                   )}
                 </div>
@@ -459,7 +605,7 @@ function AnalysisModal({ media, onClose }) {
 
                     <div className="absolute bottom-1 left-1 right-1 text-center">
                       <span className="text-xs text-white/60 bg-black/40 px-2 py-0.5 rounded">
-                        {playerFocus ? '✓ Player selected — click elsewhere to change' : 'Click on a player to focus on them'}
+                        {playerFocus ? 'Player selected — click elsewhere to change' : 'Click on a player to focus on them'}
                       </span>
                     </div>
                   </div>
@@ -476,7 +622,7 @@ function AnalysisModal({ media, onClose }) {
                 {playerFocus && (
                   <button onClick={() => { setPlayerFocus(null); setDetectedPlayers([]); }}
                     className="text-xs text-gray-500 hover:text-gray-300 mt-1">
-                    Clear player focus ×
+                    Clear player focus &times;
                   </button>
                 )}
               </div>
@@ -484,7 +630,7 @@ function AnalysisModal({ media, onClose }) {
               <button onClick={analyzeFilm}
                 className="w-full py-3 rounded-lg font-bold text-white hover:opacity-90"
                 style={{ backgroundColor: '#2563eb' }}>
-                Analyze Film →
+                Analyze Film
               </button>
             </div>
           )}
@@ -498,6 +644,12 @@ function AnalysisModal({ media, onClose }) {
 
           {step === 'done' && (
             <>
+              {savedAnalyses.length > 0 && (
+                <button onClick={() => setStep('history')}
+                  className="text-xs text-blue-400 hover:underline">
+                  &larr; View all analyses ({savedAnalyses.length})
+                </button>
+              )}
               <div className="space-y-1">{renderText(analysis)}</div>
               {chatHistory.length > 0 && (
                 <div className="border-t border-gray-700 pt-4 space-y-4">
@@ -540,13 +692,15 @@ function AnalysisModal({ media, onClose }) {
   );
 }
 
+// ── Main Trainer Film Room Page ──────────────────────────────────────────────
 export default function TrainerFilmRoomPage() {
   const [media, setMedia] = useState([]);
+  const [allMedia, setAllMedia] = useState([]);
   const [loading, setLoading] = useState(true);
   const [analyzingMedia, setAnalyzingMedia] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [uploadMode, setUploadMode] = useState('file');
-  const [form, setForm] = useState({ title: '', description: '', url: '', media_type: 'video' });
+  const [form, setForm] = useState({ title: '', description: '', url: '', media_type: 'video', tags: [] });
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -556,15 +710,65 @@ export default function TrainerFilmRoomPage() {
   const fileInputRef = useRef(null);
   const dropRef = useRef(null);
 
+  // Search & filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTagFilters, setActiveTagFilters] = useState([]);
+  const [allTags, setAllTags] = useState([]);
+  const searchTimerRef = useRef(null);
+
+  // Editing tags
+  const [editingTagsFor, setEditingTagsFor] = useState(null);
+  const [editTags, setEditTags] = useState([]);
+
   useEffect(() => { loadMedia(); }, []);
+
+  useEffect(() => {
+    const tags = new Set();
+    allMedia.forEach(m => (m.tags || []).forEach(t => tags.add(t)));
+    setAllTags([...tags].sort());
+  }, [allMedia]);
+
+  useEffect(() => {
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      fetchFilteredMedia();
+    }, 300);
+    return () => clearTimeout(searchTimerRef.current);
+  }, [searchQuery, activeTagFilters]);
 
   async function loadMedia() {
     setLoading(true);
     try {
       const res = await apiFetch('/trainer-media');
-      if (res.ok) setMedia(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setMedia(data);
+        setAllMedia(data);
+      }
     } catch {}
     setLoading(false);
+  }
+
+  async function fetchFilteredMedia() {
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (activeTagFilters.length > 0) params.set('tags', activeTagFilters.join(','));
+      const qs = params.toString();
+      const res = await apiFetch(`/trainer-media${qs ? `?${qs}` : ''}`);
+      if (res.ok) setMedia(await res.json());
+    } catch {}
+  }
+
+  function toggleTagFilter(tag) {
+    setActiveTagFilters(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  }
+
+  function clearFilters() {
+    setSearchQuery('');
+    setActiveTagFilters([]);
   }
 
   function handleFileSelect(selected) {
@@ -609,7 +813,7 @@ export default function TrainerFilmRoomPage() {
 
       const res = await apiFetch('/trainer-media', {
         method: 'POST',
-        body: JSON.stringify({ title: form.title, description: form.description, url, media_type }),
+        body: JSON.stringify({ title: form.title, description: form.description, url, media_type, tags: form.tags }),
       });
       const data = await res.json();
       if (!res.ok) { setFormError(data.error || 'Failed to save'); setUploading(false); return; }
@@ -623,7 +827,7 @@ export default function TrainerFilmRoomPage() {
   }
 
   function resetModal() {
-    setForm({ title: '', description: '', url: '', media_type: 'video' });
+    setForm({ title: '', description: '', url: '', media_type: 'video', tags: [] });
     setFile(null);
     setFilePreview(null);
     setFormError('');
@@ -639,18 +843,50 @@ export default function TrainerFilmRoomPage() {
         await deleteMediaFile(m.url).catch(() => {});
       }
       setMedia((prev) => prev.filter((x) => x.id !== m.id));
+      setAllMedia((prev) => prev.filter((x) => x.id !== m.id));
     } catch {}
     setDeleteLoading(null);
   }
 
+  async function saveEditedTags(mediaId) {
+    try {
+      const res = await apiFetch(`/trainer-media/${mediaId}/tags`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tags: editTags }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setMedia(prev => prev.map(m => m.id === mediaId ? { ...m, tags: updated.tags } : m));
+        setAllMedia(prev => prev.map(m => m.id === mediaId ? { ...m, tags: updated.tags } : m));
+      }
+    } catch {}
+    setEditingTagsFor(null);
+  }
+
   const isTrainerUpload = (m) => m.user_email === localStorage.getItem('email');
+  const hasFilters = searchQuery.trim() || activeTagFilters.length > 0;
 
   return (
     <div>
       {analyzingMedia && (
         <AnalysisModal media={analyzingMedia} onClose={() => setAnalyzingMedia(null)} />
       )}
-      <div className="flex items-center justify-between mb-8">
+
+      {editingTagsFor && (
+        <Modal title="Edit Tags" onClose={() => setEditingTagsFor(null)}>
+          <TagInput tags={editTags} onChange={setEditTags} />
+          <div className="flex gap-3 pt-4">
+            <button type="button" onClick={() => setEditingTagsFor(null)} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">
+              Cancel
+            </button>
+            <button onClick={() => saveEditedTags(editingTagsFor)} className="flex-1 py-2.5 rounded-lg font-bold text-white" style={{ backgroundColor: '#2563eb' }}>
+              Save Tags
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-black text-white">Film Room</h1>
           <p className="text-gray-400 mt-1">Upload and analyze film from you and your players</p>
@@ -664,16 +900,69 @@ export default function TrainerFilmRoomPage() {
         </button>
       </div>
 
+      {/* Search & Filter Bar */}
+      {!loading && allMedia.length > 0 && (
+        <div className="mb-6 p-4 rounded-xl border border-gray-800" style={{ backgroundColor: '#1e1e30' }}>
+          <div className="flex gap-3 items-center mb-3">
+            <div className="flex-1 relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title or tags..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                style={{ backgroundColor: '#16213e' }}
+              />
+            </div>
+            {hasFilters && (
+              <button onClick={clearFilters} className="text-xs text-gray-400 hover:text-white whitespace-nowrap">
+                Clear filters
+              </button>
+            )}
+          </div>
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {allTags.map(tag => (
+                <button key={tag} onClick={() => toggleTagFilter(tag)}
+                  className="text-xs px-3 py-1 rounded-full font-medium transition-all"
+                  style={activeTagFilters.includes(tag)
+                    ? { backgroundColor: '#e85d04', color: 'white' }
+                    : { backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }
+                  }>
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className="text-gray-400 text-center py-12">Loading...</div>
       ) : media.length === 0 ? (
         <div className="rounded-xl p-12 border border-gray-800 text-center" style={{ backgroundColor: '#1e1e30' }}>
-          <div className="text-5xl mb-4">🎬</div>
-          <h3 className="text-xl font-bold text-white mb-2">No film yet</h3>
-          <p className="text-gray-400 mb-6">Upload game film, practice clips, or highlight reels.</p>
-          <button onClick={() => { setShowModal(true); resetModal(); }} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
-            Upload First Clip
-          </button>
+          {hasFilters ? (
+            <>
+              <div className="text-5xl mb-4">🔍</div>
+              <h3 className="text-xl font-bold text-white mb-2">No results</h3>
+              <p className="text-gray-400 mb-6">No film matches your search or filters.</p>
+              <button onClick={clearFilters} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
+                Clear Filters
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-5xl mb-4">🎬</div>
+              <h3 className="text-xl font-bold text-white mb-2">No film yet</h3>
+              <p className="text-gray-400 mb-6">Upload game film, practice clips, or highlight reels.</p>
+              <button onClick={() => { setShowModal(true); resetModal(); }} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
+                Upload First Clip
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -681,7 +970,7 @@ export default function TrainerFilmRoomPage() {
             const embedUrl = isYouTube(m.url) ? getYouTubeEmbed(m.url) : null;
             const isVideo = isSupabaseVideo(m.url);
             const isImage = isSupabaseImage(m.url);
-            const playerName = `${m.first_name || ''} ${m.last_name || ''}`.trim();
+            const playerName = !isTrainerUpload(m) ? `${m.first_name || ''} ${m.last_name || ''}`.trim() : '';
             return (
               <div key={m.id} className="rounded-xl border border-gray-800 overflow-hidden hover:border-blue-600 transition-colors" style={{ backgroundColor: '#1e1e30' }}>
                 <div className="aspect-video bg-gray-900 flex items-center justify-center relative overflow-hidden">
@@ -696,7 +985,7 @@ export default function TrainerFilmRoomPage() {
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-gray-600">
                       <span className="text-4xl">🎬</span>
-                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: '#2563eb' }}>Open Link ↗</a>
+                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: '#2563eb' }}>Open Link</a>
                     </div>
                   )}
                 </div>
@@ -704,21 +993,36 @@ export default function TrainerFilmRoomPage() {
                   <h3 className="font-bold text-white text-sm mb-1 truncate">{m.title || 'Untitled'}</h3>
                   {m.description && <p className="text-xs text-gray-400 mb-2 line-clamp-2">{m.description}</p>}
                   {playerName && (
-                    <p className="text-xs text-blue-400 mb-2">🏀 {playerName}</p>
+                    <p className="text-xs text-blue-400 mb-2">{playerName}</p>
                   )}
-                  {playerName && !isTrainerUpload(m) && (
-                    <p className="text-xs text-blue-400 mb-2">🏀 {playerName}</p>
+
+                  {/* Tags */}
+                  {m.tags?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {m.tags.map(tag => (
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">{new Date(m.created_at).toLocaleDateString()}</span>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => { setEditingTagsFor(m.id); setEditTags(m.tags || []); }}
+                        className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500"
+                        title="Edit tags">
+                        Tags
+                      </button>
                       {(isSupabaseImage(m.url) || isSupabaseVideo(m.url)) && (
                         <button
                           onClick={() => setAnalyzingMedia(m)}
                           className="text-xs px-2.5 py-1 rounded border font-medium hover:opacity-80"
                           style={{ borderColor: '#2563eb', color: '#2563eb' }}
                         >
-                          🤖 Analyze
+                          Analyze
                         </button>
                       )}
                       {isTrainerUpload(m) && (
@@ -750,7 +1054,7 @@ export default function TrainerFilmRoomPage() {
                   border: `1px solid ${uploadMode === mode ? '#2563eb' : '#374151'}`,
                 }}
               >
-                {mode === 'file' ? '📁 Upload File' : '🔗 Paste URL'}
+                {mode === 'file' ? 'Upload File' : 'Paste URL'}
               </button>
             ))}
           </div>
@@ -826,6 +1130,8 @@ export default function TrainerFilmRoomPage() {
                 style={{ backgroundColor: '#16213e' }}
               />
             </div>
+
+            <TagInput tags={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
 
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => { setShowModal(false); resetModal(); }} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">

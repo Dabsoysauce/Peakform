@@ -93,6 +93,18 @@ CREATE TABLE IF NOT EXISTS media (
   url TEXT,
   thumbnail_url TEXT,
   media_type VARCHAR(20) DEFAULT 'video',
+  tags JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS media_analyses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  media_id UUID REFERENCES media(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  analysis TEXT NOT NULL,
+  focus VARCHAR(20),
+  player_focus JSONB,
+  chat_history JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -259,6 +271,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_code VARCHAR(6);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP;
 -- Grandfather existing users as verified (registered before email verification was added)
 UPDATE users SET email_verified = TRUE WHERE email_verified = FALSE AND verification_code IS NULL;
+ALTER TABLE media ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;
 
 -- Indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_user_id ON athlete_profiles(user_id);
@@ -274,3 +287,5 @@ CREATE INDEX IF NOT EXISTS idx_direct_messages_created_at ON direct_messages(cre
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_profile_views_player_id ON profile_views(player_id);
 CREATE INDEX IF NOT EXISTS idx_depth_chart_team_id ON depth_chart_entries(team_id);
+CREATE INDEX IF NOT EXISTS idx_media_tags ON media USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_media_analyses_media_id ON media_analyses(media_id);
