@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 
+/* ───────── TICKER DATA ───────── */
 const TICKER_ITEMS = [
   'Jordan M. logged a 54-min workout',
   'Coach Williams viewed 3 profiles today',
@@ -9,674 +10,724 @@ const TICKER_ITEMS = [
   'Alex R. uploaded new game film',
   'Marcus T. is on a 6-day workout streak',
   'Coach Davis viewed Jaylen\'s profile',
-  'DeShawn B. crushed his sprint time goal',
+  'DeShawn B. crushed his sprint time',
   'Coach Torres left film feedback',
   'Isaiah W. logged his 20th workout this month',
   '2 coaches viewed profiles in the last hour',
 ];
 
-const features = [
+/* ───────── FEATURE CARDS ───────── */
+const FEATURES = [
   {
-    label: 'Train',
-    title: 'Every rep.\nEvery session.\nAll tracked.',
-    desc: 'Log workouts with sets, reps, weight, and RPE. Build a complete history coaches can actually see.',
-    stat: '54 min avg session',
-    color: '#3b82f6',
+    title: 'Workout Tracking',
+    desc: 'Log every set, rep, and weight. Track RPE, build a history coaches can actually see.',
+    icon: '🏋️',
+    accent: '#f97316',
+    gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
   },
   {
-    label: 'Achieve',
-    title: 'Set goals.\nBreak records.\nGet notified.',
-    desc: 'Set vertical jump, bench, squat and sprint goals. The moment you crush a milestone, we let you know.',
-    stat: '300+ PRs broken',
-    color: '#3b82f6',
+    title: 'Film Room + AI',
+    desc: 'Upload game film or YouTube links. Get AI-powered breakdowns of form, footwork, and IQ.',
+    icon: '🎬',
+    accent: '#3b82f6',
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
   },
   {
-    label: 'Film',
-    title: 'Your game.\nOn tape.\nAI analyzed.',
-    desc: 'Upload game and practice film. Get AI-powered breakdowns of your form, footwork, and mechanics.',
-    stat: 'AI-powered analysis',
-    color: '#3b82f6',
+    title: 'Team Chat',
+    desc: 'Real-time messaging with your squad. DMs, group chats, emoji reactions — all built in.',
+    icon: '💬',
+    accent: '#22c55e',
+    gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
   },
   {
-    label: 'Recruit',
-    title: 'Know who\'s\nwatching.\nIn real time.',
-    desc: 'Get a notification the instant a coach views your profile. Know exactly who is recruiting you.',
-    stat: 'Real-time alerts',
-    color: '#3b82f6',
+    title: 'Coach Discovery',
+    desc: 'Know the instant a coach views your profile. Get recruited with real-time alerts.',
+    icon: '👀',
+    accent: '#a855f7',
+    gradient: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
   },
 ];
 
-function useScrollProgress(ref) {
-  const [progress, setProgress] = useState(0);
+/* ───────── STEPS ───────── */
+const STEPS = [
+  { num: '01', title: 'Create Your Profile', desc: 'Sign up, add your stats, school, position, and bio. Your recruiting profile starts here.' },
+  { num: '02', title: 'Train & Upload Film', desc: 'Log workouts, upload game tape, and get AI analysis on your technique and performance.' },
+  { num: '03', title: 'Get Discovered', desc: 'Coaches browse, view profiles, and reach out. You get notified in real time when they look.' },
+];
+
+/* ───────── COUNTER HOOK ───────── */
+function useCountUp(target, duration = 2000) {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef(null);
+
   useEffect(() => {
-    function update() {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      const scrollable = ref.current.offsetHeight - window.innerHeight;
-      const scrolled = -rect.top;
-      setProgress(Math.max(0, Math.min(1, scrolled / scrollable)));
-    }
-    window.addEventListener('scroll', update, { passive: true });
-    update();
-    return () => window.removeEventListener('scroll', update);
-  }, [ref]);
-  return progress;
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setStarted(true); obs.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+    let start = 0;
+    const step = target / (duration / 16);
+    const id = setInterval(() => {
+      start += step;
+      if (start >= target) { setCount(target); clearInterval(id); }
+      else setCount(Math.floor(start));
+    }, 16);
+    return () => clearInterval(id);
+  }, [started, target, duration]);
+
+  return { count, ref };
 }
 
-function useInView(threshold = 0.15) {
+/* ───────── SCROLL-REVEAL HOOK ───────── */
+function useReveal() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold });
-    if (ref.current) obs.observe(ref.current);
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
     return () => obs.disconnect();
-  }, [threshold]);
-  return [ref, visible];
+  }, []);
+  return { ref, visible };
 }
 
-function useCountUp(target, duration = 1800, start = false) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    let startTime = null;
-    const step = (ts) => {
-      if (!startTime) startTime = ts;
-      const p = Math.min((ts - startTime) / duration, 1);
-      setValue(Math.floor((1 - Math.pow(1 - p, 3)) * target));
-      if (p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [start, target, duration]);
-  return value;
-}
-
-function HeroReveal({ children, delay = 0 }) {
-  const [ref, visible] = useInView(0.1);
-  return (
-    <div ref={ref} style={{
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(32px)',
-      transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function PinnedFeatures() {
-  const containerRef = useRef(null);
-  const progress = useScrollProgress(containerRef);
-  const totalFeatures = features.length;
-  const rawIndex = progress * totalFeatures;
-  const featureIndex = Math.min(totalFeatures - 1, Math.floor(rawIndex));
-  const f = features[featureIndex];
-
-  return (
-    <div ref={containerRef} style={{ height: `${totalFeatures * 100}vh` }}>
-      <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', background: 'linear-gradient(180deg, #08081a 0%, #0a0a22 100%)' }}>
-        {/* Ambient orbs */}
-        <div style={{
-          position: 'absolute', top: '30%', left: '20%', width: 500, height: 500, borderRadius: '50%',
-          background: `radial-gradient(circle, ${f.color}10 0%, transparent 70%)`,
-          transition: 'all 1s ease', pointerEvents: 'none',
-          animation: 'orb-float 8s ease-in-out infinite',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '20%', right: '15%', width: 400, height: 400, borderRadius: '50%',
-          background: `radial-gradient(circle, ${f.color === '#3b82f6' ? '#e85d04' : '#3b82f6'}08 0%, transparent 70%)`,
-          transition: 'all 1s ease', pointerEvents: 'none',
-          animation: 'orb-float 10s ease-in-out infinite reverse',
-        }} />
-
-        {/* Progress dots */}
-        <div style={{
-          position: 'absolute', right: 32, top: '50%', transform: 'translateY(-50%)',
-          display: 'flex', flexDirection: 'column', gap: 12, zIndex: 10,
-        }}>
-          {features.map((feat, i) => (
-            <div key={i} style={{
-              width: 6, height: i === featureIndex ? 28 : 6,
-              borderRadius: 99, transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
-              background: i === featureIndex
-                ? `linear-gradient(180deg, ${feat.color}, ${feat.color}80)`
-                : 'rgba(255,255,255,0.12)',
-              boxShadow: i === featureIndex ? `0 0 12px ${feat.color}40` : 'none',
-            }} />
-          ))}
-        </div>
-
-        {features.map((feat, i) => {
-          const isActive = i === featureIndex;
-          const isPast = i < featureIndex;
-          return (
-            <div key={feat.label} style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexDirection: 'column', textAlign: 'center', padding: '0 24px',
-              opacity: isActive ? 1 : 0,
-              transform: isActive ? 'scale(1)' : isPast ? 'scale(0.95)' : 'scale(1.03)',
-              transition: 'opacity 0.6s ease, transform 0.6s ease',
-              pointerEvents: isActive ? 'auto' : 'none',
-            }}>
-              <div style={{
-                fontSize: 11, fontWeight: 700, letterSpacing: '0.22em',
-                textTransform: 'uppercase', color: feat.color,
-                marginBottom: 24,
-                opacity: isActive ? 1 : 0,
-                transform: isActive ? 'translateY(0)' : 'translateY(12px)',
-                transition: 'all 0.5s ease 0.1s',
-              }}>
-                {feat.label}
-              </div>
-
-              <h2 style={{
-                fontSize: 'clamp(44px, 8vw, 88px)',
-                fontWeight: 900, color: '#fff',
-                lineHeight: 1.05, marginBottom: 32,
-                whiteSpace: 'pre-line',
-                opacity: isActive ? 1 : 0,
-                transform: isActive ? 'translateY(0)' : 'translateY(20px)',
-                transition: 'all 0.5s ease 0.15s',
-              }}>
-                {feat.title}
-              </h2>
-
-              <p style={{
-                fontSize: 'clamp(16px, 2vw, 20px)',
-                color: 'rgba(255,255,255,0.45)', maxWidth: 520,
-                lineHeight: 1.7, marginBottom: 20,
-                opacity: isActive ? 1 : 0,
-                transform: isActive ? 'translateY(0)' : 'translateY(16px)',
-                transition: 'all 0.5s ease 0.2s',
-              }}>
-                {feat.desc}
-              </p>
-
-              <div style={{
-                display: 'inline-block', fontSize: 13, fontWeight: 600,
-                color: feat.color, padding: '10px 24px',
-                borderRadius: 99,
-                border: `1px solid ${feat.color}30`,
-                backgroundColor: `${feat.color}0a`,
-                backdropFilter: 'blur(8px)',
-                opacity: isActive ? 1 : 0,
-                transform: isActive ? 'translateY(0)' : 'translateY(12px)',
-                transition: 'all 0.5s ease 0.25s',
-              }}>
-                {feat.stat}
-              </div>
-
-              {i === 0 && (
-                <div style={{
-                  position: 'absolute', bottom: 40,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  opacity: progress < 0.05 ? 1 : 0, transition: 'opacity 0.4s ease',
-                }}>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Scroll</span>
-                  <div style={{ width: 1, height: 40, background: 'linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)' }} />
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, backgroundColor: 'rgba(255,255,255,0.04)' }}>
-          <div style={{
-            height: '100%', width: `${progress * 100}%`, transition: 'width 0.1s linear',
-            background: `linear-gradient(90deg, #3b82f6, #60a5fa)`,
-          }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatsSection() {
-  const [ref, visible] = useInView(0.3);
-  const workouts = useCountUp(5000, 1800, visible);
-  const prs = useCountUp(300, 1400, visible);
-  const coaches = useCountUp(100, 1200, visible);
-
-  return (
-    <section ref={ref} style={{
-      background: 'linear-gradient(180deg, #08081a 0%, #0c0c24 50%, #08081a 100%)',
-      borderTop: '1px solid rgba(255,255,255,0.04)',
-      borderBottom: '1px solid rgba(255,255,255,0.04)',
-      padding: '120px 24px',
-    }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, textAlign: 'center' }}>
-        {[
-          { val: workouts, suffix: '+', label: 'Workouts Logged', color: '#3b82f6' },
-          { val: prs, suffix: '+', label: 'PRs Broken', color: '#3b82f6' },
-          { val: coaches, suffix: '+', label: 'Active Coaches', color: '#22c55e' },
-        ].map((s, i) => (
-          <div key={s.label} style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(24px)',
-            transition: `all 0.7s ease ${i * 120}ms`,
-          }}>
-            <div style={{
-              fontSize: 'clamp(44px, 7vw, 76px)', fontWeight: 900, lineHeight: 1,
-              fontVariantNumeric: 'tabular-nums',
-              background: `linear-gradient(135deg, ${s.color}, ${s.color}aa)`,
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              {s.val.toLocaleString()}{s.suffix}
-            </div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 12, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-              {s.label}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function HowItWorks() {
-  const steps = [
-    { num: '01', title: 'Build Your Profile', desc: 'Add your stats, GPA, school, and goals. Your public recruiting profile is live in minutes.' },
-    { num: '02', title: 'Upload Film & Log Workouts', desc: 'Post game film, practice clips, and training sessions. Show coaches your work ethic and your game.' },
-    { num: '03', title: 'Get Discovered', desc: 'When a coach views your profile, you get a real-time notification. Know exactly who\'s recruiting you.' },
-  ];
-
-  return (
-    <section style={{ background: 'linear-gradient(180deg, #08081a 0%, #0a0a22 100%)', padding: '140px 24px' }}>
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
-        <HeroReveal delay={0}>
-          <div style={{ textAlign: 'center', marginBottom: 100 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20 }}>How It Works</p>
-            <h2 style={{ fontSize: 'clamp(36px, 6vw, 60px)', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>
-              From first login<br />to first offer.
-            </h2>
-          </div>
-        </HeroReveal>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {steps.map((s, i) => (
-            <HeroReveal key={s.num} delay={i * 100}>
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 40,
-                padding: '48px 32px',
-                borderBottom: i < steps.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                borderRadius: 20,
-                background: 'rgba(255,255,255,0.02)',
-                marginBottom: i < steps.length - 1 ? 8 : 0,
-                border: '1px solid rgba(255,255,255,0.04)',
-                transition: 'all 0.3s ease',
-              }}>
-                <div style={{
-                  fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 900, flexShrink: 0, lineHeight: 1, minWidth: 70,
-                  background: 'linear-gradient(135deg, #3b82f6, #3b82f630)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                }}>
-                  {s.num}
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: 700, color: '#fff', marginBottom: 12 }}>{s.title}</h3>
-                  <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>{s.desc}</p>
-                </div>
-              </div>
-            </HeroReveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PlayerCard() {
-  const [ref, visible] = useInView(0.2);
-  return (
-    <div ref={ref} style={{
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.96)',
-      transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1)',
-      position: 'relative', width: 320, flexShrink: 0,
-    }}>
-      <div style={{
-        borderRadius: 24, padding: 28,
-        background: 'rgba(255,255,255,0.03)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 16,
-            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 900, color: '#fff', flexShrink: 0,
-          }}>M</div>
-          <div>
-            <div style={{ fontWeight: 800, color: '#fff', fontSize: 15 }}>Marcus Thompson</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Point Guard · LA, CA</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>Jefferson High · Class of 2026</div>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 16 }}>
-          {[{ v: '6\'2"', l: 'Height' }, { v: '175', l: 'lbs' }, { v: '3.8', l: 'GPA' }].map(s => (
-            <div key={s.l} style={{
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14, padding: '10px 6px', textAlign: 'center',
-            }}>
-              <div style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{s.v}</div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{s.l}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, padding: '5px 12px', borderRadius: 99, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#60a5fa', fontWeight: 600 }}>Scholarship</span>
-          <span style={{ fontSize: 11, padding: '5px 12px', borderRadius: 99, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 600 }}>Class of 2026</span>
-        </div>
-
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[
-            { label: 'Film clips', val: '12 uploaded', color: '#fff' },
-            { label: 'Workouts', val: '34 logged', color: '#fff' },
-            { label: 'Coach views', val: '8 this week', color: '#22c55e' },
-          ].map(row => (
-            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{row.label}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: row.color }}>{row.val}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Floating notification */}
-      <div style={{
-        position: 'absolute', top: -14, right: -14,
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 16px', borderRadius: 99,
-        background: 'rgba(255,255,255,0.04)',
-        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        fontSize: 12, fontWeight: 600, color: '#fff',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-      }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block', boxShadow: '0 0 10px #22c55e' }} />
-        Coach Davis just viewed
-      </div>
-    </div>
-  );
-}
-
+/* ═══════════════════════════════════════════
+   MAIN PAGE COMPONENT
+   ═══════════════════════════════════════════ */
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
-  const [heroVisible, setHeroVisible] = useState(false);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [heroReady, setHeroReady] = useState(false);
+  const [tickerIdx, setTickerIdx] = useState(0);
+  const heroRef = useRef(null);
 
+  // redirect logged-in users
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    if (token) {
-      window.location.replace(role === 'trainer' ? '/trainer' : '/dashboard');
-      return;
-    }
-    setHeroVisible(true);
+    if (token) window.location.href = '/dashboard';
+  }, []);
+
+  // scroll listener for navbar
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // hero entrance
+  useEffect(() => {
+    const t = setTimeout(() => setHeroReady(true), 200);
+    return () => clearTimeout(t);
+  }, []);
+
+  // ticker rotation
+  useEffect(() => {
+    const id = setInterval(() => setTickerIdx(i => (i + 1) % TICKER_ITEMS.length), 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  // mouse parallax
+  const handleMouse = useCallback((e) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    setMouse({ x, y });
+  }, []);
+
+  // stats counters
+  const stat1 = useCountUp(5000);
+  const stat2 = useCountUp(100);
+  const stat3 = useCountUp(500);
+
+  // section reveals
+  const featReveal = useReveal();
+  const statsReveal = useReveal();
+  const stepsReveal = useReveal();
+  const ctaReveal = useReveal();
+
+  // particles
+  const particles = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    size: 2 + Math.random() * 4,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    dur: 6 + Math.random() * 10,
+    delay: Math.random() * 5,
+    opacity: 0.15 + Math.random() * 0.25,
+  }));
+
   return (
-    <div style={{ backgroundColor: '#08081a', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+    <div style={{ background: '#08081a', color: '#fff', fontFamily: "'Inter', sans-serif", overflowX: 'hidden', minHeight: '100vh' }}>
+
+      {/* ───── GLOBAL KEYFRAMES ───── */}
       <style>{`
-        @keyframes ticker {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+        @keyframes aurora {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
-        .ticker-track { display: flex; width: max-content; animation: ticker 36s linear infinite; }
-        .ticker-track:hover { animation-play-state: paused; }
-        .cta-btn { transition: all 0.25s cubic-bezier(0.16,1,0.3,1); }
-        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.3); }
-        .ghost-btn { transition: all 0.25s ease; }
-        .ghost-btn:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50%      { transform: translateY(-20px); }
+        }
+        @keyframes particleDrift {
+          0%   { transform: translateY(0) translateX(0); opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translateY(-120px) translateX(30px); opacity: 0; }
+        }
+        @keyframes tickerSlide {
+          0%   { transform: translateY(8px); opacity: 0; }
+          15%  { transform: translateY(0); opacity: 1; }
+          85%  { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(-8px); opacity: 0; }
+        }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(249,115,22,0.3); }
+          50%      { box-shadow: 0 0 40px rgba(249,115,22,0.6); }
+        }
+        @keyframes shimmer {
+          0%   { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes notifFloat1 { 0%,100%{ transform: translateY(0) rotate(-6deg); } 50%{ transform: translateY(-12px) rotate(-3deg); } }
+        @keyframes notifFloat2 { 0%,100%{ transform: translateY(0) rotate(4deg); } 50%{ transform: translateY(-16px) rotate(7deg); } }
+        @keyframes notifFloat3 { 0%,100%{ transform: translateY(0) rotate(2deg); } 50%{ transform: translateY(-10px) rotate(-2deg); } }
+        @keyframes lineGrow { 0%{ height: 0; } 100%{ height: 100%; } }
+        .rajdhani { font-family: 'Rajdhani', sans-serif; }
       `}</style>
 
-      {/* Nav */}
+      {/* ───── NAVBAR ───── */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '0 24px', height: 56,
+        padding: '0 clamp(16px, 4vw, 48px)',
+        height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: scrolled ? 'rgba(8,8,26,0.8)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
+        background: scrolled ? 'rgba(8,8,26,0.85)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(16px)' : 'none',
         borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
         transition: 'all 0.4s ease',
       }}>
-        <div style={{ fontWeight: 900, fontSize: 17, letterSpacing: '-0.02em', color: '#fff' }}>
-          ATHLETE<span style={{ color: '#3b82f6' }}>EDGE</span>
-        </div>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <span className="rajdhani" style={{ fontSize: 22, fontWeight: 700, color: '#f97316', letterSpacing: 2 }}>ATHLETE</span>
+          <span className="rajdhani" style={{ fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>EDGE</span>
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <Link href="/login" style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }}>
+          <Link href="/login" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'color 0.2s' }}>
             Sign In
           </Link>
-          <Link href="/register" className="cta-btn" style={{
-            fontSize: 13, fontWeight: 700, color: '#fff',
-            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-            padding: '8px 20px', borderRadius: 12, textDecoration: 'none',
+          <Link href="/register" style={{
+            background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            color: '#fff', padding: '8px 20px', borderRadius: 8, textDecoration: 'none',
+            fontSize: 14, fontWeight: 600, border: 'none',
+            boxShadow: '0 2px 12px rgba(249,115,22,0.3)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
           }}>
             Get Started
           </Link>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section style={{
-        minHeight: '100vh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        textAlign: 'center', padding: '120px 24px 80px',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Mesh gradient background */}
+      {/* ═══════════════════════════
+         HERO SECTION
+         ═══════════════════════════ */}
+      <section
+        ref={heroRef}
+        onMouseMove={handleMouse}
+        style={{
+          position: 'relative',
+          minHeight: '100vh',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '120px clamp(16px, 5vw, 64px) 80px',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Aurora bg */}
         <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(59,130,246,0.08) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 30% 60%, rgba(232,93,4,0.06) 0%, transparent 70%)',
+          position: 'absolute', inset: 0, zIndex: 0,
+          background: 'linear-gradient(135deg, #08081a 0%, #0c1a3a 25%, #1a0a2e 50%, #08081a 75%, #0a1628 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'aurora 20s ease infinite',
         }} />
-        {/* Dot grid */}
+        {/* radial overlay */}
         <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.4,
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(249,115,22,0.08) 0%, transparent 60%)',
         }} />
 
-        <div style={{
-          fontSize: 11, fontWeight: 700, letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          marginBottom: 28,
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
-          transition: 'all 0.8s ease 0.1s',
-          position: 'relative',
-        }}>
-          Built for High School Basketball
-        </div>
+        {/* Particles */}
+        {particles.map(p => (
+          <div key={p.id} style={{
+            position: 'absolute', zIndex: 1,
+            width: p.size, height: p.size, borderRadius: '50%',
+            background: '#f97316',
+            left: `${p.left}%`, top: `${p.top}%`,
+            opacity: p.opacity,
+            animation: `particleDrift ${p.dur}s ${p.delay}s ease-in-out infinite`,
+            pointerEvents: 'none',
+          }} />
+        ))}
 
-        <h1 style={{
-          fontSize: 'clamp(48px, 10vw, 110px)',
-          fontWeight: 900, color: '#fff',
-          lineHeight: 1.0, letterSpacing: '-0.03em',
-          marginBottom: 28, maxWidth: 900,
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
-          transition: 'all 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s',
-          position: 'relative',
-        }}>
-          Your season.<br />
-          <span style={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 40%, #93c5fd 100%)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>Activated.</span>
-        </h1>
-
-        <p style={{
-          fontSize: 'clamp(16px, 2.2vw, 20px)',
-          color: 'rgba(255,255,255,0.45)',
-          maxWidth: 560, lineHeight: 1.7, marginBottom: 48,
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.9s ease 0.35s',
-          position: 'relative',
-        }}>
-          Track every workout. Upload your film. Know the moment a coach views your profile.
-        </p>
-
-        <div style={{
-          display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center',
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
-          transition: 'all 0.9s ease 0.5s',
-          position: 'relative',
-        }}>
-          <Link href="/register" className="cta-btn" style={{
-            padding: '16px 36px', borderRadius: 16,
-            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-            color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none',
-            display: 'inline-block',
+        {/* Hero content */}
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', maxWidth: 900, width: '100%' }}>
+          {/* Headline */}
+          <h1 className="rajdhani" style={{
+            fontSize: 'clamp(48px, 10vw, 112px)',
+            fontWeight: 800,
+            lineHeight: 1.0,
+            letterSpacing: '-0.02em',
+            margin: 0,
           }}>
-            I&apos;m a Player
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', marginLeft: 8, verticalAlign: 'middle' }}>
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </Link>
-          <Link href="/register" className="ghost-btn" style={{
-            padding: '16px 36px', borderRadius: 16,
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.8)',
-            fontWeight: 700, fontSize: 16, textDecoration: 'none',
-            display: 'inline-block',
+            {['Train.', 'Film.', 'Get Noticed.'].map((word, i) => (
+              <span key={i} style={{
+                display: 'inline-block',
+                marginRight: i < 2 ? 'clamp(10px, 2vw, 24px)' : 0,
+                opacity: heroReady ? 1 : 0,
+                transform: heroReady ? 'translateY(0)' : 'translateY(40px)',
+                transition: `opacity 0.7s ${0.3 + i * 0.25}s ease-out, transform 0.7s ${0.3 + i * 0.25}s ease-out`,
+                background: i === 2
+                  ? 'linear-gradient(90deg, #f97316, #fb923c)'
+                  : 'linear-gradient(90deg, #fff, #cbd5e1)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
+                {word}
+              </span>
+            ))}
+          </h1>
+
+          {/* Subtitle */}
+          <p style={{
+            fontSize: 'clamp(16px, 2.2vw, 22px)',
+            color: 'rgba(255,255,255,0.55)',
+            maxWidth: 540, margin: '24px auto 0',
+            lineHeight: 1.6,
+            opacity: heroReady ? 1 : 0,
+            transform: heroReady ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'opacity 0.7s 1.1s ease-out, transform 0.7s 1.1s ease-out',
           }}>
-            I&apos;m a Coach
-          </Link>
-        </div>
+            The basketball training platform that puts your game in front of the right coaches.
+          </p>
 
-        <p style={{
-          marginTop: 20, fontSize: 12,
-          color: 'rgba(255,255,255,0.18)',
-          opacity: heroVisible ? 1 : 0,
-          transition: 'all 0.9s ease 0.65s',
-          position: 'relative',
-        }}>
-          Free to start · No credit card required
-        </p>
-
-        <div style={{ marginTop: 80, width: '100%', display: 'flex', justifyContent: 'center', position: 'relative' }}>
-          <PlayerCard />
-        </div>
-      </section>
-
-      {/* Ticker */}
-      <div style={{
-        borderTop: '1px solid rgba(255,255,255,0.04)',
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
-        padding: '14px 0', overflow: 'hidden',
-        background: 'rgba(255,255,255,0.01)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* CTA Buttons */}
           <div style={{
-            flexShrink: 0, paddingLeft: 24, paddingRight: 16,
-            borderRight: '1px solid rgba(255,255,255,0.06)',
-            fontSize: 10, fontWeight: 800, letterSpacing: '0.2em',
-            textTransform: 'uppercase', color: '#3b82f6',
-            display: 'flex', alignItems: 'center', gap: 6,
+            display: 'flex', gap: 16, justifyContent: 'center', marginTop: 40, flexWrap: 'wrap',
+            opacity: heroReady ? 1 : 0,
+            transform: heroReady ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'opacity 0.7s 1.4s ease-out, transform 0.7s 1.4s ease-out',
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
-            Live
+            <Link href="/register" style={{
+              background: 'linear-gradient(135deg, #e85d04, #f97316)',
+              color: '#fff', padding: '14px 36px', borderRadius: 12,
+              textDecoration: 'none', fontSize: 16, fontWeight: 700,
+              boxShadow: '0 4px 24px rgba(249,115,22,0.4)',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              display: 'inline-block',
+            }}>
+              Start Free
+            </Link>
+            <Link href="/register?role=trainer" style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: '#fff', padding: '14px 36px', borderRadius: 12,
+              textDecoration: 'none', fontSize: 16, fontWeight: 600,
+              backdropFilter: 'blur(8px)',
+              transition: 'background 0.2s, border-color 0.2s',
+              display: 'inline-block',
+            }}>
+              I&apos;m a Coach
+            </Link>
           </div>
-          <div style={{ overflow: 'hidden', flex: 1 }}>
-            <div className="ticker-track">
-              {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-                <span key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap', marginRight: 64 }}>
-                  {item}
-                </span>
+        </div>
+
+        {/* Floating Card Mockup */}
+        <div style={{
+          position: 'relative', zIndex: 2,
+          marginTop: 60,
+          opacity: heroReady ? 1 : 0,
+          transform: heroReady
+            ? `perspective(1000px) rotateY(${mouse.x * 8}deg) rotateX(${-mouse.y * 8}deg)`
+            : 'perspective(1000px) translateY(40px)',
+          transition: heroReady
+            ? 'opacity 0.7s 1.6s ease-out'
+            : 'opacity 0.7s 1.6s ease-out, transform 0.7s 1.6s ease-out',
+        }}>
+          <div style={{
+            width: 'clamp(280px, 50vw, 400px)',
+            background: 'linear-gradient(145deg, rgba(30,30,48,0.9), rgba(22,33,62,0.9))',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 20,
+            padding: 'clamp(20px, 3vw, 32px)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(249,115,22,0.1)',
+          }}>
+            {/* card header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 14,
+                background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22,
+              }}>🏀</div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>Marcus Johnson</div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>PG · Lincoln High · Class of 2026</div>
+              </div>
+            </div>
+            {/* stat row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 18 }}>
+              {[{ label: 'Workouts', val: '147' }, { label: 'Film Clips', val: '23' }, { label: 'Coach Views', val: '12' }].map((s, i) => (
+                <div key={i} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#f97316' }}>{s.val}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{s.label}</div>
+                </div>
               ))}
+            </div>
+            {/* notification badge */}
+            <div style={{
+              background: 'rgba(34,197,94,0.12)',
+              border: '1px solid rgba(34,197,94,0.2)',
+              borderRadius: 10, padding: '10px 14px',
+              display: 'flex', alignItems: 'center', gap: 10,
+              fontSize: 13,
+            }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>Coach Williams viewed your profile 2m ago</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <PinnedFeatures />
-      <StatsSection />
-      <HowItWorks />
-
-      {/* CTA */}
-      <section style={{ background: 'linear-gradient(180deg, #0a0a22 0%, #08081a 100%)', padding: '140px 24px' }}>
-        <HeroReveal>
+        {/* Live ticker */}
+        <div style={{
+          position: 'relative', zIndex: 2,
+          marginTop: 48,
+          display: 'flex', alignItems: 'center', gap: 10,
+          opacity: heroReady ? 1 : 0,
+          transition: 'opacity 0.7s 2s ease-out',
+        }}>
           <div style={{
-            maxWidth: 700, margin: '0 auto', textAlign: 'center',
-            padding: '80px 48px',
-            borderRadius: 28,
-            background: 'rgba(255,255,255,0.02)',
-            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            position: 'relative', overflow: 'hidden',
+            width: 6, height: 6, borderRadius: '50%',
+            background: '#22c55e',
+            animation: 'glow 2s ease-in-out infinite',
+            boxShadow: '0 0 8px #22c55e',
+          }} />
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', height: 20, overflow: 'hidden' }}>
+            <div key={tickerIdx} style={{ animation: 'tickerSlide 3s ease forwards' }}>
+              {TICKER_ITEMS[tickerIdx]}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════
+         FEATURES — HORIZONTAL SCROLL
+         ═══════════════════════════ */}
+      <section ref={featReveal.ref} style={{ padding: '100px 0 80px', position: 'relative' }}>
+        <div style={{
+          textAlign: 'center', marginBottom: 48,
+          padding: '0 clamp(16px, 5vw, 64px)',
+          opacity: featReveal.visible ? 1 : 0,
+          transform: featReveal.visible ? 'translateY(0)' : 'translateY(30px)',
+          transition: 'all 0.7s ease-out',
+        }}>
+          <h2 className="rajdhani" style={{
+            fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 800, margin: 0,
+            background: 'linear-gradient(90deg, #fff, #94a3b8)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
-            {/* Glow orb */}
-            <div style={{
-              position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)',
-              width: 300, height: 300, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }} />
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20, position: 'relative' }}>
-              Ready to be seen?
-            </p>
-            <h2 style={{ fontSize: 'clamp(32px, 6vw, 56px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 20, position: 'relative' }}>
-              Your future coach<br />is already looking.
-            </h2>
-            <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7, marginBottom: 44, maxWidth: 440, margin: '0 auto 44px', position: 'relative' }}>
-              Join players who are getting noticed. Build your profile today — it&apos;s free.
-            </p>
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
-              <Link href="/register" className="cta-btn" style={{
-                padding: '16px 40px', borderRadius: 16,
-            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-                color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none',
-                display: 'inline-block',
+            Everything You Need
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 'clamp(14px, 1.8vw, 18px)', marginTop: 12 }}>
+            Built for serious players and the coaches watching them.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'flex', gap: 24,
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          padding: '0 clamp(16px, 5vw, 64px) 24px',
+          WebkitOverflowScrolling: 'touch',
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none',
+        }}>
+          {FEATURES.map((f, i) => (
+            <div key={i} style={{
+              minWidth: 'clamp(260px, 70vw, 320px)',
+              scrollSnapAlign: 'start',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 20,
+              padding: 0,
+              overflow: 'hidden',
+              opacity: featReveal.visible ? 1 : 0,
+              transform: featReveal.visible ? 'translateY(0)' : 'translateY(40px)',
+              transition: `all 0.6s ${0.15 * i}s ease-out`,
+              flexShrink: 0,
+              cursor: 'default',
+            }}>
+              {/* Icon area */}
+              <div style={{
+                height: 160,
+                background: f.gradient,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 56,
+                position: 'relative',
               }}>
-                Create My Profile Free
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'linear-gradient(180deg, transparent 60%, #08081a 100%)',
+                }} />
+                <span style={{ position: 'relative', zIndex: 1, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }}>
+                  {f.icon}
+                </span>
+              </div>
+              {/* Text */}
+              <div style={{ padding: '24px 24px 28px' }}>
+                <h3 className="rajdhani" style={{
+                  fontSize: 22, fontWeight: 700, margin: '0 0 10px',
+                  color: f.accent,
+                }}>{f.title}</h3>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
+                  {f.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════
+         STATS / SOCIAL PROOF
+         ═══════════════════════════ */}
+      <section ref={statsReveal.ref} style={{
+        padding: '80px clamp(16px, 5vw, 64px)',
+        opacity: statsReveal.visible ? 1 : 0,
+        transform: statsReveal.visible ? 'translateY(0)' : 'translateY(30px)',
+        transition: 'all 0.7s ease-out',
+      }}>
+        <div style={{
+          display: 'flex', justifyContent: 'center', gap: 'clamp(32px, 8vw, 100px)', flexWrap: 'wrap',
+        }}>
+          {[
+            { hook: stat1, label: 'Workouts Logged', suffix: '+' },
+            { hook: stat2, label: 'Active Coaches', suffix: '+' },
+            { hook: stat3, label: 'Film Clips Analyzed', suffix: '+' },
+          ].map((s, i) => (
+            <div key={i} ref={s.hook.ref} style={{ textAlign: 'center', minWidth: 140 }}>
+              <div className="rajdhani" style={{
+                fontSize: 'clamp(40px, 7vw, 64px)', fontWeight: 800,
+                background: 'linear-gradient(135deg, #f97316, #fb923c)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                lineHeight: 1,
+              }}>
+                {s.hook.count.toLocaleString()}{s.suffix}
+              </div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 8, fontWeight: 500 }}>
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════
+         HOW IT WORKS — TIMELINE
+         ═══════════════════════════ */}
+      <section ref={stepsReveal.ref} style={{
+        padding: '80px clamp(16px, 5vw, 64px) 100px',
+        maxWidth: 680, margin: '0 auto',
+      }}>
+        <h2 className="rajdhani" style={{
+          fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 800, textAlign: 'center', margin: '0 0 60px',
+          opacity: stepsReveal.visible ? 1 : 0,
+          transform: stepsReveal.visible ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 0.6s ease-out',
+          background: 'linear-gradient(90deg, #fff, #94a3b8)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        }}>
+          How It Works
+        </h2>
+
+        <div style={{ position: 'relative' }}>
+          {/* Glowing timeline line */}
+          <div style={{
+            position: 'absolute', left: 24, top: 0, bottom: 0, width: 2,
+            background: 'rgba(249,115,22,0.1)',
+          }}>
+            <div style={{
+              width: '100%',
+              background: 'linear-gradient(180deg, #f97316, #e85d04)',
+              animation: stepsReveal.visible ? 'lineGrow 1.5s 0.3s ease-out forwards' : 'none',
+              height: 0,
+              borderRadius: 2,
+              boxShadow: '0 0 12px rgba(249,115,22,0.4)',
+            }} />
+          </div>
+
+          {STEPS.map((step, i) => (
+            <div key={i} style={{
+              display: 'flex', gap: 28, marginBottom: i < 2 ? 56 : 0,
+              position: 'relative',
+              opacity: stepsReveal.visible ? 1 : 0,
+              transform: stepsReveal.visible ? 'translateX(0)' : 'translateX(-30px)',
+              transition: `all 0.6s ${0.4 + i * 0.25}s ease-out`,
+            }}>
+              {/* Number badge */}
+              <div style={{
+                width: 50, height: 50, borderRadius: 16, flexShrink: 0,
+                background: 'linear-gradient(135deg, #f97316, #e85d04)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: 16,
+                boxShadow: '0 4px 20px rgba(249,115,22,0.3)',
+                position: 'relative', zIndex: 1,
+              }}>
+                {step.num}
+              </div>
+              <div style={{ paddingTop: 4 }}>
+                <h3 className="rajdhani" style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px', color: '#fff' }}>
+                  {step.title}
+                </h3>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, margin: 0 }}>
+                  {step.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════
+         FINAL CTA
+         ═══════════════════════════ */}
+      <section ref={ctaReveal.ref} style={{
+        padding: '40px clamp(16px, 5vw, 64px) 120px',
+        display: 'flex', justifyContent: 'center',
+      }}>
+        <div style={{
+          position: 'relative',
+          maxWidth: 640, width: '100%',
+          opacity: ctaReveal.visible ? 1 : 0,
+          transform: ctaReveal.visible ? 'scale(1)' : 'scale(0.95)',
+          transition: 'all 0.7s ease-out',
+        }}>
+          {/* Glow behind card */}
+          <div style={{
+            position: 'absolute', inset: -2,
+            borderRadius: 26,
+            background: 'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(59,130,246,0.2))',
+            filter: 'blur(40px)',
+            zIndex: 0,
+          }} />
+
+          {/* Floating notification badges */}
+          <div style={{
+            position: 'absolute', top: -20, right: -10, zIndex: 2,
+            background: 'rgba(30,30,48,0.9)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 12, padding: '8px 14px', fontSize: 12,
+            color: 'rgba(255,255,255,0.7)',
+            animation: 'notifFloat1 4s ease-in-out infinite',
+            backdropFilter: 'blur(8px)',
+          }}>
+            🏀 New film uploaded
+          </div>
+          <div style={{
+            position: 'absolute', bottom: 20, left: -16, zIndex: 2,
+            background: 'rgba(30,30,48,0.9)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 12, padding: '8px 14px', fontSize: 12,
+            color: 'rgba(255,255,255,0.7)',
+            animation: 'notifFloat2 5s ease-in-out infinite',
+            backdropFilter: 'blur(8px)',
+          }}>
+            👀 Coach Davis viewed your profile
+          </div>
+          <div style={{
+            position: 'absolute', top: 30, left: -24, zIndex: 2,
+            background: 'rgba(30,30,48,0.9)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 12, padding: '8px 14px', fontSize: 12,
+            color: 'rgba(255,255,255,0.7)',
+            animation: 'notifFloat3 4.5s ease-in-out infinite',
+            backdropFilter: 'blur(8px)',
+          }}>
+            🔥 7-day workout streak
+          </div>
+
+          {/* Card */}
+          <div style={{
+            position: 'relative', zIndex: 1,
+            background: 'linear-gradient(145deg, rgba(30,30,48,0.95), rgba(22,33,62,0.95))',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 24,
+            padding: 'clamp(32px, 5vw, 56px)',
+            textAlign: 'center',
+            backdropFilter: 'blur(20px)',
+          }}>
+            <h2 className="rajdhani" style={{
+              fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 800, margin: '0 0 16px',
+              background: 'linear-gradient(90deg, #fff, #e2e8f0)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              lineHeight: 1.2,
+            }}>
+              Your future coach is already looking.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 'clamp(14px, 1.8vw, 17px)', margin: '0 0 32px', lineHeight: 1.6 }}>
+              Build your profile, upload your film, and let your work speak for itself.
+            </p>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/register" style={{
+                background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                color: '#fff', padding: '14px 32px', borderRadius: 12,
+                textDecoration: 'none', fontSize: 16, fontWeight: 700,
+                boxShadow: '0 4px 24px rgba(249,115,22,0.4)',
+              }}>
+                Create Your Profile
               </Link>
-              <Link href="/login" className="ghost-btn" style={{
-                padding: '16px 40px', borderRadius: 16,
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.6)',
-                fontWeight: 700, fontSize: 16, textDecoration: 'none',
-                display: 'inline-block',
+              <Link href="/login" style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#fff', padding: '14px 32px', borderRadius: 12,
+                textDecoration: 'none', fontSize: 16, fontWeight: 600,
+                backdropFilter: 'blur(8px)',
               }}>
                 Sign In
               </Link>
             </div>
           </div>
-        </HeroReveal>
+        </div>
       </section>
 
-      {/* Footer */}
+      {/* ═══════════════════════════
+         FOOTER
+         ═══════════════════════════ */}
       <footer style={{
-        borderTop: '1px solid rgba(255,255,255,0.04)',
-        background: '#08081a', padding: '60px 24px',
-        textAlign: 'center',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        padding: '32px clamp(16px, 5vw, 64px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 16,
       }}>
-        <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', color: '#fff', marginBottom: 12 }}>
-          ATHLETE<span style={{ color: '#3b82f6' }}>EDGE</span>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <span className="rajdhani" style={{ fontSize: 16, fontWeight: 700, color: '#f97316' }}>ATHLETE</span>
+          <span className="rajdhani" style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>EDGE</span>
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.18)', marginBottom: 10 }}>
-          &copy; 2026 Athlete Edge. Built for ballers, by ballers.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ fontSize: 13, color: '#3b82f6', textDecoration: 'none' }}>
-            ryan.dhalbisoi@gmail.com
-          </a>
-          <a href="mailto:shrey2425@gmail.com" style={{ fontSize: 13, color: '#3b82f6', textDecoration: 'none' }}>
-            shrey2425@gmail.com
-          </a>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span>&copy; {new Date().getFullYear()} Athlete Edge</span>
+          <a href="mailto:ryan.dhalbisoi@gmail.com" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>ryan.dhalbisoi@gmail.com</a>
+          <a href="mailto:shrey2425@gmail.com" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>shrey2425@gmail.com</a>
         </div>
       </footer>
     </div>
