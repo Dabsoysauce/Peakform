@@ -75,7 +75,7 @@ const navItems = [
   { label: 'Team',          href: '/dashboard/team',          iconKey: 'team',          tour: 'nav-team' },
   { label: 'Notifications', href: '/dashboard/notifications', iconKey: 'notifications' },
   { label: 'Profile',       href: '/dashboard/profile',       iconKey: 'profile',       tour: 'nav-profile' },
-  { label: 'Basketball Training', href: '/dashboard/basketball-training', iconKey: 'basketball' },
+  { label: 'Injury Recovery', href: '/dashboard/basketball-training', iconKey: 'basketball' },
 ];
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';

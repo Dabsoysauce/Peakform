@@ -1,23 +1,6 @@
 'use client';
 import { useState } from 'react';
 
-// ─── Plan generation logic ────────────────────────────────────────────────────
-
-const POS_NAMES = {
-  pg:  'Point Guard',
-  sg:  'Shooting Guard',
-  sf:  'Small Forward',
-  pf:  'Power Forward',
-  c:   'Center',
-};
-const POS_FOCUS = {
-  pg:  'Ball Handling, Vision, Leadership',
-  sg:  'Shooting, Off-Ball Movement, Athleticism',
-  sf:  'Versatility, Scoring, Two-Way Defense',
-  pf:  'Post Play, Rebounding, Strength',
-  c:   'Rim Protection, Post Scoring, Rebounding',
-};
-
 const AREA_LABELS = {
   head: 'Head', neck: 'Neck',
   leftShoulder: 'Left Shoulder', rightShoulder: 'Right Shoulder',
@@ -29,312 +12,147 @@ const AREA_LABELS = {
   leftFoot: 'Left Ankle/Foot', rightFoot: 'Right Ankle/Foot',
 };
 
-function buildPlan(age, pos, fitness, soreness, painData) {
+const INJURY_PROTOCOLS = {
+  head: {
+    immediate: ['Stop all activity immediately', 'Assess for concussion symptoms — dizziness, nausea, blurred vision', 'If symptoms present, seek medical attention immediately', 'Apply cold compress to affected area for 10–15 minutes'],
+    first48h: ['Complete rest — no physical activity', 'Monitor symptoms every 2–4 hours', 'Avoid screens and bright lights if headache persists', 'Sleep with head slightly elevated', 'No pain medication without doctor approval (can mask symptoms)'],
+    rehab: ['Gradual return-to-play protocol only after cleared by physician', 'Light walking after 24–48h if symptom-free', 'Neck mobility exercises — gentle chin tucks, side bends', 'Balance and proprioception drills when cleared', 'Progressive aerobic activity — stationary bike, light jogging'],
+    avoid: ['Contact sports until fully cleared', 'Heavy lifting or straining', 'Activities with fall risk', 'Alcohol and sedatives (mask symptoms)'],
+  },
+  neck: {
+    immediate: ['Stop activity and immobilize neck if severe pain', 'Apply ice for 15–20 minutes', 'Avoid any neck rotation or flexion movements', 'Seek medical evaluation if numbness or tingling in arms'],
+    first48h: ['Gentle heat therapy after initial 24h ice', 'Rest in neutral neck position', 'Avoid looking down at phone or laptop for extended periods', 'Sleep with supportive pillow maintaining neutral alignment', 'Gentle chin tucks — 10 reps, 3× daily if pain allows'],
+    rehab: ['Isometric neck strengthening — press hand against head in all 4 directions, 5-second holds', 'Scapular retraction exercises — squeeze shoulder blades, 3×15', 'Thoracic spine mobility — foam roller extensions', 'Progressive resistance band neck work', 'Gradual return to sport-specific movements'],
+    avoid: ['Contact drills until pain-free through full ROM', 'Overhead pressing movements', 'Wrestling or heading the ball', 'Sudden jerking or whiplash-type movements'],
+  },
+  leftShoulder: { shoulder: true },
+  rightShoulder: { shoulder: true },
+  chest: {
+    immediate: ['Stop upper body activity immediately', 'Apply ice for 15–20 minutes every 2–3 hours', 'Rest arm in comfortable position — sling if severe', 'Seek medical evaluation if breathing is affected or there is a popping sensation'],
+    first48h: ['Continue ice therapy — 15 min on, 45 min off', 'Avoid pushing, pulling, or lifting movements', 'Sleep on unaffected side or back', 'Gentle pendulum swings — let arm hang and make small circles', 'Anti-inflammatory foods: turmeric, ginger, omega-3s'],
+    rehab: ['Wall push-ups progressing to incline push-ups when pain-free', 'Resistance band internal/external rotation — 3×15', 'Scapular stabilization — prone Y-T-W raises', 'Doorway pec stretch — 30-second holds, 3×', 'Gradual return to shooting and passing drills'],
+    avoid: ['Bench press and heavy pushing until cleared', 'Contact drills and blocking', 'Overhead throwing or shooting at full power', 'Dips and deep stretching of the chest'],
+  },
+  core: {
+    immediate: ['Stop activity and rest in comfortable position', 'Apply ice for 15–20 minutes to affected area', 'Avoid twisting, bending, or lifting movements', 'Seek medical attention if severe pain or inability to stand straight'],
+    first48h: ['Gentle walking as tolerated — promotes blood flow', 'Avoid sit-ups, crunches, or any abdominal flexion', 'Sleep on back with knees elevated or on side with pillow between knees', 'Diaphragmatic breathing exercises — 5 minutes, 3× daily', 'Heat therapy after 48h if muscle spasm persists'],
+    rehab: ['Dead bug exercise — 3×10 per side', 'Bird dog — 3×10 per side, hold 3 seconds', 'Plank progression: knee plank → full plank, 20–30 seconds', 'Pallof press with resistance band — anti-rotation work', 'Gradual return to sport-specific rotational movements'],
+    avoid: ['Heavy compound lifts (squats, deadlifts)', 'Rotational sports movements at full speed', 'Sit-ups and crunches in early rehab', 'Any movement that causes sharp pain'],
+  },
+  hips: {
+    immediate: ['Stop activity and rest the hip', 'Apply ice for 15–20 minutes', 'Avoid weight-bearing if severe pain — use crutches if needed', 'Seek evaluation if unable to bear weight or there is a popping sensation'],
+    first48h: ['Relative rest — limit walking to necessary movement only', 'Ice 3–4× daily for 15 minutes', 'Sleep with pillow between knees if side-sleeping', 'Gentle hip flexor stretch — 20-second holds, 3× if pain allows', 'Avoid sitting for prolonged periods'],
+    rehab: ['Clamshells — 3×15 per side for glute medius activation', 'Hip bridges — 3×15, progress to single-leg', 'Pigeon pose stretch — 90-second holds per side', 'Lateral band walks — 3×10 each direction', 'Progressive running program: walk → jog → sprint over 2–3 weeks'],
+    avoid: ['Deep squatting and lunges in early rehab', 'Cutting and pivoting movements', 'Prolonged sitting with hip flexed past 90°', 'High-impact activities until pain-free'],
+  },
+  leftArm: { arm: true },
+  rightArm: { arm: true },
+  leftThigh: { thigh: true },
+  rightThigh: { thigh: true },
+  leftKnee: { knee: true },
+  rightKnee: { knee: true },
+  leftShin: { shin: true },
+  rightShin: { shin: true },
+  leftFoot: { foot: true },
+  rightFoot: { foot: true },
+};
+
+function getProtocol(area, severity) {
+  const base = INJURY_PROTOCOLS[area];
+  if (!base) return null;
+
+  if (base.shoulder) return {
+    immediate: [`Stop all overhead and pushing movements`, `Apply ice to ${AREA_LABELS[area]} for 15–20 minutes every 2–3 hours`, `Rest arm in comfortable position — avoid reaching overhead`, `Seek medical evaluation if there is numbness, tingling, or inability to lift the arm`],
+    first48h: ['Continue ice therapy — 15 min on, 45 min off', 'Gentle pendulum swings — let arm hang and make small circles, 2 minutes', 'Avoid any lifting, pushing, or pulling movements', 'Sleep on unaffected side with pillow supporting the injured arm', 'Anti-inflammatory nutrition: omega-3s, turmeric, berries'],
+    rehab: ['Wall slides — 3×10, progress range as tolerated', 'Resistance band external rotation — 3×15 light resistance', 'Scapular retraction — squeeze shoulder blades, 3×15', 'Sleeper stretch — 30-second holds, 3×', 'Progressive throwing/shooting program starting at 50% intensity'],
+    avoid: ['Overhead pressing and bench press until pain-free', 'Contact drills and blocking', 'Full-power shooting or throwing', 'Dips and deep shoulder stretching'],
+  };
+
+  if (base.arm) return {
+    immediate: ['Stop all activity involving the arm', 'Apply ice for 15–20 minutes to the affected area', 'Rest and immobilize — avoid gripping or lifting', 'Seek medical evaluation if there is visible deformity or inability to move the joint'],
+    first48h: ['Continue RICE protocol — Rest, Ice, Compression, Elevation', 'Gentle wrist and finger mobility circles if pain allows', 'Avoid any gripping, lifting, or weight-bearing through the arm', 'Sleep with arm elevated on pillows', 'Anti-inflammatory foods and adequate hydration'],
+    rehab: ['Wrist curls and extensions with light weight — 3×15', 'Grip strengthening — stress ball squeezes, 3×20', 'Forearm pronation/supination with light dumbbell — 3×10', 'Progressive resistance band work for full arm', 'Gradual return to ball-handling drills starting stationary'],
+    avoid: ['Heavy lifting and weight training', 'Contact drills that stress the arm', 'Repetitive motions that caused the injury', 'Push-ups and planks until pain-free'],
+  };
+
+  if (base.thigh) return {
+    immediate: ['Stop activity immediately — do not try to play through it', 'Apply ice for 15–20 minutes, repeat every 2–3 hours', 'Compress with elastic bandage — snug but not tight', 'Elevate leg above heart level when resting'],
+    first48h: ['Continue RICE protocol consistently', 'Avoid stretching the injured muscle — this can worsen tears', 'Use crutches if walking causes a limp', 'Gentle pain-free range of motion only — no forcing', 'Anti-inflammatory diet: lean protein, berries, leafy greens, omega-3s'],
+    rehab: ['Gentle static stretching when pain-free — 20-second holds, 3×', 'Progressive strengthening: isometric → concentric → eccentric', 'Stationary bike — light resistance, 10–15 minutes', 'Nordic hamstring curls (progressive) for posterior thigh', 'Gradual return to running: walk → jog → sprint over 10–14 days'],
+    avoid: ['Sprinting and explosive movements until cleared', 'Deep stretching of the injured muscle', 'Massage directly on the injury in the first 72 hours', 'Returning to play before achieving full pain-free ROM'],
+  };
+
+  if (base.knee) return {
+    immediate: ['Stop activity immediately — do not bear weight if unstable', 'Apply ice for 15–20 minutes, elevate above heart', 'Compress with elastic bandage or knee sleeve', 'Seek medical evaluation if knee gives out, locks, or swells rapidly'],
+    first48h: ['Strict RICE protocol — Rest, Ice, Compression, Elevation', 'Avoid HARM: Heat, Alcohol, Running, Massage (first 72h)', 'Use crutches if unable to walk without a limp', 'Gentle quad sets — tighten thigh muscle, hold 5 seconds, 10 reps', 'Sleep with knee slightly elevated on pillow'],
+    rehab: ['Straight leg raises — 3×15, progress to ankle weight', 'Terminal knee extensions with band — 3×15', 'Mini squats to 45° — 3×10, progress depth as tolerated', 'Single-leg balance — 30 seconds each leg, progress to eyes closed', 'Step-ups — 3×10, start with 4-inch step, progress gradually'],
+    avoid: ['Jumping and landing activities until cleared', 'Deep squats and lunges in early rehab', 'Cutting, pivoting, and lateral movements', 'Returning to sport before passing functional tests'],
+  };
+
+  if (base.shin) return {
+    immediate: ['Stop impact activity immediately', 'Apply ice for 15–20 minutes along the shin', 'Elevate leg when resting', 'Seek medical evaluation if pain is localized to one spot (stress fracture concern)'],
+    first48h: ['Switch to non-weight-bearing cardio — swimming, cycling', 'Ice after any activity — 15 minutes minimum', 'Compression sleeve during daily activities', 'Gentle calf stretching — 30-second holds, 3× each leg', 'Foam rolling of calves (not directly on shin bone)'],
+    rehab: ['Calf raises — double leg progressing to single leg, 3×15', 'Tibialis anterior raises — lean against wall, lift toes, 3×15', 'Toe walking and heel walking — 30 seconds each, 3×', 'Gradual return to impact: walk → jog → run on soft surface', 'Assess footwear — replace worn shoes, consider orthotics'],
+    avoid: ['Running on hard surfaces (concrete) during rehab', 'Increasing training volume by more than 10% per week', 'Playing through shin pain — this worsens the condition', 'Barefoot activity on hard surfaces'],
+  };
+
+  if (base.foot) return {
+    immediate: ['Stop weight-bearing activity immediately', 'Apply ice for 15–20 minutes, elevate above heart', 'Compress with elastic bandage', 'Seek medical evaluation if unable to bear weight or there is significant swelling'],
+    first48h: ['Strict RICE protocol', 'Avoid walking barefoot — wear supportive shoes always', 'Use crutches if unable to walk without significant pain', 'Ankle alphabet — trace A–Z with toes, 2× daily', 'Gentle calf stretching — 30-second holds, 3×'],
+    rehab: ['Resistance band ankle work — dorsiflexion, plantarflexion, inversion, eversion — 3×15 each', 'Single-leg balance — 30 seconds, progress to unstable surface', 'Calf raises — double leg → single leg, 3×15', 'Towel curls with toes — strengthens foot intrinsics, 3×10', 'Gradual return to running: walk → jog → sprint over 2–3 weeks'],
+    avoid: ['Playing on uneven surfaces until cleared', 'Wearing unsupportive footwear', 'Jumping and landing activities', 'Ignoring persistent pain — foot injuries can become chronic'],
+  };
+
+  return null;
+}
+
+function buildInjuryPlan(age, soreness, painData) {
   const entries = Object.entries(painData).filter(([, v]) => v > 0);
   const maxSev = entries.length ? Math.max(...entries.map(([, v]) => v)) : 0;
   const primaryArea = entries.length
     ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0]
     : null;
 
-  let intensity = 'high';
-  if (soreness === 'severe' || maxSev >= 7) intensity = 'recovery';
-  else if (soreness === 'moderate' || maxSev >= 4) intensity = 'light';
-  else if (soreness === 'mild' || maxSev >= 1) intensity = 'moderate';
+  let severity = 'mild';
+  if (soreness === 'severe' || maxSev >= 7) severity = 'severe';
+  else if (soreness === 'moderate' || maxSev >= 4) severity = 'moderate';
+  else if (soreness === 'mild' || maxSev >= 1) severity = 'mild';
 
-  return {
-    summary: {
-      position: POS_NAMES[pos] || pos,
-      intensity,
-      focus: POS_FOCUS[pos] || 'All-around skills',
-      painAreas: { ...painData },
-      primaryArea,
-      maxSev,
-    },
-    training: buildTraining(pos, intensity, fitness, primaryArea, maxSev),
-    recovery: buildRecovery(intensity, primaryArea, maxSev, painData),
-    positionDrills: buildPositionDrills(pos, intensity),
-  };
-}
-
-function buildTraining(pos, intensity, fitness, painArea, maxSev) {
-  const stdWarm = [
-    '5 minutes light jogging & dynamic movement',
-    'Dynamic stretching — leg swings, hip circles, shoulder rotations',
-    'Ball-handling warm-up — two-ball dribbling, Mikan drill, stationary combos',
-  ];
-  const stdCool = [
-    '5 minutes light jogging & walking',
-    'Static stretching — hold each stretch 20–30 seconds',
-    'Foam rolling for quads, hamstrings, calves, and hips',
-  ];
-  const plan = { title: '', description: '', warmup: [], main: [], cooldown: [], duration: '', icon: '🏀' };
-
-  switch (intensity) {
-    case 'recovery':
-      plan.title = 'Recovery Session'; plan.icon = '🛌';
-      plan.description = 'Focus on active recovery and light skill reinforcement to promote healing.';
-      plan.warmup = ['5 minutes very light movement — gentle walking', 'Gentle full-body mobility & joint circles'];
-      plan.main = [
-        '20 minutes of stationary shooting & form work (no cutting or jumping)',
-        'Walk-through play review — mental reps, no physical exertion',
-        'Non-impact cross-training — swimming or stationary bike (30 min)',
-        'Breathing & relaxation exercises',
-      ];
-      plan.cooldown = ['Extended stretching session (25–30 minutes)', 'Foam rolling — full body, 90 seconds per area'];
-      plan.duration = '30–45 minutes (very low intensity)'; break;
-
-    case 'light':
-      plan.title = 'Light Training Session'; plan.icon = '🌤';
-      plan.description = 'Maintain sharpness while giving your body space to recover.';
-      plan.warmup = stdWarm;
-      plan.main = [
-        'Stationary & slow-speed ball-handling drills at 50–60% effort',
-        'Catch-and-shoot repetition — no off-dribble or sprinting',
-        'Positional walk-through — half-speed play execution',
-        'Form shooting from close range — focus on mechanics over volume',
-      ];
-      plan.cooldown = stdCool;
-      plan.duration = '45–60 minutes (low to moderate intensity)'; break;
-
-    case 'moderate':
-      plan.title = 'Moderate Training Session'; plan.icon = '⚡';
-      plan.description = 'Balanced session building technical sharpness and court fitness.';
-      plan.warmup = stdWarm;
-      plan.main = [
-        'Ball-handling combos at 70–80% speed',
-        'Mid-range & three-point shooting off movement (curls, flares, pull-ups)',
-        '3-on-3 half-court competitive sets (15 minutes)',
-        'Position-specific drills at moderate game pace',
-        'Interval sprints — full court × 6, 1:1 work-to-rest',
-      ];
-      plan.cooldown = stdCool;
-      plan.duration = '60–75 minutes (moderate intensity)'; break;
-
-    case 'high':
-      plan.title = 'High Intensity Session'; plan.icon = '🔥';
-      plan.description = 'Full-intensity session to sharpen game fitness and decision-making under pressure.';
-      plan.warmup = stdWarm;
-      plan.main = [
-        'Ball-handling & finishing at 90–100% game speed',
-        'Competitive 5-on-5 live sets — no stopping on mistakes',
-        'Full-court transition offense and defense drills',
-        'Sprint & conditioning circuit — 8 × court suicides, 4 × defensive-slide circuits',
-        'Late-clock & end-of-game scenario execution at match pace',
-      ];
-      plan.cooldown = stdCool;
-      plan.duration = '75–90 minutes (high intensity)'; break;
-  }
-
-  if (painArea && maxSev > 0) modifyForPain(plan, painArea, maxSev);
-  return plan;
-}
-
-function modifyForPain(plan, area, sev) {
-  const mods = [];
-  if (['leftThigh', 'rightThigh', 'leftKnee', 'rightKnee', 'leftShin', 'rightShin'].includes(area)) {
-    mods.push('Reduce full-court sprinting and cutting volume by 40–50%');
-    mods.push('Avoid explosive jumping, dunking, or plyometric drills');
-    if (['leftKnee', 'rightKnee'].includes(area)) mods.push('No deep squatting or rapid lateral direction changes');
-    if (sev > 5) mods.push('Consider non-weight-bearing conditioning — swimming or stationary bike');
-  } else if (['leftFoot', 'rightFoot'].includes(area)) {
-    mods.push('Wear high-top footwear with adequate ankle support');
-    mods.push('Reduce cutting, planting, and sharp pivoting movements');
-    mods.push('Consider kinesiology taping for additional ankle support');
-  } else if (area === 'back' || area === 'core') {
-    mods.push('Avoid heavy load-bearing or contact drills');
-    mods.push('Focus on core bracing with strict neutral spine throughout');
-    if (area === 'back') mods.push('Limit rotation-heavy movements and post contact drills');
-  } else if (['leftShoulder', 'rightShoulder'].includes(area)) {
-    mods.push('Reduce overhead passing and shooting volume as tolerated');
-    mods.push('Modify any overhead or push-off contact movements');
-  } else if (['leftArm', 'rightArm'].includes(area)) {
-    mods.push('Reduce dribbling reps on affected side; emphasize off-hand work');
-    mods.push('Avoid contact drills that stress the injured limb');
-  } else if (area === 'hips') {
-    mods.push('Avoid explosive lateral cuts and hip-hinge power movements');
-    mods.push('Add hip flexor & glute activation to the warm-up');
-  }
-  if (mods.length) {
-    plan.main.push('__separator__Pain Management Modifications');
-    plan.main = plan.main.concat(mods);
-  }
-}
-
-function buildRecovery(intensity, primaryArea, maxSev, allPainAreas) {
-  const plan = {
-    title: 'Recovery Protocol',
-    description: 'Optimize recovery to be ready for your next practice or game.',
-    immediate: [], sameDay: [], nextDay: [], nutrition: [], icon: '🔄',
-  };
-
-  const si = [
-    '10–15 minutes of cool-down light jogging & walking',
-    'Hydrate immediately — 500–600ml water or electrolyte drink',
-    'Light static stretching of all major muscle groups',
-  ];
-  const sd = [
-    'Full meal within 60 minutes — 4:1 carbohydrate-to-protein ratio',
-    'Wear compression tights or sleeves if available',
-    '20 minutes of foam rolling — quads, hamstrings, calves, glutes, IT band',
-  ];
-  const nd = [
-    '10–15 minutes of mobility flow work',
-    'Light muscle activation drills — glutes, core, shoulders',
-    'Self-assessment — rate soreness vs. yesterday; adjust intensity accordingly',
-  ];
-  const nu = [
-    'Daily hydration: 2.5–3 litres of water minimum',
-    'Protein: 1.6–1.8g per kg of bodyweight per day',
-    'Complex carbohydrates at each meal to maintain energy stores',
-    'Anti-inflammatory foods: berries, fatty fish, turmeric, leafy greens, walnuts',
-  ];
-
-  switch (intensity) {
-    case 'recovery':
-      plan.immediate = si;
-      plan.sameDay = [...sd, 'Extended stretching — 30 minutes, prioritise tight areas', 'Contrast therapy: 2 minutes cold / 1 minute warm, 4 rounds'];
-      plan.nextDay = [...nd, 'Continue active recovery — light walk or swim', 'Consider physiotherapy or sports massage'];
-      plan.nutrition = [...nu, 'Prioritise anti-inflammatory diet for 48–72 hours']; break;
-    case 'light':
-      plan.immediate = si; plan.sameDay = sd; plan.nextDay = nd; plan.nutrition = nu; break;
-    case 'moderate':
-      plan.immediate = si;
-      plan.sameDay = [...sd, 'Cold shower or ice pack on heaviest-worked joints (8–12 min)'];
-      plan.nextDay = nd; plan.nutrition = nu; break;
-    case 'high':
-      plan.immediate = si;
-      plan.sameDay = [...sd, 'Ice bath — 10–15 minutes at 10–15°C', 'Compression sleeves or boots for 30–45 minutes'];
-      plan.nextDay = [...nd, 'Light recovery session — 20–25 minutes easy shooting & movement', 'Sports massage or physio session recommended'];
-      plan.nutrition = [...nu, 'Tart cherry juice — 30ml concentrate for muscle recovery', 'High-GI carbohydrates (banana, rice, fruit) immediately post-session']; break;
-  }
-
-  const entries = Object.entries(allPainAreas || {}).filter(([, v]) => v > 0);
-  if (entries.length) {
-    const extra = [];
-    entries.forEach(([a, sev]) => {
-      const lbl = AREA_LABELS[a] || a;
-      if (['leftThigh', 'rightThigh'].includes(a)) extra.push(`Elevate affected leg when resting; ice ${lbl} — 15 min on, 45 min off`);
-      if (['leftKnee', 'rightKnee'].includes(a)) { extra.push(`RICE protocol for ${lbl}`); if (sev > 5) extra.push(`Compression sleeve on ${lbl} during activity`); }
-      if (['leftShin', 'rightShin'].includes(a)) extra.push(`Ice ${lbl} for 15 minutes after any activity`);
-      if (['leftFoot', 'rightFoot'].includes(a)) extra.push(`Ice ankle/foot 10–15 minutes; ankle alphabet & calf stretches`);
-      if (['leftShoulder', 'rightShoulder'].includes(a)) extra.push(`Ice ${lbl} — 15 min on / 45 min off; gentle pendulum mobility drills`);
-      if (['leftArm', 'rightArm'].includes(a)) extra.push(`Rest ${lbl} from dribbling; ice if swollen; wrist/elbow mobility circles`);
-      if (a === 'back') extra.push(`Cat-cow and child's pose stretches; heat pad for muscle relaxation; avoid prolonged sitting`);
-      if (a === 'hips') extra.push(`Pigeon pose & hip flexor stretches (90-second holds); heat therapy on hips`);
-      if (a === 'core') extra.push(`Gentle diaphragmatic breathing exercises; avoid forced abdominal compression`);
-    });
-    const unique = [...new Set(extra)];
-    if (unique.length) {
-      plan.sameDay.push('__separator__Area-Specific Recovery');
-      plan.sameDay = plan.sameDay.concat(unique);
+  const protocols = [];
+  const areaNames = [];
+  entries.forEach(([area, sev]) => {
+    const proto = getProtocol(area, sev);
+    if (proto) {
+      protocols.push({ area, severity: sev, ...proto });
+      areaNames.push(AREA_LABELS[area]);
     }
-  }
-  return plan;
-}
-
-function buildPositionDrills(pos, intensity) {
-  const map = {
-    pg: {
-      t: ['Two-ball dribbling combos — crossover, between legs, behind back', 'Pick-and-roll reads — attack, pull up, or kick out', 'Floater & pull-up mid-range off live dribble', 'No-look / behind-the-back passing against pressure'],
-      p: ['Lateral quickness ladder drills — 4×30s', 'Change-of-direction circuit: 5-10-5 pro agility 4×', 'Full-court endurance: 4×5min at 80% HR', 'Reactive first step: partner-signal burst drills'],
-      ta: ['Reading the pick-and-roll defender (hedge vs. drop)', 'Pace control — when to push vs. slow the game down', 'Identifying mismatches and attacking them immediately', 'Pressure defense on ball — forcing baseline or middle'],
-    },
-    sg: {
-      t: ['Catch-and-shoot off screens — curl, flare, and flat', 'Pull-up jumper off 1–2 dribbles from wing & elbow', 'Off-ball movement — V-cuts, backdoor, zipper cuts', 'Finishing through contact at the rim — both sides'],
-      p: ['Sprint and decelerate circuits — 6×30m', 'Vertical leap: box jumps & depth jumps 4×10', 'Defensive lateral slides — full court 4×', 'Reaction: partner mirror & closeout drills'],
-      ta: ['Reading off-ball screens — when to curl vs. fade', 'Defensive assignment — denying the wing and chasing screens', 'Shot selection — pull up vs. drive vs. kick out', 'Transition offense — fill lanes and spot up on the break'],
-    },
-    sf: {
-      t: ['Mid-range from elbow & wing — off catch and off dribble', 'Drive-and-kick sequences — read the help and make the pass', 'Post-up basics — seal, catch, and simple scoring moves', 'Perimeter closeout & contest defense footwork'],
-      p: ['Full-court conditioning — suicide runs 6×', 'Explosive first step: 6×10m from triple-threat stance', 'Strength for contact: resistance band push-pull 3×12', 'Agility: T-drill & L-drill 4× each'],
-      ta: ['Help-side defensive positioning — see ball and man', 'Transition offense — reading the defense on the break', 'Attacking closeouts — shot fake, one dribble, finish', 'Switching on screens — body position and communication'],
-    },
-    pf: {
-      t: ['Post moves — drop step, up-and-under, baby hook both hands', 'Face-up mid-range from short corner & elbow', 'Offensive rebounding positioning — seal and tip drills', 'Dump-off & kick-out passes from the post'],
-      p: ['Lower body strength: squat & lunge circuit 4×10', 'Box-out battle drills — 1v1 rebounding 5×5', 'Jump training: approach rebound runs & tip-ins 4×8', 'Core stability for post play: plank & anti-rotation holds'],
-      ta: ['Positioning in the pick-and-roll — timing the roll vs. pop', 'Defending on the perimeter vs. switching onto guards', 'Offensive rebounding reads — when to crash vs. stay', 'Setting and re-screening: angle, legality, and timing'],
-    },
-    c: {
-      t: ['Drop step & up-and-under in the post', 'Short hook shot — both hands, both blocks', 'Outlet passing after rebound — quick decision, accurate delivery', 'Rim protection — block technique, verticality, and timing'],
-      p: ['Lower body power: leg press & hip thrust 4×8', 'Jump & rebound circuit — tip-outs, put-backs 4×10', 'Explosive power: depth jumps 4×6', 'Lateral mobility drills — defensive slides & drop steps'],
-      ta: ['Rim protection — reading driver angles & staying vertical', 'Pick-and-roll defense — drop coverage vs. hedge coverage', 'Alley-oop lob timing — footwork and jump point', 'Communicating switches and defensive rotations'],
-    },
-  };
-
-  const d = map[pos] || map.pg;
-  let { t, p, ta } = d;
-
-  if (['recovery', 'light'].includes(intensity)) {
-    t  = t.slice(0, 2).map(x => x + ' (low intensity)');
-    p  = p.slice(0, 2).map(x => x + ' (reduced volume)');
-    ta = ta.slice(0, 2).map(x => x + ' (walk-through / discussion)');
-  }
+  });
 
   return {
-    title: `${POS_NAMES[pos] || pos} — Position Drills`,
-    description: `Key skills and attributes for your position, calibrated to ${intensity} intensity.`,
-    technical: t, physical: p, tactical: ta, icon: '🎯',
+    age,
+    severity,
+    primaryArea,
+    maxSev,
+    painAreas: { ...painData },
+    areaNames,
+    protocols,
   };
 }
-
-// ─── Severity colour helper ───────────────────────────────────────────────────
 
 function sevColor(s) {
   if (!s) return '#1e1e30';
   const t = s / 10;
   const h = Math.round(50 - t * 50);
   const sa = Math.round(85 + t * 12);
-  const l  = Math.round(60 - t * 20);
+  const l = Math.round(60 - t * 20);
   return `hsl(${h},${sa}%,${l}%)`;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function PlanSection({ heading, items }) {
-  return (
-    <div className="mb-4">
-      <div className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-2">{heading}</div>
-      <ul className="space-y-1">
-        {items.map((item, i) =>
-          item.startsWith('__separator__') ? (
-            <li key={i} className="text-xs font-semibold text-gray-500 uppercase tracking-wider pt-2 pb-1 border-t border-gray-700">
-              {item.replace('__separator__', '')}
-            </li>
-          ) : (
-            <li key={i} className="flex gap-2 text-sm text-gray-300">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-              {item}
-            </li>
-          )
-        )}
-      </ul>
-    </div>
-  );
-}
-
-function PlanCard({ icon, title, description, sections }) {
-  return (
-    <div className="rounded-xl border border-gray-700 p-5" style={{ backgroundColor: '#1e1e30' }}>
-      <div className="flex items-center gap-3 mb-2">
-        <span className="text-2xl">{icon}</span>
-        <h3 className="text-lg font-bold text-white">{title}</h3>
-      </div>
-      <p className="text-sm text-gray-400 mb-4">{description}</p>
-      {sections.map(([heading, items]) => (
-        <PlanSection key={heading} heading={heading} items={items} />
-      ))}
-    </div>
-  );
-}
-
-const INTENSITY_STYLES = {
-  recovery: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
-  light:    'bg-green-500/15 text-green-300 border border-green-500/30',
+const SEVERITY_STYLES = {
+  mild: 'bg-green-500/15 text-green-300 border border-green-500/30',
   moderate: 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/30',
-  high:     'bg-red-500/15 text-red-300 border border-red-500/30',
+  severe: 'bg-red-500/15 text-red-300 border border-red-500/30',
 };
-
-// ─── Body Map SVG ─────────────────────────────────────────────────────────────
 
 const BODY_AREAS = [
   { id: 'head',          shape: 'path',    d: 'M100,12 C82,12 68,26 68,44 C68,60 78,73 92,78 L92,92 L108,92 L108,78 C122,73 132,60 132,44 C132,26 118,12 100,12 Z' },
@@ -372,11 +190,76 @@ function BodyMapArea({ area, pain, isSelected, isFocused, onClick }) {
   return null;
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+function ProtocolCard({ protocol }) {
+  const areaName = AREA_LABELS[protocol.area];
+  return (
+    <div className="rounded-xl border border-gray-700 p-5" style={{ backgroundColor: '#1e1e30' }}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🩹</span>
+          <h3 className="text-lg font-bold text-white">{areaName}</h3>
+        </div>
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ borderColor: sevColor(protocol.severity), color: sevColor(protocol.severity), backgroundColor: `${sevColor(protocol.severity)}18`, borderWidth: 1 }}>
+          Severity: {protocol.severity}/10
+        </span>
+      </div>
 
-export default function BasketballTrainingPage() {
+      <div className="space-y-4">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-red-400 mb-2">Immediate Action</div>
+          <ul className="space-y-1">
+            {protocol.immediate.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-gray-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-yellow-400 mb-2">First 48 Hours</div>
+          <ul className="space-y-1">
+            {protocol.first48h.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-gray-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-green-400 mb-2">Rehabilitation</div>
+          <ul className="space-y-1">
+            {protocol.rehab.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-gray-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-2">What to Avoid</div>
+          <ul className="space-y-1">
+            {protocol.avoid.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-gray-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function InjuryRecoveryPage() {
   const [view, setView] = useState('form');
-  const [form, setForm] = useState({ age: '', position: '', fitness: '', soreness: '' });
+  const [form, setForm] = useState({ age: '', soreness: '' });
   const [painData, setPainData] = useState({});
   const [selectedAreas, setSelectedAreas] = useState(new Set());
   const [focusedArea, setFocusedArea] = useState(null);
@@ -386,7 +269,6 @@ export default function BasketballTrainingPage() {
 
   function handleAreaClick(areaId) {
     if (selectedAreas.has(areaId)) {
-      // Deselect — remove from set and clear its pain
       const next = new Set(selectedAreas);
       next.delete(areaId);
       setSelectedAreas(next);
@@ -398,7 +280,6 @@ export default function BasketballTrainingPage() {
         setSliderVal(newFocus ? (painData[newFocus] || 0) : 0);
       }
     } else {
-      // Select — add to set, make it the focused area
       setSelectedAreas(prev => new Set([...prev, areaId]));
       setFocusedArea(areaId);
       setSliderVal(painData[areaId] || 0);
@@ -424,11 +305,15 @@ export default function BasketballTrainingPage() {
   function generate() {
     setError('');
     const age = parseInt(form.age);
-    if (!age || !form.position || !form.fitness || !form.soreness) {
-      setError('Please fill in Age, Position, Fitness Level, and Overall Soreness.');
+    if (!age || !form.soreness) {
+      setError('Please fill in Age and Overall Pain Level.');
       return;
     }
-    const generated = buildPlan(age, form.position, form.fitness, form.soreness, painData);
+    if (Object.keys(painData).length === 0) {
+      setError('Please select at least one body area on the pain map.');
+      return;
+    }
+    const generated = buildInjuryPlan(age, form.soreness, painData);
     setPlan(generated);
     setView('results');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -436,25 +321,22 @@ export default function BasketballTrainingPage() {
 
   const activePainEntries = Object.entries(painData).filter(([, v]) => v > 0);
 
-  // ── Form view ────────────────────────────────────────────────────────────────
   if (view === 'form') {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">🏀</span>
-            <h1 className="text-2xl font-bold text-white">Basketball Training Plan</h1>
+            <span className="text-2xl">🩹</span>
+            <h1 className="text-2xl font-bold text-white">Injury Recovery</h1>
           </div>
           <p className="text-gray-400 text-sm">
-            Generate a personalized training &amp; recovery plan tailored to your position and physical condition.
+            Map your injury, rate the severity, and get a personalized recovery protocol.
           </p>
         </div>
 
-        {/* Player Info */}
         <div className="rounded-xl border border-gray-700 p-5" style={{ backgroundColor: '#1e1e30' }}>
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-blue-400 mb-4">Player Info</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-blue-400 mb-4">Your Info</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Age</label>
               <input
@@ -465,41 +347,13 @@ export default function BasketballTrainingPage() {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Position</label>
-              <select
-                value={form.position}
-                onChange={e => setForm(p => ({ ...p, position: e.target.value }))}
-                className="w-full rounded-lg px-3 py-2 text-sm text-white border border-gray-600 bg-[#0f0f1a] focus:outline-none focus:border-blue-500"
-              >
-                <option value="">Select…</option>
-                {Object.entries(POS_NAMES).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Fitness Level</label>
-              <select
-                value={form.fitness}
-                onChange={e => setForm(p => ({ ...p, fitness: e.target.value }))}
-                className="w-full rounded-lg px-3 py-2 text-sm text-white border border-gray-600 bg-[#0f0f1a] focus:outline-none focus:border-blue-500"
-              >
-                <option value="">Select…</option>
-                <option value="beginner">Beginner</option>
-                <option value="moderate">Recreational</option>
-                <option value="high">High School / AAU</option>
-                <option value="elite">College / Elite</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Overall Soreness</label>
+              <label className="block text-xs text-gray-400 mb-1">Overall Pain Level</label>
               <select
                 value={form.soreness}
                 onChange={e => setForm(p => ({ ...p, soreness: e.target.value }))}
                 className="w-full rounded-lg px-3 py-2 text-sm text-white border border-gray-600 bg-[#0f0f1a] focus:outline-none focus:border-blue-500"
               >
                 <option value="">Select…</option>
-                <option value="none">None</option>
                 <option value="mild">Mild</option>
                 <option value="moderate">Moderate</option>
                 <option value="severe">Severe</option>
@@ -508,13 +362,11 @@ export default function BasketballTrainingPage() {
           </div>
         </div>
 
-        {/* Pain Map */}
         <div className="rounded-xl border border-gray-700 p-5" style={{ backgroundColor: '#1e1e30' }}>
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-blue-400 mb-1">Pain &amp; Stress Mapping</h2>
-          <p className="text-xs text-gray-500 mb-4">Click body areas to flag pain, then rate severity with the slider.</p>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-blue-400 mb-1">Injury Mapping</h2>
+          <p className="text-xs text-gray-500 mb-4">Click body areas where you feel pain or injury, then rate severity with the slider.</p>
 
           <div className="flex flex-col sm:flex-row gap-6 items-start">
-            {/* SVG */}
             <div className="flex-shrink-0">
               <svg viewBox="0 0 200 380" width="180" height="342" xmlns="http://www.w3.org/2000/svg">
                 {BODY_AREAS.map(area => (
@@ -530,7 +382,6 @@ export default function BasketballTrainingPage() {
               </svg>
             </div>
 
-            {/* Controls */}
             <div className="flex-1 space-y-4">
               <div>
                 <div className="text-sm text-gray-300 mb-3 italic">
@@ -559,7 +410,6 @@ export default function BasketballTrainingPage() {
                 )}
               </div>
 
-              {/* Pain tags */}
               <div>
                 <div className="text-xs text-gray-500 uppercase tracking-widest mb-2">Flagged Areas</div>
                 {activePainEntries.length === 0 ? (
@@ -594,22 +444,22 @@ export default function BasketballTrainingPage() {
           className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90 active:scale-95"
           style={{ backgroundColor: '#2563eb' }}
         >
-          Generate Training Plan
+          Generate Recovery Plan
         </button>
       </div>
     );
   }
 
-  // ── Results view ─────────────────────────────────────────────────────────────
-  const s = plan.summary;
-  const painEntries = Object.entries(s.painAreas).filter(([, v]) => v > 0);
+  const painEntries = Object.entries(plan.painAreas).filter(([, v]) => v > 0);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">{s.position} Training Plan</h1>
-          <p className="text-gray-400 text-sm capitalize">{s.intensity} Intensity · {s.focus}</p>
+          <h1 className="text-2xl font-bold text-white">Injury Recovery Plan</h1>
+          <p className="text-gray-400 text-sm">
+            {plan.areaNames.join(', ')} · <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${SEVERITY_STYLES[plan.severity]}`}>{plan.severity}</span>
+          </p>
         </div>
         <button
           onClick={() => setView('form')}
@@ -619,17 +469,15 @@ export default function BasketballTrainingPage() {
         </button>
       </div>
 
-      {/* Summary strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Position', value: s.position },
-          { label: 'Focus', value: s.focus },
-          { label: 'Pain Areas', value: painEntries.length
+          { label: 'Age', value: plan.age },
+          { label: 'Injured Areas', value: painEntries.length
               ? painEntries.map(([a, v]) => `${AREA_LABELS[a]} ${v}/10`).join(', ')
               : 'None reported' },
-          { label: 'Intensity', value: (
-            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${INTENSITY_STYLES[s.intensity]}`}>
-              {s.intensity}
+          { label: 'Severity', value: (
+            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${SEVERITY_STYLES[plan.severity]}`}>
+              {plan.severity}
             </span>
           )},
         ].map(({ label, value }) => (
@@ -641,58 +489,12 @@ export default function BasketballTrainingPage() {
       </div>
 
       <div className="text-xs text-gray-600 italic px-1">
-        This plan is for informational purposes only. Always consult a qualified coach or sports medicine professional before training with pain or injury.
+        This recovery plan is for informational purposes only. Always consult a qualified sports medicine professional or physician before beginning any rehabilitation program.
       </div>
 
-      <PlanCard
-        icon={plan.training.icon}
-        title={plan.training.title}
-        description={`${plan.training.description} · ${plan.training.duration}`}
-        sections={[
-          ['Warm-up', plan.training.warmup],
-          ['Main Session', plan.training.main],
-          ['Cool-down', plan.training.cooldown],
-        ]}
-      />
-
-      <PlanCard
-        icon={plan.recovery.icon}
-        title={plan.recovery.title}
-        description={plan.recovery.description}
-        sections={[
-          ['Immediate Post-Session', plan.recovery.immediate],
-          ['Same Day', plan.recovery.sameDay],
-          ['Next Day', plan.recovery.nextDay],
-          ['Nutrition Focus', plan.recovery.nutrition],
-        ]}
-      />
-
-      <div className="rounded-xl border border-gray-700 p-5" style={{ backgroundColor: '#1e1e30' }}>
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl">{plan.positionDrills.icon}</span>
-          <h3 className="text-lg font-bold text-white">{plan.positionDrills.title}</h3>
-        </div>
-        <p className="text-sm text-gray-400 mb-4">{plan.positionDrills.description}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {[
-            ['Technical Drills', plan.positionDrills.technical],
-            ['Physical Focus', plan.positionDrills.physical],
-            ['Tactical Awareness', plan.positionDrills.tactical],
-          ].map(([heading, items]) => (
-            <div key={heading}>
-              <div className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-2">{heading}</div>
-              <ul className="space-y-1.5">
-                {items.map((item, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-gray-300">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
+      {plan.protocols.map((proto, i) => (
+        <ProtocolCard key={i} protocol={proto} />
+      ))}
 
       <button
         onClick={() => setView('form')}
