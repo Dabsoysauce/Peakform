@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '../../../lib/api';
 
-export default function PracticePlanEditorPage() {
+export default function TemplateEditorPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [plan, setPlan] = useState(null);
+  const [template, setTemplate] = useState(null);
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -16,29 +16,18 @@ export default function PracticePlanEditorPage() {
   const [editBlockData, setEditBlockData] = useState({});
   const [msg, setMsg] = useState('');
 
-  const [templates, setTemplates] = useState([]);
-  const [showTplModal, setShowTplModal] = useState(false);
-  const [insertingTpl, setInsertingTpl] = useState(false);
+  useEffect(() => { loadTemplate(); }, [id]);
 
-  useEffect(() => { loadPlan(); loadTemplates(); }, [id]);
-
-  async function loadPlan() {
+  async function loadTemplate() {
     try {
-      const res = await apiFetch(`/practice-plans/${id}`);
+      const res = await apiFetch(`/practice-plan-templates/${id}`);
       if (res.ok) {
         const data = await res.json();
-        setPlan(data);
+        setTemplate(data);
         setBlocks(data.blocks || []);
       }
     } catch {}
     setLoading(false);
-  }
-
-  async function loadTemplates() {
-    try {
-      const res = await apiFetch('/practice-plan-templates');
-      if (res.ok) setTemplates(await res.json());
-    } catch {}
   }
 
   async function saveHeader(e) {
@@ -46,9 +35,9 @@ export default function PracticePlanEditorPage() {
     setSaving(true);
     setMsg('');
     try {
-      const res = await apiFetch(`/practice-plans/${id}`, {
+      const res = await apiFetch(`/practice-plan-templates/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ title: plan.title, plan_date: plan.plan_date, notes: plan.notes }),
+        body: JSON.stringify({ title: template.title, template_type: template.template_type, focus_area: template.focus_area, notes: template.notes }),
       });
       if (res.ok) setMsg('Saved!');
     } catch {}
@@ -60,7 +49,7 @@ export default function PracticePlanEditorPage() {
     e.preventDefault();
     if (!newBlock.title.trim()) return;
     try {
-      const res = await apiFetch(`/practice-plans/${id}/blocks`, {
+      const res = await apiFetch(`/practice-plan-templates/${id}/blocks`, {
         method: 'POST',
         body: JSON.stringify({ ...newBlock, sort_order: blocks.length }),
       });
@@ -75,7 +64,7 @@ export default function PracticePlanEditorPage() {
 
   async function saveBlock(blockId) {
     try {
-      const res = await apiFetch(`/practice-plans/${id}/blocks/${blockId}`, {
+      const res = await apiFetch(`/practice-plan-templates/${id}/blocks/${blockId}`, {
         method: 'PUT',
         body: JSON.stringify(editBlockData),
       });
@@ -89,7 +78,7 @@ export default function PracticePlanEditorPage() {
 
   async function deleteBlock(blockId) {
     try {
-      const res = await apiFetch(`/practice-plans/${id}/blocks/${blockId}`, { method: 'DELETE' });
+      const res = await apiFetch(`/practice-plan-templates/${id}/blocks/${blockId}`, { method: 'DELETE' });
       if (res.ok) setBlocks(blocks.filter(b => b.id !== blockId));
     } catch {}
   }
@@ -102,42 +91,35 @@ export default function PracticePlanEditorPage() {
     const reordered = newBlocks.map((b, i) => ({ ...b, sort_order: i }));
     setBlocks(reordered);
     try {
-      await apiFetch(`/practice-plans/${id}/reorder`, {
+      await apiFetch(`/practice-plan-templates/${id}/reorder`, {
         method: 'PUT',
         body: JSON.stringify(reordered.map(b => ({ id: b.id, sort_order: b.sort_order }))),
       });
     } catch {}
   }
 
-  async function insertTemplate(templateId) {
-    setInsertingTpl(true);
-    try {
-      const res = await apiFetch(`/practice-plan-templates/${templateId}/insert`, {
-        method: 'POST',
-        body: JSON.stringify({ plan_id: id, start_order: blocks.length }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBlocks([...blocks, ...data.blocks]);
-        setShowTplModal(false);
-      }
-    } catch {}
-    setInsertingTpl(false);
-  }
-
   if (loading) {
     return <div className="text-gray-400 py-12 text-center">Loading...</div>;
   }
 
-  if (!plan) {
-    return <div className="text-gray-400 py-12 text-center">Plan not found.</div>;
+  if (!template) {
+    return <div className="text-gray-400 py-12 text-center">Template not found.</div>;
   }
 
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.push('/trainer/practice-plans')} className="text-gray-400 hover:text-white text-sm">← Back</button>
-        <h1 className="text-2xl font-black text-white">Edit Plan</h1>
+        <h1 className="text-2xl font-black text-white">
+          Edit Template
+          <span className={`ml-3 text-xs px-2 py-0.5 rounded-full font-semibold ${
+            template.template_type === 'practice'
+              ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
+              : 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
+          }`}>
+            {template.template_type === 'practice' ? 'Full Practice' : 'Block'}
+          </span>
+        </h1>
       </div>
 
       {/* Header fields */}
@@ -145,20 +127,21 @@ export default function PracticePlanEditorPage() {
         <div className="space-y-3">
           <input
             type="text"
-            value={plan.title || ''}
-            onChange={e => setPlan({ ...plan, title: e.target.value })}
-            placeholder="Plan title"
+            value={template.title || ''}
+            onChange={e => setTemplate({ ...template, title: e.target.value })}
+            placeholder="Template name"
             className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 font-bold text-lg"
           />
           <input
-            type="date"
-            value={plan.plan_date ? plan.plan_date.split('T')[0] : ''}
-            onChange={e => setPlan({ ...plan, plan_date: e.target.value })}
-            className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white focus:outline-none focus:border-blue-500"
+            type="text"
+            value={template.focus_area || ''}
+            onChange={e => setTemplate({ ...template, focus_area: e.target.value })}
+            placeholder="Focus area (optional)"
+            className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
           />
           <textarea
-            value={plan.notes || ''}
-            onChange={e => setPlan({ ...plan, notes: e.target.value })}
+            value={template.notes || ''}
+            onChange={e => setTemplate({ ...template, notes: e.target.value })}
             placeholder="Notes (optional)"
             rows={2}
             className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
@@ -181,26 +164,17 @@ export default function PracticePlanEditorPage() {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-black text-white">Blocks</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowTplModal(true)}
-              className="text-xs px-3 py-1.5 rounded font-bold text-purple-300 border border-purple-500/30 hover:opacity-90"
-              style={{ backgroundColor: 'rgba(147,51,234,0.1)' }}
-            >
-              📝 Insert from Template
-            </button>
-            <button
-              onClick={() => setAddingBlock(!addingBlock)}
-              className="text-xs px-3 py-1.5 rounded font-bold text-white hover:opacity-90"
-              style={{ backgroundColor: '#2563eb' }}
-            >
-              + Add Block
-            </button>
-          </div>
+          <button
+            onClick={() => setAddingBlock(!addingBlock)}
+            className="text-xs px-3 py-1.5 rounded font-bold text-white hover:opacity-90"
+            style={{ backgroundColor: '#2563eb' }}
+          >
+            + Add Block
+          </button>
         </div>
 
         {blocks.length === 0 && !addingBlock && (
-          <div className="text-gray-500 text-sm py-4 text-center">No blocks yet. Add one above or insert from a template!</div>
+          <div className="text-gray-500 text-sm py-4 text-center">No blocks yet. Add one above!</div>
         )}
 
         <div className="space-y-3">
@@ -314,58 +288,6 @@ export default function PracticePlanEditorPage() {
           </form>
         )}
       </div>
-
-      {/* Template Insert Modal */}
-      {showTplModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-          <div className="w-full max-w-md rounded-2xl border border-gray-700 p-6" style={{ backgroundColor: '#1e1e30' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-black text-white">Insert from Template</h2>
-              <button onClick={() => setShowTplModal(false)} className="text-gray-400 hover:text-white text-xl">×</button>
-            </div>
-            {templates.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-400 mb-3">No templates yet.</p>
-                <button
-                  onClick={() => { setShowTplModal(false); router.push('/trainer/practice-plans'); }}
-                  className="text-sm text-purple-400 hover:underline"
-                >
-                  Go to Templates →
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {templates.map(tpl => (
-                  <button
-                    key={tpl.id}
-                    onClick={() => insertTemplate(tpl.id)}
-                    disabled={insertingTpl}
-                    className="w-full text-left rounded-xl border border-gray-700 p-4 hover:border-purple-500/50 transition-colors disabled:opacity-50"
-                    style={{ backgroundColor: '#16213e' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-white text-sm">{tpl.title}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {tpl.block_count} block{tpl.block_count !== 1 ? 's' : ''}
-                          {tpl.focus_area && ` · ${tpl.focus_area}`}
-                        </div>
-                      </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                        tpl.template_type === 'practice'
-                          ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
-                          : 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
-                      }`}>
-                        {tpl.template_type === 'practice' ? 'Practice' : 'Block'}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

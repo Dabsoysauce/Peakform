@@ -221,6 +221,26 @@ CREATE TABLE IF NOT EXISTS practice_plan_blocks (
   sort_order INTEGER DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS practice_plan_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trainer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  template_type VARCHAR(20) NOT NULL DEFAULT 'block',
+  focus_area VARCHAR(100),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS practice_plan_template_blocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id UUID REFERENCES practice_plan_templates(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  duration_minutes INTEGER,
+  focus_area VARCHAR(100),
+  notes TEXT,
+  sort_order INTEGER DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS depth_chart_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID REFERENCES teams(id) ON DELETE CASCADE,

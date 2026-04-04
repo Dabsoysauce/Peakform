@@ -359,6 +359,59 @@ async function seed() {
   }
   console.log('   Done.\n');
 
+  // ── Practice Plan Templates ──
+  console.log('📝 Creating practice plan templates...');
+  for (const trainer of trainerUsers) {
+    // Warm-up template
+    const warmupRes = await pool.query(
+      `INSERT INTO practice_plan_templates (trainer_id, title, template_type, focus_area, notes)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [trainer.id, 'Standard Warm-Up', 'block', 'Warm-Up', 'Dynamic stretching and activation before every practice']
+    );
+    const warmupId = warmupRes.rows[0].id;
+    await pool.query(
+      `INSERT INTO practice_plan_template_blocks (template_id, title, duration_minutes, focus_area, notes, sort_order) VALUES
+       ($1, 'Light Jogging & High Knees', 3, 'Cardio', 'Around the court', 0),
+       ($1, 'Dynamic Stretching', 4, 'Mobility', 'Leg swings, hip circles, arm circles', 1),
+       ($1, 'Defensive Slides', 3, 'Footwork', 'Lane line to lane line, chest up', 2)`,
+      [warmupId]
+    );
+
+    // Cool-down template
+    const cooldownRes = await pool.query(
+      `INSERT INTO practice_plan_templates (trainer_id, title, template_type, focus_area, notes)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [trainer.id, 'Cool Down', 'block', 'Recovery', 'Post-practice cool down routine']
+    );
+    const cooldownId = cooldownRes.rows[0].id;
+    await pool.query(
+      `INSERT INTO practice_plan_template_blocks (template_id, title, duration_minutes, focus_area, notes, sort_order) VALUES
+       ($1, 'Light Jog & Walk', 3, 'Cardio', 'Cool down heart rate', 0),
+       ($1, 'Static Stretching', 5, 'Flexibility', 'Hold each stretch 20–30 seconds', 1),
+       ($1, 'Foam Rolling', 4, 'Recovery', 'Quads, hamstrings, calves, IT band', 2)`,
+      [cooldownId]
+    );
+
+    // Full practice template
+    const fullRes = await pool.query(
+      `INSERT INTO practice_plan_templates (trainer_id, title, template_type, focus_area, notes)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [trainer.id, 'Standard Practice', 'practice', 'All-Around', 'Complete practice plan template — customize as needed']
+    );
+    const fullId = fullRes.rows[0].id;
+    await pool.query(
+      `INSERT INTO practice_plan_template_blocks (template_id, title, duration_minutes, focus_area, notes, sort_order) VALUES
+       ($1, 'Warm-Up', 10, 'Mobility', 'Dynamic stretching + activation', 0),
+       ($1, 'Ball Handling', 15, 'Skill', 'Stationary dribbling, cone drills, two-ball work', 1),
+       ($1, 'Shooting Drills', 20, 'Offense', 'Form shooting, catch-and-shoot, off-dribble', 2),
+       ($1, 'Defensive Shell Drill', 15, 'Defense', 'Help-side, rotations, communication', 3),
+       ($1, '5v5 Scrimmage', 20, 'Live Play', 'Apply concepts from drills', 4),
+       ($1, 'Cool Down', 10, 'Recovery', 'Static stretching, foam roll', 5)`,
+      [fullId]
+    );
+  }
+  console.log('   Done.\n');
+
   // ── Summary ──
   console.log('━'.repeat(50));
   console.log('✅ Demo seed complete!\n');

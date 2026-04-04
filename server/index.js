@@ -56,6 +56,7 @@ const eventsRoutes = require('./routes/events');
 const playsRoutes = require('./routes/plays');
 const notificationsRoutes = require('./routes/notifications');
 const practicePlansRoutes = require('./routes/practice-plans');
+const practicePlanTemplatesRoutes = require('./routes/practice-plan-templates');
 const depthChartRoutes = require('./routes/depth-chart');
 
 const setupSocket = require('./socket/index');
@@ -111,6 +112,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/plays', playsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/practice-plans', practicePlansRoutes);
+app.use('/api/practice-plan-templates', practicePlanTemplatesRoutes);
 app.use('/api/depth-chart', depthChartRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true, service: 'Athlete Edge API' }));
