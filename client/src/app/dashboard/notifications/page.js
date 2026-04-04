@@ -16,14 +16,14 @@ function timeAgo(dateStr) {
 }
 
 const EyeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e85d04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const BellIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e85d04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
@@ -76,7 +76,7 @@ export default function NotificationsPage() {
           {notifications.map((n, i) => (
             <div
               key={n.id}
-              className={`flex items-start gap-4 px-6 py-4 ${i !== notifications.length - 1 ? 'border-b border-white/[0.06]' : ''} ${!n.read ? 'bg-[#e85d04]/5' : ''}`}
+              className={`flex items-start gap-4 px-6 py-4 ${i !== notifications.length - 1 ? 'border-b border-white/[0.06]' : ''} ${!n.read ? 'bg-[var(--primary)]/5' : ''}`}
             >
               <div className="text-2xl flex-shrink-0 mt-0.5">
                 {TYPE_ICON[n.type] || '🔔'}
@@ -88,7 +88,7 @@ export default function NotificationsPage() {
                 <p className="text-white/30 text-xs mt-1">{timeAgo(n.created_at)}</p>
               </div>
               {!n.read && (
-                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ backgroundColor: '#e85d04' }} />
+                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ backgroundColor: 'var(--primary)' }} />
               )}
             </div>
           ))}

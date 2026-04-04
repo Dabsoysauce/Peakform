@@ -94,7 +94,7 @@ function SpotlightCard({ children, style, className, delay = 0, mounted, ...prop
           position: 'absolute',
           top: 0, left: 0, right: 0, bottom: 0,
           pointerEvents: 'none',
-          background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(232,93,38,0.06), transparent 60%)`,
+          background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(var(--primary-rgb),0.06), transparent 60%)`,
           zIndex: 0,
         }} />
       )}
@@ -176,7 +176,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
       }}>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 4, fontWeight: 600, letterSpacing: '0.05em' }}>{label}</p>
-        <p style={{ color: '#e85d04', fontSize: 18, fontWeight: 800 }}>{payload[0].value} <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>sessions</span></p>
+        <p style={{ color: 'var(--primary)', fontSize: 18, fontWeight: 800 }}>{payload[0].value} <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>sessions</span></p>
       </div>
     );
   }
@@ -246,13 +246,13 @@ export default function DashboardOverview() {
   const recentWorkouts = workouts.slice(0, 3);
 
   const statsCards = [
-    { label: 'Total Workouts', num: workouts.length, suffix: '', iconKey: 'workouts', color: '#e85d04', bg: 'linear-gradient(135deg, rgba(232,93,4,0.12), rgba(249,115,22,0.05))' },
+    { label: 'Total Workouts', num: workouts.length, suffix: '', iconKey: 'workouts', color: 'var(--primary)', bg: 'linear-gradient(135deg, rgba(var(--primary-rgb),0.12), rgba(var(--primary-light-rgb),0.05))' },
     { label: 'This Week', num: thisWeekSessions.length, suffix: ' sessions', iconKey: 'calendar', color: '#3b82f6', bg: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(96,165,250,0.05))' },
     { label: 'Streak', num: profile?.workout_streak || 0, suffix: ' days', iconKey: 'streak', color: '#f59e0b', bg: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.05))' },
   ];
 
   const quickActions = [
-    { label: 'Log Workout', icon: 'workout', href: '/dashboard/workouts', color: '#e85d04' },
+    { label: 'Log Workout', icon: 'workout', href: '/dashboard/workouts', color: 'var(--primary)' },
     { label: 'Upload Film', icon: 'film', href: '/dashboard/media', color: '#8b5cf6' },
     { label: 'View Schedule', icon: 'schedule', href: '/dashboard/schedule', color: '#3b82f6' },
     { label: 'Messages', icon: 'messages', href: '/dashboard/messages', color: '#10b981' },
@@ -313,7 +313,7 @@ export default function DashboardOverview() {
         }}>
           {getGreeting()},{' '}
           <span style={{
-            background: 'linear-gradient(135deg, #e85d04, #f97316, #fb923c)',
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-light), var(--primary-light))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -335,7 +335,7 @@ export default function DashboardOverview() {
           marginTop: 20,
           height: 2,
           borderRadius: 1,
-          background: 'linear-gradient(90deg, #e85d04, #f97316, #3b82f6, #8b5cf6, #e85d04)',
+          background: 'linear-gradient(90deg, var(--primary), var(--primary-light), #3b82f6, #8b5cf6, var(--primary))',
           backgroundSize: '200% 100%',
           animation: 'gradientMove 4s ease infinite',
           opacity: 0.4,
@@ -447,22 +447,22 @@ export default function DashboardOverview() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#e85d04" stopOpacity={0.35}/>
-                      <stop offset="100%" stopColor="#e85d04" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.35}/>
+                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                   <XAxis dataKey="week" stroke="transparent" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis stroke="transparent" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.25)', fontWeight: 600 }} allowDecimals={false} axisLine={false} tickLine={false} width={28} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e85d04', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--primary)', strokeWidth: 1, strokeDasharray: '4 4' }} />
                   <Area
                     type="monotone"
                     dataKey="sessions"
-                    stroke="#e85d04"
+                    stroke="var(--primary)"
                     strokeWidth={2.5}
                     fill="url(#orangeGrad)"
-                    dot={{ fill: '#e85d04', r: 4, strokeWidth: 0 }}
-                    activeDot={{ r: 7, fill: '#f97316', strokeWidth: 2, stroke: 'rgba(232,93,4,0.3)' }}
+                    dot={{ fill: 'var(--primary)', r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 7, fill: 'var(--primary-light)', strokeWidth: 2, stroke: 'rgba(var(--primary-rgb),0.3)' }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -500,7 +500,7 @@ export default function DashboardOverview() {
                   width: 68,
                   height: 68,
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -508,7 +508,7 @@ export default function DashboardOverview() {
                   fontWeight: 800,
                   color: 'white',
                   marginBottom: 16,
-                  boxShadow: '0 8px 24px rgba(232,93,4,0.2)',
+                  boxShadow: '0 8px 24px rgba(var(--primary-rgb),0.2)',
                 }}>
                   {userName ? userName.charAt(0).toUpperCase() : '?'}
                 </div>
@@ -559,14 +559,14 @@ export default function DashboardOverview() {
                     borderRadius: 12,
                     fontSize: 13,
                     fontWeight: 700,
-                    color: '#e85d04',
-                    background: 'rgba(232,93,4,0.08)',
-                    border: '1px solid rgba(232,93,4,0.15)',
+                    color: 'var(--primary)',
+                    background: 'rgba(var(--primary-rgb),0.08)',
+                    border: '1px solid rgba(var(--primary-rgb),0.15)',
                     textDecoration: 'none',
                     transition: 'all 0.2s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(232,93,4,0.14)'; e.currentTarget.style.borderColor = 'rgba(232,93,4,0.3)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(232,93,4,0.08)'; e.currentTarget.style.borderColor = 'rgba(232,93,4,0.15)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.14)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.3)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.08)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.15)'; }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -601,16 +601,16 @@ export default function DashboardOverview() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: '#e85d04',
+                  color: 'var(--primary)',
                   textDecoration: 'none',
                   padding: '5px 14px',
                   borderRadius: 20,
-                  background: 'rgba(232,93,4,0.08)',
-                  border: '1px solid rgba(232,93,4,0.12)',
+                  background: 'rgba(var(--primary-rgb),0.08)',
+                  border: '1px solid rgba(var(--primary-rgb),0.12)',
                   transition: 'all 0.2s ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(232,93,4,0.14)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(232,93,4,0.08)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.14)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.08)'; }}
               >
                 View all
               </a>
@@ -631,7 +631,7 @@ export default function DashboardOverview() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {recentWorkouts.map((w, idx) => {
-                  const borderColors = ['#e85d04', '#3b82f6', '#8b5cf6'];
+                  const borderColors = ['var(--primary)', '#3b82f6', '#8b5cf6'];
                   return (
                     <div key={w.id} style={{
                       display: 'flex',
@@ -716,7 +716,7 @@ export default function DashboardOverview() {
                   transition: 'all 0.2s ease',
                   boxSizing: 'border-box',
                 }}
-                onFocus={(e) => { e.target.style.borderColor = '#e85d04'; e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }}
+                onFocus={(e) => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }}
                 onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
               />
               <button
@@ -729,15 +729,15 @@ export default function DashboardOverview() {
                   fontSize: 13,
                   fontWeight: 700,
                   color: 'white',
-                  background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                   border: 'none',
                   cursor: joinLoading ? 'not-allowed' : 'pointer',
                   opacity: joinLoading ? 0.5 : 1,
                   transition: 'all 0.2s ease',
-                  boxShadow: '0 4px 16px rgba(232,93,4,0.2)',
+                  boxShadow: '0 4px 16px rgba(var(--primary-rgb),0.2)',
                 }}
-                onMouseEnter={(e) => { if (!joinLoading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(232,93,4,0.3)'; }}}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(232,93,4,0.2)'; }}
+                onMouseEnter={(e) => { if (!joinLoading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(var(--primary-rgb),0.3)'; }}}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(var(--primary-rgb),0.2)'; }}
               >
                 {joinLoading ? 'Joining...' : 'Join Team'}
               </button>

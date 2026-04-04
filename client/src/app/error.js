@@ -75,11 +75,11 @@ export default function Error({ error, reset }) {
             onClick={reset}
             style={{
               padding: '12px 28px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #e85d04, #f97316)',
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
               color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', border: 'none',
               transition: 'all 0.25s ease',
             }}
-            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.3)'; }}
+            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary-rgb),0.3)'; }}
             onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
           >
             Try Again

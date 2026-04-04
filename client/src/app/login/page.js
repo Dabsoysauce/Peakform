@@ -62,7 +62,7 @@ export default function LoginPage() {
         if (p.y > canvas.offsetHeight) p.y = 0;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232,93,38,${p.o})`;
+        ctx.fillStyle = `rgba(var(--primary-rgb),${p.o})`;
         ctx.fill();
       });
       animId = requestAnimationFrame(draw);
@@ -126,8 +126,8 @@ export default function LoginPage() {
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(232,93,38,0.15); }
-      50% { box-shadow: 0 0 40px rgba(232,93,38,0.25); }
+      0%, 100% { box-shadow: 0 0 20px rgba(var(--primary-rgb),0.15); }
+      50% { box-shadow: 0 0 40px rgba(var(--primary-rgb),0.25); }
     }
     @keyframes shimmer {
       0% { background-position: -200% 0; }
@@ -153,13 +153,13 @@ export default function LoginPage() {
         position: 'relative', zIndex: 20,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}>
-          <span style={{ fontSize: '20px', fontWeight: 900, color: '#e85d04' }}>ATHLETE</span>
+          <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--primary)' }}>ATHLETE</span>
           <span style={{ fontSize: '20px', fontWeight: 900, color: '#fff' }}>EDGE</span>
         </Link>
         <Link href="/register" style={{
-          fontSize: '14px', fontWeight: 600, color: '#e85d04',
+          fontSize: '14px', fontWeight: 600, color: 'var(--primary)',
           textDecoration: 'none', padding: '8px 20px', borderRadius: '10px',
-          border: '1px solid rgba(232,93,4,0.3)', background: 'rgba(232,93,4,0.05)',
+          border: '1px solid rgba(var(--primary-rgb),0.3)', background: 'rgba(var(--primary-rgb),0.05)',
           transition: 'all 0.2s',
         }}>
           Create Account
@@ -178,7 +178,7 @@ export default function LoginPage() {
           {/* Animated gradient mesh */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse 80% 60% at 20% 30%, rgba(232,93,38,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 70%, rgba(249,115,22,0.08) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 50%)',
+            background: 'radial-gradient(ellipse 80% 60% at 20% 30%, rgba(var(--primary-rgb),0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 70%, rgba(var(--primary-light-rgb),0.08) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 50%)',
             backgroundSize: '200% 200%',
             animation: 'gradientShift 12s ease infinite',
           }} />
@@ -194,7 +194,7 @@ export default function LoginPage() {
               fontSize: '56px', fontWeight: 900, lineHeight: 1.05, marginBottom: '16px',
               letterSpacing: '-2px',
             }}>
-              <span style={{ color: '#e85d04' }}>ATHLETE</span>
+              <span style={{ color: 'var(--primary)' }}>ATHLETE</span>
               <br />
               <span style={{ color: '#ffffff' }}>EDGE</span>
             </div>
@@ -221,13 +221,13 @@ export default function LoginPage() {
 
               <div style={{
                 position: 'absolute', top: '80px', right: '0',
-                background: 'rgba(232,93,38,0.08)', backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(232,93,38,0.15)', borderRadius: '16px',
+                background: 'rgba(var(--primary-rgb),0.08)', backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(var(--primary-rgb),0.15)', borderRadius: '16px',
                 padding: '20px 24px', minWidth: '180px',
                 animation: 'floatCard2 7s ease-in-out infinite',
               }}>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Goal Progress</div>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#e85d04' }}>87%</div>
+                <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--primary)' }}>87%</div>
                 <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', fontWeight: 500, marginTop: '4px' }}>3-point accuracy</div>
               </div>
 
@@ -261,7 +261,7 @@ export default function LoginPage() {
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             width: '500px', height: '500px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(232,93,38,0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(var(--primary-rgb),0.04) 0%, transparent 70%)',
             pointerEvents: 'none',
           }} />
 
@@ -337,7 +337,7 @@ export default function LoginPage() {
                 <div style={{ marginBottom: '20px', position: 'relative' }}>
                   <label style={{
                     display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px',
-                    color: emailFocused ? '#e85d04' : 'rgba(255,255,255,0.45)',
+                    color: emailFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
                     transition: 'color 0.2s',
                   }}>Email</label>
                   <input
@@ -352,8 +352,8 @@ export default function LoginPage() {
                       width: '100%', padding: '12px 16px', borderRadius: '12px',
                       color: '#fff', fontSize: '14px', outline: 'none',
                       background: 'rgba(255,255,255,0.04)',
-                      border: emailFocused ? '1px solid #e85d04' : '1px solid rgba(255,255,255,0.08)',
-                      boxShadow: emailFocused ? '0 0 0 3px rgba(232,93,4,0.12), 0 0 20px rgba(232,93,4,0.05)' : 'none',
+                      border: emailFocused ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: emailFocused ? '0 0 0 3px rgba(var(--primary-rgb),0.12), 0 0 20px rgba(var(--primary-rgb),0.05)' : 'none',
                       transition: 'all 0.25s ease',
                       boxSizing: 'border-box',
                     }}
@@ -365,11 +365,11 @@ export default function LoginPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <label style={{
                       fontSize: '13px', fontWeight: 600,
-                      color: passwordFocused ? '#e85d04' : 'rgba(255,255,255,0.45)',
+                      color: passwordFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
                       transition: 'color 0.2s',
                     }}>Password</label>
                     <Link href="/forgot-password" style={{
-                      fontSize: '12px', fontWeight: 600, color: '#e85d04',
+                      fontSize: '12px', fontWeight: 600, color: 'var(--primary)',
                       textDecoration: 'none',
                     }}>
                       Forgot?
@@ -388,8 +388,8 @@ export default function LoginPage() {
                         width: '100%', padding: '12px 48px 12px 16px', borderRadius: '12px',
                         color: '#fff', fontSize: '14px', outline: 'none',
                         background: 'rgba(255,255,255,0.04)',
-                        border: passwordFocused ? '1px solid #e85d04' : '1px solid rgba(255,255,255,0.08)',
-                        boxShadow: passwordFocused ? '0 0 0 3px rgba(232,93,4,0.12), 0 0 20px rgba(232,93,4,0.05)' : 'none',
+                        border: passwordFocused ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: passwordFocused ? '0 0 0 3px rgba(var(--primary-rgb),0.12), 0 0 20px rgba(var(--primary-rgb),0.05)' : 'none',
                         transition: 'all 0.25s ease',
                         boxSizing: 'border-box',
                       }}
@@ -420,7 +420,7 @@ export default function LoginPage() {
                     width: '100%', padding: '14px', borderRadius: '14px',
                     fontWeight: 700, color: '#fff', fontSize: '15px', border: 'none',
                     cursor: loading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                    background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                     opacity: loading ? 0.5 : 1,
                     transition: 'all 0.25s ease',
                     animation: !loading ? 'pulseGlow 3s ease-in-out infinite' : 'none',
@@ -428,7 +428,7 @@ export default function LoginPage() {
                   onMouseEnter={(e) => {
                     if (!loading) {
                       e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(232,93,4,0.4)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(var(--primary-rgb),0.4)';
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -442,7 +442,7 @@ export default function LoginPage() {
 
               <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>
                 Don&apos;t have an account?{' '}
-                <Link href="/register" style={{ fontWeight: 600, color: '#e85d04', textDecoration: 'none' }}>
+                <Link href="/register" style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
                   Create one
                 </Link>
               </p>

@@ -136,7 +136,7 @@ export default function TrainerLayout({ children }) {
       >
         {/* Logo */}
         <div className="flex items-center gap-1 px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <span className="text-xl font-black" style={{ color: '#e85d04' }}>ATHLETE</span>
+          <span className="text-xl font-black" style={{ color: 'var(--primary)' }}>ATHLETE</span>
           <span className="text-xl font-black text-white">EDGE</span>
           <span className="ml-2 text-xs px-2 py-0.5 rounded-lg font-bold" style={{
             background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#60a5fa',
@@ -226,7 +226,7 @@ export default function TrainerLayout({ children }) {
             </svg>
           </button>
           <span className="font-black">
-            <span style={{ color: '#e85d04' }}>ATHLETE</span>
+            <span style={{ color: 'var(--primary)' }}>ATHLETE</span>
             <span className="text-white">EDGE</span>
           </span>
         </header>

@@ -157,7 +157,7 @@ export default function AthleteProfilePage() {
           <div className="relative flex-shrink-0">
             <div
               className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center text-2xl font-black text-white cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+              style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
               onClick={() => fileInputRef.current?.click()}
             >
               {photoPreview
@@ -209,29 +209,29 @@ export default function AthleteProfilePage() {
             <div>
               <label className="block text-sm font-medium text-white/50 mb-1">First Name</label>
               <input type="text" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} placeholder="John"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/50 mb-1">Last Name</label>
               <input type="text" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} placeholder="Smith"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-white/50 mb-1">Age</label>
               <input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} placeholder="16" min="13" max="100"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/50 mb-1">Weight (lbs)</label>
               <input type="number" value={form.weight_lbs} onChange={(e) => setForm({ ...form, weight_lbs: e.target.value })} placeholder="170" step="0.1" min="50"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
               <label className="block text-sm font-medium text-white/50 mb-1">Height (inches)</label>
               <input type="number" value={form.height_inches} onChange={(e) => setForm({ ...form, height_inches: e.target.value })} placeholder="72" min="48" max="96"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
             </div>
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function AthleteProfilePage() {
             <label className="block text-sm font-medium text-white/50 mb-1">Bio</label>
             <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })}
               placeholder="Tell your coach about your background and position..."
-              rows={4} className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04] resize-none" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
+              rows={4} className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)] resize-none" style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }} />
           </div>
         </div>
 
@@ -271,8 +271,8 @@ export default function AthleteProfilePage() {
                 step="0.01"
                 min="0"
                 max="5"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]"
-                style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]"
+                style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
               />
             </div>
             <div>
@@ -284,8 +284,8 @@ export default function AthleteProfilePage() {
                 placeholder="2026"
                 min="2020"
                 max="2035"
-                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[#e85d04]"
-                style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
+                className="w-full px-4 py-2.5 rounded-lg border border-white/[0.08] text-white placeholder-gray-500 focus:outline-none focus:border-[var(--primary)]"
+                style={{ background: 'rgba(255,255,255,0.04)', transition: 'all 0.2s ease' }} onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }} onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
               />
             </div>
           </div>

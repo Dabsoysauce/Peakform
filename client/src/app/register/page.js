@@ -59,7 +59,7 @@ export default function RegisterPage() {
         if (p.y > canvas.offsetHeight) p.y = 0;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(232,93,38,${p.o})`;
+        ctx.fillStyle = `rgba(var(--primary-rgb),${p.o})`;
         ctx.fill();
       });
       animId = requestAnimationFrame(draw);
@@ -203,8 +203,8 @@ export default function RegisterPage() {
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(232,93,38,0.15); }
-      50% { box-shadow: 0 0 40px rgba(232,93,38,0.25); }
+      0%, 100% { box-shadow: 0 0 20px rgba(var(--primary-rgb),0.15); }
+      50% { box-shadow: 0 0 40px rgba(var(--primary-rgb),0.25); }
     }
     @keyframes mailBounce {
       0%, 100% { transform: translateY(0) scale(1); }
@@ -212,8 +212,8 @@ export default function RegisterPage() {
       60% { transform: translateY(-3px) scale(1.02); }
     }
     @keyframes borderGlow {
-      0%, 100% { border-color: rgba(232,93,38,0.4); box-shadow: 0 0 15px rgba(232,93,38,0.1); }
-      50% { border-color: rgba(232,93,38,0.7); box-shadow: 0 0 25px rgba(232,93,38,0.2); }
+      0%, 100% { border-color: rgba(var(--primary-rgb),0.4); box-shadow: 0 0 15px rgba(var(--primary-rgb),0.1); }
+      50% { border-color: rgba(var(--primary-rgb),0.7); box-shadow: 0 0 25px rgba(var(--primary-rgb),0.2); }
     }
   `;
 
@@ -264,13 +264,13 @@ export default function RegisterPage() {
         position: 'relative', zIndex: 20,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}>
-          <span style={{ fontSize: '20px', fontWeight: 900, color: '#e85d04' }}>ATHLETE</span>
+          <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--primary)' }}>ATHLETE</span>
           <span style={{ fontSize: '20px', fontWeight: 900, color: '#fff' }}>EDGE</span>
         </Link>
         <Link href="/login" style={{
-          fontSize: '14px', fontWeight: 600, color: '#e85d04',
+          fontSize: '14px', fontWeight: 600, color: 'var(--primary)',
           textDecoration: 'none', padding: '8px 20px', borderRadius: '10px',
-          border: '1px solid rgba(232,93,4,0.3)', background: 'rgba(232,93,4,0.05)',
+          border: '1px solid rgba(var(--primary-rgb),0.3)', background: 'rgba(var(--primary-rgb),0.05)',
           transition: 'all 0.2s',
         }}>
           Sign In
@@ -289,7 +289,7 @@ export default function RegisterPage() {
           {/* Animated gradient mesh */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse 80% 60% at 20% 30%, rgba(232,93,38,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 70%, rgba(249,115,22,0.08) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 50%)',
+            background: 'radial-gradient(ellipse 80% 60% at 20% 30%, rgba(var(--primary-rgb),0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 70%, rgba(var(--primary-light-rgb),0.08) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 50%)',
             backgroundSize: '200% 200%',
             animation: 'gradientShift 12s ease infinite',
           }} />
@@ -305,7 +305,7 @@ export default function RegisterPage() {
               fontSize: '56px', fontWeight: 900, lineHeight: 1.05, marginBottom: '16px',
               letterSpacing: '-2px',
             }}>
-              <span style={{ color: '#e85d04' }}>ATHLETE</span>
+              <span style={{ color: 'var(--primary)' }}>ATHLETE</span>
               <br />
               <span style={{ color: '#ffffff' }}>EDGE</span>
             </div>
@@ -332,13 +332,13 @@ export default function RegisterPage() {
 
               <div style={{
                 position: 'absolute', top: '80px', right: '0',
-                background: 'rgba(232,93,38,0.08)', backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(232,93,38,0.15)', borderRadius: '16px',
+                background: 'rgba(var(--primary-rgb),0.08)', backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(var(--primary-rgb),0.15)', borderRadius: '16px',
                 padding: '20px 24px', minWidth: '180px',
                 animation: 'floatCard2 7s ease-in-out infinite',
               }}>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>AI Analyses</div>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#e85d04' }}>50K+</div>
+                <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--primary)' }}>50K+</div>
                 <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', fontWeight: 500, marginTop: '4px' }}>Films reviewed</div>
               </div>
 
@@ -372,7 +372,7 @@ export default function RegisterPage() {
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
             width: '500px', height: '500px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(232,93,38,0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(var(--primary-rgb),0.04) 0%, transparent 70%)',
             pointerEvents: 'none',
           }} />
 
@@ -465,10 +465,10 @@ export default function RegisterPage() {
                                 cursor: 'pointer', transition: 'all 0.25s ease',
                                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
                                 textAlign: 'center',
-                                background: isActive ? 'rgba(232,93,4,0.08)' : 'rgba(255,255,255,0.02)',
-                                border: isActive ? '1.5px solid rgba(232,93,4,0.5)' : '1.5px solid rgba(255,255,255,0.06)',
-                                color: isActive ? '#f97316' : 'rgba(255,255,255,0.35)',
-                                boxShadow: isActive ? '0 0 20px rgba(232,93,4,0.1), inset 0 1px 0 rgba(232,93,4,0.1)' : 'none',
+                                background: isActive ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.02)',
+                                border: isActive ? '1.5px solid rgba(var(--primary-rgb),0.5)' : '1.5px solid rgba(255,255,255,0.06)',
+                                color: isActive ? 'var(--primary-light)' : 'rgba(255,255,255,0.35)',
+                                boxShadow: isActive ? '0 0 20px rgba(var(--primary-rgb),0.1), inset 0 1px 0 rgba(var(--primary-rgb),0.1)' : 'none',
                                 animation: isActive ? 'borderGlow 3s ease-in-out infinite' : 'none',
                               }}
                             >
@@ -476,7 +476,7 @@ export default function RegisterPage() {
                               <div style={{ fontSize: '15px', fontWeight: 700 }}>{r.label}</div>
                               <div style={{
                                 fontSize: '11px', lineHeight: '1.4',
-                                color: isActive ? 'rgba(249,115,22,0.7)' : 'rgba(255,255,255,0.25)',
+                                color: isActive ? 'rgba(var(--primary-light-rgb),0.7)' : 'rgba(255,255,255,0.25)',
                               }}>{r.desc}</div>
                             </button>
                           );
@@ -488,7 +488,7 @@ export default function RegisterPage() {
                     <div style={{ marginBottom: '18px' }}>
                       <label style={{
                         display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px',
-                        color: emailFocused ? '#e85d04' : 'rgba(255,255,255,0.45)',
+                        color: emailFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
                         transition: 'color 0.2s',
                       }}>Email</label>
                       <input
@@ -503,8 +503,8 @@ export default function RegisterPage() {
                           width: '100%', padding: '12px 16px', borderRadius: '12px',
                           color: '#fff', fontSize: '14px', outline: 'none',
                           background: 'rgba(255,255,255,0.04)',
-                          border: emailFocused ? '1px solid #e85d04' : '1px solid rgba(255,255,255,0.08)',
-                          boxShadow: emailFocused ? '0 0 0 3px rgba(232,93,4,0.12), 0 0 20px rgba(232,93,4,0.05)' : 'none',
+                          border: emailFocused ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                          boxShadow: emailFocused ? '0 0 0 3px rgba(var(--primary-rgb),0.12), 0 0 20px rgba(var(--primary-rgb),0.05)' : 'none',
                           transition: 'all 0.25s ease',
                           boxSizing: 'border-box',
                         }}
@@ -515,7 +515,7 @@ export default function RegisterPage() {
                     <div style={{ marginBottom: '24px' }}>
                       <label style={{
                         display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px',
-                        color: passwordFocused ? '#e85d04' : 'rgba(255,255,255,0.45)',
+                        color: passwordFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
                         transition: 'color 0.2s',
                       }}>Password</label>
                       <div style={{ position: 'relative' }}>
@@ -531,8 +531,8 @@ export default function RegisterPage() {
                             width: '100%', padding: '12px 48px 12px 16px', borderRadius: '12px',
                             color: '#fff', fontSize: '14px', outline: 'none',
                             background: 'rgba(255,255,255,0.04)',
-                            border: passwordFocused ? '1px solid #e85d04' : '1px solid rgba(255,255,255,0.08)',
-                            boxShadow: passwordFocused ? '0 0 0 3px rgba(232,93,4,0.12), 0 0 20px rgba(232,93,4,0.05)' : 'none',
+                            border: passwordFocused ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
+                            boxShadow: passwordFocused ? '0 0 0 3px rgba(var(--primary-rgb),0.12), 0 0 20px rgba(var(--primary-rgb),0.05)' : 'none',
                             transition: 'all 0.25s ease',
                             boxSizing: 'border-box',
                           }}
@@ -563,7 +563,7 @@ export default function RegisterPage() {
                         width: '100%', padding: '14px', borderRadius: '14px',
                         fontWeight: 700, color: '#fff', fontSize: '15px', border: 'none',
                         cursor: loading ? 'not-allowed' : 'pointer',
-                        background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                        background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                         opacity: loading ? 0.5 : 1,
                         transition: 'all 0.25s ease',
                         animation: !loading ? 'pulseGlow 3s ease-in-out infinite' : 'none',
@@ -571,7 +571,7 @@ export default function RegisterPage() {
                       onMouseEnter={(e) => {
                         if (!loading) {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(232,93,4,0.4)';
+                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(var(--primary-rgb),0.4)';
                         }
                       }}
                       onMouseLeave={(e) => {
@@ -585,7 +585,7 @@ export default function RegisterPage() {
 
                   <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>
                     Already have an account?{' '}
-                    <Link href="/login" style={{ fontWeight: 600, color: '#e85d04', textDecoration: 'none' }}>
+                    <Link href="/login" style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
                       Sign in
                     </Link>
                   </p>
@@ -632,7 +632,7 @@ export default function RegisterPage() {
                     <div style={{ marginBottom: '24px' }}>
                       <label style={{
                         display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '12px',
-                        color: codeFocused ? '#e85d04' : 'rgba(255,255,255,0.45)',
+                        color: codeFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
                         textAlign: 'center', transition: 'color 0.2s',
                       }}>Verification Code</label>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
@@ -653,9 +653,9 @@ export default function RegisterPage() {
                               width: '48px', height: '56px', textAlign: 'center',
                               fontSize: '22px', fontWeight: 700, fontFamily: 'monospace',
                               color: '#fff', borderRadius: '12px', outline: 'none',
-                              background: verifyCode[i] ? 'rgba(232,93,38,0.06)' : 'rgba(255,255,255,0.04)',
-                              border: verifyCode[i] ? '1.5px solid rgba(232,93,38,0.4)' : '1.5px solid rgba(255,255,255,0.08)',
-                              boxShadow: verifyCode[i] ? '0 0 12px rgba(232,93,38,0.08)' : 'none',
+                              background: verifyCode[i] ? 'rgba(var(--primary-rgb),0.06)' : 'rgba(255,255,255,0.04)',
+                              border: verifyCode[i] ? '1.5px solid rgba(var(--primary-rgb),0.4)' : '1.5px solid rgba(255,255,255,0.08)',
+                              boxShadow: verifyCode[i] ? '0 0 12px rgba(var(--primary-rgb),0.08)' : 'none',
                               transition: 'all 0.2s ease',
                               boxSizing: 'border-box',
                             }}
@@ -671,7 +671,7 @@ export default function RegisterPage() {
                         width: '100%', padding: '14px', borderRadius: '14px',
                         fontWeight: 700, color: '#fff', fontSize: '15px', border: 'none',
                         cursor: loading ? 'not-allowed' : 'pointer',
-                        background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                        background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                         opacity: loading ? 0.5 : 1,
                         transition: 'all 0.25s ease',
                         animation: !loading ? 'pulseGlow 3s ease-in-out infinite' : 'none',
@@ -679,7 +679,7 @@ export default function RegisterPage() {
                       onMouseEnter={(e) => {
                         if (!loading) {
                           e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(232,93,4,0.4)';
+                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(var(--primary-rgb),0.4)';
                         }
                       }}
                       onMouseLeave={(e) => {
@@ -698,7 +698,7 @@ export default function RegisterPage() {
                         onClick={handleResend}
                         disabled={resending}
                         style={{
-                          fontWeight: 600, color: '#e85d04', background: 'none', border: 'none',
+                          fontWeight: 600, color: 'var(--primary)', background: 'none', border: 'none',
                           cursor: resending ? 'not-allowed' : 'pointer', fontSize: '14px',
                           opacity: resending ? 0.5 : 1,
                         }}

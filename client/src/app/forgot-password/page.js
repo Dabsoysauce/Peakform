@@ -96,12 +96,12 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#08081a' }}>
       <div style={{
         position: 'fixed', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 50% 40% at 50% 30%, rgba(232,93,4,0.06) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 30% 70%, rgba(59,130,246,0.04) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 50% 40% at 50% 30%, rgba(var(--primary-rgb),0.06) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 30% 70%, rgba(59,130,246,0.04) 0%, transparent 70%)',
       }} />
 
       <nav className="flex items-center justify-between px-6 py-4 border-b relative z-10" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
         <Link href="/" className="flex items-center gap-0.5">
-          <span className="text-xl font-black" style={{ color: '#e85d04' }}>ATHLETE</span>
+          <span className="text-xl font-black" style={{ color: 'var(--primary)' }}>ATHLETE</span>
           <span className="text-xl font-black text-white">EDGE</span>
         </Link>
       </nav>
@@ -120,8 +120,8 @@ export default function ForgotPasswordPage() {
             {step === 'email' && (
               <>
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(232,93,4,0.1)' }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e85d04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(var(--primary-rgb),0.1)' }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
                   </div>
@@ -148,7 +148,7 @@ export default function ForgotPasswordPage() {
                       required
                       className={inputClass}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#e85d04'; e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }}
+                      onFocus={(e) => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }}
                       onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
                     />
                   </div>
@@ -156,8 +156,8 @@ export default function ForgotPasswordPage() {
                     type="submit"
                     disabled={loading}
                     className="w-full py-3 rounded-xl font-bold text-white transition-all text-sm disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
-                    onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.3)'; }}}
+                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
+                    onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary-rgb),0.3)'; }}}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     {loading ? 'Sending...' : 'Send Code'}
@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
                       maxLength={6}
                       className={`${inputClass} text-center text-2xl tracking-[0.5em] font-mono`}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#e85d04'; e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }}
+                      onFocus={(e) => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }}
                       onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
                     />
                   </div>
@@ -208,8 +208,8 @@ export default function ForgotPasswordPage() {
                     type="submit"
                     disabled={loading}
                     className="w-full py-3 rounded-xl font-bold text-white transition-all text-sm disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
-                    onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.3)'; }}}
+                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
+                    onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary-rgb),0.3)'; }}}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     {loading ? 'Verifying...' : 'Verify Code'}
@@ -223,7 +223,7 @@ export default function ForgotPasswordPage() {
                       onClick={handleResend}
                       disabled={resending}
                       className="font-semibold hover:underline disabled:opacity-50"
-                      style={{ color: '#e85d04' }}
+                      style={{ color: 'var(--primary)' }}
                     >
                       {resending ? 'Resending...' : 'Resend code'}
                     </button>
@@ -271,7 +271,7 @@ export default function ForgotPasswordPage() {
                       required
                       className={inputClass}
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#e85d04'; e.target.style.boxShadow = '0 0 0 3px rgba(232,93,4,0.12)'; }}
+                      onFocus={(e) => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb),0.12)'; }}
                       onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
                     />
                   </div>
@@ -279,8 +279,8 @@ export default function ForgotPasswordPage() {
                     type="submit"
                     disabled={loading}
                     className="w-full py-3 rounded-xl font-bold text-white transition-all text-sm disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
-                    onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.3)'; }}}
+                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
+                    onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary-rgb),0.3)'; }}}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     {loading ? 'Resetting...' : 'Reset Password'}
@@ -291,7 +291,7 @@ export default function ForgotPasswordPage() {
 
             <p className="text-center mt-6 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
               Remember your password?{' '}
-              <Link href="/login" className="font-semibold hover:underline" style={{ color: '#e85d04' }}>
+              <Link href="/login" className="font-semibold hover:underline" style={{ color: 'var(--primary)' }}>
                 Sign in
               </Link>
             </p>

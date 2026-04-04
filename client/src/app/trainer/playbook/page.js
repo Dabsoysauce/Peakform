@@ -255,7 +255,7 @@ function renderPlayer(obj, isSelected, onMD, showBall=true) {
 
   const ballIndicator = hasBall && showBall ? (
     <g>
-      <circle cx={x+PLAYER_R-2} cy={y-PLAYER_R+2} r={6} fill="#f97316" stroke="#c2410c" strokeWidth={1}/>
+      <circle cx={x+PLAYER_R-2} cy={y-PLAYER_R+2} r={6} fill="var(--primary-light)" stroke="#c2410c" strokeWidth={1}/>
       <path d={`M${x+PLAYER_R-5} ${y-PLAYER_R+2} Q${x+PLAYER_R-2} ${y-PLAYER_R-1} ${x+PLAYER_R+1} ${y-PLAYER_R+2}`} stroke="#c2410c" strokeWidth={0.8} fill="none"/>
     </g>
   ) : null;
@@ -380,7 +380,7 @@ function renderBallAnim(ballPos) {
   if (!ballPos) return null;
   return (
     <g>
-      <circle cx={ballPos.x} cy={ballPos.y} r={7} fill="#f97316" stroke="#c2410c" strokeWidth={1.5}/>
+      <circle cx={ballPos.x} cy={ballPos.y} r={7} fill="var(--primary-light)" stroke="#c2410c" strokeWidth={1.5}/>
       <path d={`M${ballPos.x-3} ${ballPos.y} Q${ballPos.x} ${ballPos.y-3} ${ballPos.x+3} ${ballPos.y}`} stroke="#c2410c" strokeWidth={0.8} fill="none"/>
     </g>
   );

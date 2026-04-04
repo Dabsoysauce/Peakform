@@ -17,8 +17,8 @@ function EventDetail({ event, onClose }) {
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold px-2.5 py-1 rounded-full"
               style={{
-                backgroundColor: event.type === 'game' ? 'rgba(220,38,38,0.2)' : 'rgba(232,93,4,0.2)',
-                color: event.type === 'game' ? '#f87171' : '#f97316',
+                backgroundColor: event.type === 'game' ? 'rgba(220,38,38,0.2)' : 'rgba(var(--primary-rgb),0.2)',
+                color: event.type === 'game' ? '#f87171' : 'var(--primary-light)',
               }}
             >
               {event.type === 'game' ? '🏀 Game' : '🏋️ Practice'}
@@ -136,7 +136,7 @@ export default function PlayerSchedulePage() {
           <div className="mb-4 flex justify-center"><svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg></div>
           <h3 className="text-lg font-bold text-white mb-2">No team yet</h3>
           <p className="text-white/40 mb-4">Join a team to see your coach's schedule.</p>
-          <a href="/dashboard/team" className="text-[#e85d04] hover:underline text-sm">Join a team →</a>
+          <a href="/dashboard/team" className="text-[var(--primary)] hover:underline text-sm">Join a team →</a>
         </div>
       </div>
     );
@@ -174,7 +174,7 @@ export default function PlayerSchedulePage() {
               return (
                 <div key={day} className="border-r border-b border-white/[0.04] min-h-[80px] p-1.5">
                   <div className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday ? 'text-white' : 'text-white/40'}`}
-                    style={isToday ? { backgroundColor: '#e85d04' } : {}}
+                    style={isToday ? { backgroundColor: 'var(--primary)' } : {}}
                   >
                     {day}
                   </div>
@@ -185,8 +185,8 @@ export default function PlayerSchedulePage() {
                         onClick={() => setSelectedEvent(ev)}
                         className="text-xs px-1.5 py-0.5 rounded font-medium truncate cursor-pointer hover:opacity-80"
                         style={{
-                          backgroundColor: ev.type === 'game' ? 'rgba(220,38,38,0.25)' : 'rgba(232,93,4,0.25)',
-                          color: ev.type === 'game' ? '#f87171' : '#f97316',
+                          backgroundColor: ev.type === 'game' ? 'rgba(220,38,38,0.25)' : 'rgba(var(--primary-rgb),0.25)',
+                          color: ev.type === 'game' ? '#f87171' : 'var(--primary-light)',
                         }}
                       >
                         {ev.event_time?.slice(0, 5) ? `${ev.event_time.slice(0, 5)} ` : ''}{ev.title}
@@ -216,8 +216,8 @@ export default function PlayerSchedulePage() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                     style={{
-                      backgroundColor: ev.type === 'game' ? 'rgba(220,38,38,0.2)' : 'rgba(232,93,4,0.2)',
-                      color: ev.type === 'game' ? '#f87171' : '#f97316',
+                      backgroundColor: ev.type === 'game' ? 'rgba(220,38,38,0.2)' : 'rgba(var(--primary-rgb),0.2)',
+                      color: ev.type === 'game' ? '#f87171' : 'var(--primary-light)',
                     }}
                   >
                     {ev.type === 'game' ? '🏀 Game' : '🏋️ Practice'}

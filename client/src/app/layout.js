@@ -1,5 +1,6 @@
 import './globals.css';
 import { Inter, Rajdhani } from 'next/font/google';
+import { ThemeProvider } from './components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const rajdhani = Rajdhani({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-rajdhani' });
@@ -16,7 +17,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${rajdhani.variable}`}>
       <body style={{ backgroundColor: '#08081a', color: '#f0f0f5', minHeight: '100vh', fontFamily: 'var(--font-inter)' }}>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

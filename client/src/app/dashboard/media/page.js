@@ -942,7 +942,7 @@ export default function MediaPage() {
                 <button key={tag} onClick={() => toggleTagFilter(tag)}
                   className="text-xs px-3 py-1 rounded-full font-medium transition-all"
                   style={activeTagFilters.includes(tag)
-                    ? { backgroundColor: '#e85d04', color: 'white' }
+                    ? { backgroundColor: 'var(--primary)', color: 'white' }
                     : { backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }
                   }>
                   {tag}

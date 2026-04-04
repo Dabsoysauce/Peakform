@@ -27,7 +27,7 @@ export default function NotFound() {
       {/* Background glow */}
       <div style={{
         position: 'fixed', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 40% 30% at 50% 35%, rgba(232,93,4,0.06) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 40% 30% at 50% 35%, rgba(var(--primary-rgb),0.06) 0%, transparent 70%)',
       }} />
 
       <div style={{
@@ -40,7 +40,7 @@ export default function NotFound() {
         <div style={{
           fontSize: 'clamp(80px, 20vw, 160px)', fontWeight: 900,
           lineHeight: 1, letterSpacing: '-0.04em',
-          background: 'linear-gradient(135deg, #e85d04 0%, #f97316 50%, rgba(232,93,4,0.15) 100%)',
+          background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, rgba(var(--primary-rgb),0.15) 100%)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           marginBottom: 8, fontFamily: 'var(--font-rajdhani), sans-serif',
         }}>
@@ -49,9 +49,9 @@ export default function NotFound() {
 
         {/* Court line decoration */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 32 }}>
-          <div style={{ height: 1, width: 60, background: 'linear-gradient(90deg, transparent, rgba(232,93,4,0.3))' }} />
-          <div style={{ width: 10, height: 10, borderRadius: '50%', border: '2px solid #e85d04', backgroundColor: 'transparent' }} />
-          <div style={{ height: 1, width: 60, background: 'linear-gradient(90deg, rgba(232,93,4,0.3), transparent)' }} />
+          <div style={{ height: 1, width: 60, background: 'linear-gradient(90deg, transparent, rgba(var(--primary-rgb),0.3))' }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', border: '2px solid var(--primary)', backgroundColor: 'transparent' }} />
+          <div style={{ height: 1, width: 60, background: 'linear-gradient(90deg, rgba(var(--primary-rgb),0.3), transparent)' }} />
         </div>
 
         <h1 style={{
@@ -68,11 +68,11 @@ export default function NotFound() {
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/" style={{
             padding: '12px 28px', borderRadius: 14,
-            background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
             color: '#fff', fontWeight: 700, fontSize: 14, textDecoration: 'none',
             transition: 'all 0.25s ease',
           }}
-            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,93,4,0.3)'; }}
+            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary-rgb),0.3)'; }}
             onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
           >
             Go Home

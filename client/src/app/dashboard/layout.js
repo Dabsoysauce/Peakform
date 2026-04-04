@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AIAssistant from '../components/AIAssistant';
 import TourGuide from '../components/TourGuide';
+import { useTheme } from '../components/ThemeProvider';
 
 const Icons = {
   overview: (
@@ -77,14 +78,30 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, setTheme, themes } = useTheme();
   const [userName, setUserName] = useState('');
   const [userPhoto, setUserPhoto] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [dockVisible, setDockVisible] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState(-1);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const themePickerRef = useRef(null);
   const lastScrollY = useRef(0);
   const scrollTimeout = useRef(null);
+
+  // Close theme picker on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (themePickerRef.current && !themePickerRef.current.contains(e.target)) {
+        setThemePickerOpen(false);
+      }
+    }
+    if (themePickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [themePickerOpen]);
 
   // Auth check + profile loading
   useEffect(() => {
@@ -191,7 +208,7 @@ export default function DashboardLayout({ children }) {
         zIndex: 0,
         pointerEvents: 'none',
         background: `
-          radial-gradient(ellipse 80% 60% at 10% 20%, rgba(232,93,38,0.03) 0%, transparent 60%),
+          radial-gradient(ellipse 80% 60% at 10% 20%, rgba(var(--primary-rgb),0.03) 0%, transparent 60%),
           radial-gradient(ellipse 60% 80% at 90% 80%, rgba(59,130,246,0.03) 0%, transparent 60%),
           radial-gradient(ellipse 50% 50% at 50% 50%, rgba(139,92,246,0.02) 0%, transparent 60%)
         `,
@@ -237,7 +254,7 @@ export default function DashboardLayout({ children }) {
             <span style={{
               fontSize: '18px',
               fontWeight: 900,
-              color: '#e85d04',
+              color: 'var(--primary)',
               letterSpacing: '1.5px',
             }}>ATHLETE</span>
             <span style={{
@@ -256,7 +273,7 @@ export default function DashboardLayout({ children }) {
             href="/dashboard/notifications"
             style={{
               position: 'relative',
-              color: pathname === '/dashboard/notifications' ? '#e85d04' : 'rgba(255,255,255,0.5)',
+              color: pathname === '/dashboard/notifications' ? 'var(--primary)' : 'rgba(255,255,255,0.5)',
               transition: 'color 0.2s',
               display: 'flex',
               alignItems: 'center',
@@ -264,7 +281,7 @@ export default function DashboardLayout({ children }) {
               width: '40px',
               height: '40px',
               borderRadius: '12px',
-              background: pathname === '/dashboard/notifications' ? 'rgba(232,93,4,0.1)' : 'transparent',
+              background: pathname === '/dashboard/notifications' ? 'rgba(var(--primary-rgb),0.1)' : 'transparent',
               textDecoration: 'none',
             }}
           >
@@ -277,7 +294,7 @@ export default function DashboardLayout({ children }) {
                 position: 'absolute',
                 top: '4px',
                 right: '4px',
-                background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                 color: 'white',
                 fontSize: '9px',
                 fontWeight: 700,
@@ -288,12 +305,79 @@ export default function DashboardLayout({ children }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '0 4px',
-                boxShadow: '0 0 8px rgba(232,93,4,0.5)',
+                boxShadow: '0 0 8px rgba(var(--primary-rgb),0.5)',
               }}>
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </Link>
+
+          {/* Theme Picker */}
+          <div ref={themePickerRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setThemePickerOpen(!themePickerOpen)}
+              title="Change theme color"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                border: '2px solid rgba(var(--primary-rgb),0.3)',
+                background: 'rgba(var(--primary-rgb),0.1)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                padding: 0,
+              }}
+            >
+              <div style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: 'var(--primary)',
+              }} />
+            </button>
+            {themePickerOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                background: 'rgba(16,16,36,0.85)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '16px',
+                padding: '12px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '8px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                zIndex: 100,
+                animation: 'fadeIn 0.15s ease-out',
+              }}>
+                {Object.entries(themes).map(([name, colors]) => (
+                  <button
+                    key={name}
+                    onClick={() => { setTheme(name); setThemePickerOpen(false); }}
+                    title={name.charAt(0).toUpperCase() + name.slice(1)}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: colors.primary,
+                      border: theme === name ? '2px solid white' : '2px solid transparent',
+                      boxShadow: theme === name ? `0 0 8px ${colors.primary}` : 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'all 0.15s ease',
+                      outline: 'none',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* User avatar */}
           <Link href="/dashboard/profile" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -308,8 +392,8 @@ export default function DashboardLayout({ children }) {
               fontSize: '14px',
               fontWeight: 700,
               color: 'white',
-              background: 'linear-gradient(135deg, #e85d04, #f97316)',
-              border: '2px solid rgba(232,93,4,0.3)',
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+              border: '2px solid rgba(var(--primary-rgb),0.3)',
               transition: 'border-color 0.2s, transform 0.2s',
               flexShrink: 0,
             }}>
@@ -392,7 +476,7 @@ export default function DashboardLayout({ children }) {
 
           {/* Logo */}
           <div style={{ marginBottom: '40px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 900, color: '#e85d04', letterSpacing: '2px' }}>ATHLETE</span>
+            <span style={{ fontSize: '24px', fontWeight: 900, color: 'var(--primary)', letterSpacing: '2px' }}>ATHLETE</span>
             <span style={{ fontSize: '24px', fontWeight: 900, color: '#fff', letterSpacing: '2px' }}> EDGE</span>
           </div>
 
@@ -416,16 +500,16 @@ export default function DashboardLayout({ children }) {
                     textDecoration: 'none',
                     fontSize: '15px',
                     fontWeight: active ? 600 : 500,
-                    color: active ? '#f97316' : 'rgba(255,255,255,0.5)',
-                    background: active ? 'rgba(232,93,4,0.1)' : 'transparent',
+                    color: active ? 'var(--primary-light)' : 'rgba(255,255,255,0.5)',
+                    background: active ? 'rgba(var(--primary-rgb),0.1)' : 'transparent',
                     transition: 'all 0.2s',
                   }}
                 >
-                  <span style={{ color: active ? '#f97316' : 'rgba(255,255,255,0.3)' }}>{Icons[item.iconKey]}</span>
+                  <span style={{ color: active ? 'var(--primary-light)' : 'rgba(255,255,255,0.3)' }}>{Icons[item.iconKey]}</span>
                   <span style={{ flex: 1 }}>{item.label}</span>
                   {isNotifications && unreadCount > 0 && (
                     <span style={{
-                      background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                      background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                       color: 'white',
                       fontSize: '10px',
                       fontWeight: 700,
@@ -531,7 +615,7 @@ export default function DashboardLayout({ children }) {
             inset: '-1px',
             borderRadius: '23px',
             padding: '1px',
-            background: 'linear-gradient(135deg, rgba(232,93,4,0.25), rgba(59,130,246,0.15), rgba(232,93,4,0.1))',
+            background: 'linear-gradient(135deg, rgba(var(--primary-rgb),0.25), rgba(59,130,246,0.15), rgba(var(--primary-rgb),0.1))',
             WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
             WebkitMaskComposite: 'xor',
             maskComposite: 'exclude',
@@ -558,8 +642,8 @@ export default function DashboardLayout({ children }) {
                   width: '44px',
                   height: '44px',
                   borderRadius: '14px',
-                  color: active ? '#f97316' : 'rgba(255,255,255,0.45)',
-                  background: active ? 'rgba(232,93,4,0.12)' : 'transparent',
+                  color: active ? 'var(--primary-light)' : 'rgba(255,255,255,0.45)',
+                  background: active ? 'rgba(var(--primary-rgb),0.12)' : 'transparent',
                   textDecoration: 'none',
                   transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s, background 0.2s',
                   transform: `scale(${scale})`,
@@ -576,8 +660,8 @@ export default function DashboardLayout({ children }) {
                     width: '4px',
                     height: '4px',
                     borderRadius: '50%',
-                    background: '#f97316',
-                    boxShadow: '0 0 8px 2px rgba(249,115,22,0.6)',
+                    background: 'var(--primary-light)',
+                    boxShadow: '0 0 8px 2px rgba(var(--primary-light-rgb),0.6)',
                   }} />
                 )}
 
@@ -587,7 +671,7 @@ export default function DashboardLayout({ children }) {
                     position: 'absolute',
                     top: '4px',
                     right: '4px',
-                    background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                    background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                     color: 'white',
                     fontSize: '8px',
                     fontWeight: 700,
@@ -598,7 +682,7 @@ export default function DashboardLayout({ children }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: '0 3px',
-                    boxShadow: '0 0 6px rgba(232,93,4,0.5)',
+                    boxShadow: '0 0 6px rgba(var(--primary-rgb),0.5)',
                   }}>
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
@@ -679,7 +763,7 @@ export default function DashboardLayout({ children }) {
                   alignItems: 'center',
                   gap: '3px',
                   padding: '6px 8px',
-                  color: active ? '#f97316' : 'rgba(255,255,255,0.35)',
+                  color: active ? 'var(--primary-light)' : 'rgba(255,255,255,0.35)',
                   textDecoration: 'none',
                   fontSize: '9px',
                   fontWeight: active ? 600 : 400,
@@ -696,8 +780,8 @@ export default function DashboardLayout({ children }) {
                     width: '4px',
                     height: '4px',
                     borderRadius: '50%',
-                    background: '#f97316',
-                    boxShadow: '0 0 6px rgba(249,115,22,0.5)',
+                    background: 'var(--primary-light)',
+                    boxShadow: '0 0 6px rgba(var(--primary-light-rgb),0.5)',
                   }} />
                 )}
               </Link>

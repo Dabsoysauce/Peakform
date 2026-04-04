@@ -526,7 +526,7 @@ export default function WorkoutsPage() {
           <button
             onClick={() => setShowModal(true)}
             className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+            style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
           >
             + Log Workout
           </button>
@@ -554,7 +554,7 @@ export default function WorkoutsPage() {
             <button
               onClick={() => setShowModal(true)}
               className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+              style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
             >
               Log First Workout
             </button>
@@ -617,7 +617,7 @@ export default function WorkoutsPage() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <button type="submit" disabled={editSessionLoading} className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}>
+                    <button type="submit" disabled={editSessionLoading} className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}>
                       {editSessionLoading ? 'Saving...' : 'Save'}
                     </button>
                     <button type="button" onClick={() => setEditingSession(null)} className="px-4 py-2 rounded-lg border border-white/10 text-white/50 text-sm hover:text-white">
@@ -748,7 +748,7 @@ export default function WorkoutsPage() {
                         type="submit"
                         disabled={exerciseLoading}
                         className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50 hover:opacity-90"
-                        style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+                        style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
                       >
                         {exerciseLoading ? 'Adding...' : '+ Add Exercise'}
                       </button>
@@ -877,7 +877,7 @@ export default function WorkoutsPage() {
                   type="submit"
                   disabled={sessionLoading}
                   className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+                  style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
                 >
                   {sessionLoading ? 'Creating...' : templateExercises ? 'Create from Template' : 'Create Session'}
                 </button>
@@ -925,7 +925,7 @@ export default function WorkoutsPage() {
                     type="submit"
                     disabled={exerciseLoading}
                     className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50 hover:opacity-90"
-                    style={{ background: 'linear-gradient(135deg, #e85d04, #f97316)' }}
+                    style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
                   >
                     {exerciseLoading ? 'Adding...' : '+ Add Exercise'}
                   </button>

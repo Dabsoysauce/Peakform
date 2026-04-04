@@ -22,8 +22,8 @@ const FEATURES = [
     title: 'Workout Tracking',
     desc: 'Log every set, rep, and weight. Track RPE, build a history coaches can actually see.',
     icon: '🏋️',
-    accent: '#f97316',
-    gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+    accent: 'var(--primary-light)',
+    gradient: 'linear-gradient(135deg, var(--primary-light) 0%, #ea580c 100%)',
   },
   {
     title: 'Film Room + AI',
@@ -197,8 +197,8 @@ export default function LandingPage() {
           100% { transform: translateY(-8px); opacity: 0; }
         }
         @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(249,115,22,0.3); }
-          50%      { box-shadow: 0 0 40px rgba(249,115,22,0.6); }
+          0%, 100% { box-shadow: 0 0 20px rgba(var(--primary-light-rgb),0.3); }
+          50%      { box-shadow: 0 0 40px rgba(var(--primary-light-rgb),0.6); }
         }
         @keyframes shimmer {
           0%   { background-position: -200% 0; }
@@ -223,7 +223,7 @@ export default function LandingPage() {
         transition: 'all 0.4s ease',
       }}>
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          <span className="rajdhani" style={{ fontSize: 22, fontWeight: 700, color: '#f97316', letterSpacing: 2 }}>ATHLETE</span>
+          <span className="rajdhani" style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary-light)', letterSpacing: 2 }}>ATHLETE</span>
           <span className="rajdhani" style={{ fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>EDGE</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
@@ -231,10 +231,10 @@ export default function LandingPage() {
             Sign In
           </Link>
           <Link href="/register" style={{
-            background: 'linear-gradient(135deg, #e85d04, #f97316)',
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
             color: '#fff', padding: '8px 20px', borderRadius: 8, textDecoration: 'none',
             fontSize: 14, fontWeight: 600, border: 'none',
-            boxShadow: '0 2px 12px rgba(249,115,22,0.3)',
+            boxShadow: '0 2px 12px rgba(var(--primary-light-rgb),0.3)',
             transition: 'transform 0.2s, box-shadow 0.2s',
           }}>
             Get Started
@@ -266,7 +266,7 @@ export default function LandingPage() {
         {/* radial overlay */}
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'radial-gradient(ellipse at 50% 40%, rgba(249,115,22,0.08) 0%, transparent 60%)',
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(var(--primary-light-rgb),0.08) 0%, transparent 60%)',
         }} />
 
         {/* Particles */}
@@ -274,7 +274,7 @@ export default function LandingPage() {
           <div key={p.id} style={{
             position: 'absolute', zIndex: 1,
             width: p.size, height: p.size, borderRadius: '50%',
-            background: '#f97316',
+            background: 'var(--primary-light)',
             left: `${p.left}%`, top: `${p.top}%`,
             opacity: p.opacity,
             animation: `particleDrift ${p.dur}s ${p.delay}s ease-in-out infinite`,
@@ -300,7 +300,7 @@ export default function LandingPage() {
                 transform: heroReady ? 'translateY(0)' : 'translateY(40px)',
                 transition: `opacity 0.7s ${0.3 + i * 0.25}s ease-out, transform 0.7s ${0.3 + i * 0.25}s ease-out`,
                 background: i === 2
-                  ? 'linear-gradient(90deg, #f97316, #fb923c)'
+                  ? 'linear-gradient(90deg, var(--primary-light), var(--primary-light))'
                   : 'linear-gradient(90deg, #fff, #cbd5e1)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -332,10 +332,10 @@ export default function LandingPage() {
             transition: 'opacity 0.7s 1.4s ease-out, transform 0.7s 1.4s ease-out',
           }}>
             <Link href="/register" style={{
-              background: 'linear-gradient(135deg, #e85d04, #f97316)',
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
               color: '#fff', padding: '14px 36px', borderRadius: 12,
               textDecoration: 'none', fontSize: 16, fontWeight: 700,
-              boxShadow: '0 4px 24px rgba(249,115,22,0.4)',
+              boxShadow: '0 4px 24px rgba(var(--primary-light-rgb),0.4)',
               transition: 'transform 0.2s, box-shadow 0.2s',
               display: 'inline-block',
             }}>
@@ -374,13 +374,13 @@ export default function LandingPage() {
             borderRadius: 20,
             padding: 'clamp(20px, 3vw, 32px)',
             backdropFilter: 'blur(20px)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(249,115,22,0.1)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(var(--primary-light-rgb),0.1)',
           }}>
             {/* card header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
               <div style={{
                 width: 52, height: 52, borderRadius: 14,
-                background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                background: 'linear-gradient(135deg, var(--primary-light), #ea580c)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 22,
               }}>🏀</div>
@@ -393,7 +393,7 @@ export default function LandingPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 18 }}>
               {[{ label: 'Workouts', val: '147' }, { label: 'Film Clips', val: '23' }, { label: 'Coach Views', val: '12' }].map((s, i) => (
                 <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#f97316' }}>{s.val}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary-light)' }}>{s.val}</div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{s.label}</div>
                 </div>
               ))}
@@ -532,7 +532,7 @@ export default function LandingPage() {
             <div key={i} ref={s.hook.ref} style={{ textAlign: 'center', minWidth: 140 }}>
               <div className="rajdhani" style={{
                 fontSize: 'clamp(40px, 7vw, 64px)', fontWeight: 800,
-                background: 'linear-gradient(135deg, #f97316, #fb923c)',
+                background: 'linear-gradient(135deg, var(--primary-light), var(--primary-light))',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                 lineHeight: 1,
               }}>
@@ -568,15 +568,15 @@ export default function LandingPage() {
           {/* Glowing timeline line */}
           <div style={{
             position: 'absolute', left: 24, top: 0, bottom: 0, width: 2,
-            background: 'rgba(249,115,22,0.1)',
+            background: 'rgba(var(--primary-light-rgb),0.1)',
           }}>
             <div style={{
               width: '100%',
-              background: 'linear-gradient(180deg, #f97316, #e85d04)',
+              background: 'linear-gradient(180deg, var(--primary-light), var(--primary))',
               animation: stepsReveal.visible ? 'lineGrow 1.5s 0.3s ease-out forwards' : 'none',
               height: 0,
               borderRadius: 2,
-              boxShadow: '0 0 12px rgba(249,115,22,0.4)',
+              boxShadow: '0 0 12px rgba(var(--primary-light-rgb),0.4)',
             }} />
           </div>
 
@@ -591,10 +591,10 @@ export default function LandingPage() {
               {/* Number badge */}
               <div style={{
                 width: 50, height: 50, borderRadius: 16, flexShrink: 0,
-                background: 'linear-gradient(135deg, #f97316, #e85d04)',
+                background: 'linear-gradient(135deg, var(--primary-light), var(--primary))',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 800, fontSize: 16,
-                boxShadow: '0 4px 20px rgba(249,115,22,0.3)',
+                boxShadow: '0 4px 20px rgba(var(--primary-light-rgb),0.3)',
                 position: 'relative', zIndex: 1,
               }}>
                 {step.num}
@@ -630,7 +630,7 @@ export default function LandingPage() {
           <div style={{
             position: 'absolute', inset: -2,
             borderRadius: 26,
-            background: 'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(59,130,246,0.2))',
+            background: 'linear-gradient(135deg, rgba(var(--primary-light-rgb),0.3), rgba(59,130,246,0.2))',
             filter: 'blur(40px)',
             zIndex: 0,
           }} />
@@ -690,10 +690,10 @@ export default function LandingPage() {
             </p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/register" style={{
-                background: 'linear-gradient(135deg, #e85d04, #f97316)',
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
                 color: '#fff', padding: '14px 32px', borderRadius: 12,
                 textDecoration: 'none', fontSize: 16, fontWeight: 700,
-                boxShadow: '0 4px 24px rgba(249,115,22,0.4)',
+                boxShadow: '0 4px 24px rgba(var(--primary-light-rgb),0.4)',
               }}>
                 Create Your Profile
               </Link>
@@ -721,7 +721,8 @@ export default function LandingPage() {
         flexWrap: 'wrap', gap: 16,
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          <span className="rajdhani" style={{ fontSize: 16, fontWeight: 700, color: '#f97316' }}>ATHLETE</span>
+          <span className="rajdhani" style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary-light)' }}>ATHLETE</span>
+
           <span className="rajdhani" style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>EDGE</span>
         </div>
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
