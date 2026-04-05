@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 import { RootState, AppDispatch } from '../../store';
 import { fetchAthletes } from '../../store/slices/teamsSlice';
 import { fetchTeam } from '../../store/slices/teamsSlice';
@@ -9,6 +10,7 @@ import { colors, spacing } from '../../theme';
 
 export default function CoachHomeScreen() {
   const dispatch = useDispatch<AppDispatch>();
+  const navigation = useNavigation<any>();
   const email = useSelector((state: RootState) => state.auth.email) ?? '';
   const athletes = useSelector((state: RootState) => state.teams.athletes);
   const team = useSelector((state: RootState) => state.teams.team);
@@ -46,6 +48,42 @@ export default function CoachHomeScreen() {
           <Text style={styles.quickLabel}>Team Members</Text>
         </View>
       </View>
+
+      <Text style={styles.sectionTitle}>Quick Actions</Text>
+      <View style={styles.actionsGrid}>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Profile')}>
+          <Text style={styles.actionIcon}>👤</Text>
+          <Text style={styles.actionLabel}>Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Schedule')}>
+          <Text style={styles.actionIcon}>📅</Text>
+          <Text style={styles.actionLabel}>Schedule</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Notifications')}>
+          <Text style={styles.actionIcon}>🔔</Text>
+          <Text style={styles.actionLabel}>Notifications</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('DirectMessages')}>
+          <Text style={styles.actionIcon}>✉️</Text>
+          <Text style={styles.actionLabel}>DMs</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Playbook')}>
+          <Text style={styles.actionIcon}>📋</Text>
+          <Text style={styles.actionLabel}>Playbook</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('PracticePlans')}>
+          <Text style={styles.actionIcon}>📝</Text>
+          <Text style={styles.actionLabel}>Practice Plans</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('DepthChart')}>
+          <Text style={styles.actionIcon}>📊</Text>
+          <Text style={styles.actionLabel}>Depth Chart</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('AIWorkout')}>
+          <Text style={styles.actionIcon}>🤖</Text>
+          <Text style={styles.actionLabel}>AI Workout</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -69,7 +107,7 @@ const styles = StyleSheet.create({
   teamName: { fontSize: 18, fontWeight: '800', color: colors.primaryLight },
   teamSport: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
-  quickRow: { flexDirection: 'row', gap: 10 },
+  quickRow: { flexDirection: 'row', gap: 10, marginBottom: spacing.lg },
   quickItem: {
     flex: 1,
     backgroundColor: colors.card,
@@ -81,4 +119,8 @@ const styles = StyleSheet.create({
   },
   quickNum: { fontSize: 26, fontWeight: '800', color: colors.text },
   quickLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2, textAlign: 'center' },
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: spacing.sm },
+  actionCard: { width: '47%', backgroundColor: colors.card, borderRadius: 10, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  actionIcon: { fontSize: 28, marginBottom: 6 },
+  actionLabel: { fontSize: 13, color: colors.text, fontWeight: '600' },
 });

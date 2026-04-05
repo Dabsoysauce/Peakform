@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Peakform",
+    "name": "Athlete Edge",
     "slug": "peakform",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,6 +22,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.peakform.app",
+      "versionCode": 3,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -29,6 +30,12 @@
     },
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9305d43b-60ec-4635-9c6a-bd191bc44acd"
+      }
+    },
+    "owner": "ryandhalbisoi"
   }
 }
