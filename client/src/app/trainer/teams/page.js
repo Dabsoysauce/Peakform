@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { io } from 'socket.io-client';
 import { apiFetch } from '../../lib/api';
 
@@ -348,20 +349,25 @@ export default function TrainerTeamsPage() {
                   ) : (
                     members.map((m) => (
                       <div key={m.id} className="flex items-center gap-2 group">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                          style={{ backgroundColor: '#2563eb' }}
+                        <Link
+                          href={`/trainer/athletes/${m.user_id || m.id}`}
+                          className="flex items-center gap-2 min-w-0 flex-1 rounded-lg px-1 -mx-1 hover:bg-white/5 transition-colors"
                         >
-                          {(m.first_name || m.email).charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs font-medium text-white truncate">
-                            {m.first_name ? `${m.first_name} ${m.last_name || ''}`.trim() : m.email}
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                            style={{ backgroundColor: '#2563eb' }}
+                          >
+                            {(m.first_name || m.email).charAt(0).toUpperCase()}
                           </div>
-                          {m.primary_goal && (
-                            <div className="text-xs text-gray-600 truncate">{m.primary_goal}</div>
-                          )}
-                        </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-white truncate">
+                              {m.first_name ? `${m.first_name} ${m.last_name || ''}`.trim() : m.email}
+                            </div>
+                            {m.primary_goal && (
+                              <div className="text-xs text-gray-600 truncate">{m.primary_goal}</div>
+                            )}
+                          </div>
+                        </Link>
                         <button
                           onClick={() => openAssign(m)}
                           className="opacity-0 group-hover:opacity-100 text-xs px-2 py-1 rounded font-semibold transition-all flex-shrink-0"

@@ -172,4 +172,75 @@ router.get('/is-my-player/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+// Get full player profile (coach only — must be on coach's team)
+router.get('/players/:userId/profile', authMiddleware, requireRole('trainer'), async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify this player is on one of the coach's teams
+    const membership = await pool.query(
+      `SELECT 1 FROM team_members tm
+       JOIN teams t ON tm.team_id = t.id
+       WHERE tm.user_id = $1 AND t.trainer_id = $2 LIMIT 1`,
+      [userId, req.user.id]
+    );
+    if (!membership.rows[0]) {
+      return res.status(403).json({ error: 'This player is not on any of your teams' });
+    }
+
+    // Fetch player's athlete profile
+    const profileRes = await pool.query(
+      `SELECT ap.*, u.email FROM athlete_profiles ap
+       JOIN users u ON ap.user_id = u.id
+       WHERE ap.user_id = $1`,
+      [userId]
+    );
+
+    // Fetch player's workouts (last 20)
+    const workoutsRes = await pool.query(
+      `SELECT ws.*,
+              json_agg(json_build_object(
+                'id', e.id, 'exercise_name', e.exercise_name,
+                'sets', e.sets, 'reps', e.reps,
+                'weight_lbs', e.weight_lbs, 'notes', e.notes
+              )) FILTER (WHERE e.id IS NOT NULL) as exercises
+       FROM workout_sessions ws
+       LEFT JOIN exercises e ON e.session_id = ws.id
+       WHERE ws.user_id = $1
+       GROUP BY ws.id
+       ORDER BY ws.created_at DESC
+       LIMIT 20`,
+      [userId]
+    );
+
+    // Fetch player's media (last 10)
+    const mediaRes = await pool.query(
+      `SELECT id, title, description, url, thumbnail_url, media_type, tags, created_at
+       FROM media WHERE user_id = $1
+       ORDER BY created_at DESC LIMIT 10`,
+      [userId]
+    );
+
+    // Fetch player's film analyses
+    const analysesRes = await pool.query(
+      `SELECT ma.id, ma.analysis, ma.focus, ma.created_at, m.title as media_title
+       FROM media_analyses ma
+       JOIN media m ON ma.media_id = m.id
+       WHERE ma.user_id = $1
+       ORDER BY ma.created_at DESC LIMIT 10`,
+      [userId]
+    );
+
+    res.json({
+      profile: profileRes.rows[0] || null,
+      workouts: workoutsRes.rows,
+      media: mediaRes.rows,
+      analyses: analysesRes.rows,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load player profile' });
+  }
+});
+
 module.exports = router;
