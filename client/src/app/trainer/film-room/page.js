@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiFetch } from '../../lib/api';
 import { uploadMediaFile, deleteMediaFile } from '../../lib/supabase';
 
@@ -153,15 +153,81 @@ function renderPlayToBase64(canvasJson) {
   } catch { return null; }
 }
 
+// ── Glass Card Component ────────────────────────────────────────────────────
+function GlassCard({ children, style, className = '', ...props }) {
+  const cardRef = useRef(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }, []);
+
+  return (
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={className}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: 20,
+        transition: 'border-color 0.3s, box-shadow 0.3s, transform 0.3s',
+        ...style,
+      }}
+      {...props}
+    >
+      {isHovered && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none',
+          background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(var(--primary-rgb),0.06), transparent 60%)`,
+          zIndex: 0,
+        }} />
+      )}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.025, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        backgroundSize: '128px 128px',
+      }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>{children}</div>
+    </div>
+  );
+}
+
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-700 p-6" style={{ backgroundColor: '#1e1e30' }}>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 16, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 512, borderRadius: 20, overflow: 'hidden',
+        background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid var(--glass-border)', boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 24px', borderBottom: '1px solid var(--glass-border)',
+        }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'white', margin: 0 }}>{title}</h2>
+          <button onClick={onClose} style={{
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,0.5)', fontSize: 18, cursor: 'pointer', transition: 'all 0.2s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+          >&times;</button>
         </div>
-        {children}
+        <div style={{ padding: 24 }}>{children}</div>
       </div>
     </div>
   );
@@ -211,15 +277,27 @@ function TagInput({ tags, onChange }) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1">Tags</label>
-      <div className="flex flex-wrap gap-1.5 px-3 py-2 rounded-lg border border-gray-700 min-h-[40px] items-center cursor-text"
-        style={{ backgroundColor: '#16213e' }}
-        onClick={(e) => e.currentTarget.querySelector('input')?.focus()}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Tags</label>
+      <div
+        style={{
+          display: 'flex', flexWrap: 'wrap', gap: 6, padding: '10px 14px', borderRadius: 12,
+          border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+          minHeight: 42, alignItems: 'center', cursor: 'text', transition: 'border-color 0.2s',
+        }}
+        onClick={(e) => e.currentTarget.querySelector('input')?.focus()}
+      >
         {tags.map(tag => (
-          <span key={tag} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-200">
+          <span key={tag} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '3px 10px',
+            borderRadius: 20, background: 'rgba(var(--primary-rgb),0.15)', color: 'var(--primary)',
+            border: '1px solid rgba(var(--primary-rgb),0.25)', fontWeight: 600,
+          }}>
             {tag}
             <button type="button" onClick={() => onChange(tags.filter(t => t !== tag))}
-              className="text-gray-400 hover:text-white leading-none">&times;</button>
+              style={{ background: 'none', border: 'none', color: 'rgba(var(--primary-rgb),0.6)', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(var(--primary-rgb),0.6)'}
+            >&times;</button>
           </span>
         ))}
         <input
@@ -229,10 +307,13 @@ function TagInput({ tags, onChange }) {
           onKeyDown={handleKeyDown}
           onBlur={() => { if (input.trim()) addTag(input); }}
           placeholder={tags.length === 0 ? 'Type a tag and press Enter...' : ''}
-          className="flex-1 min-w-[80px] bg-transparent text-white text-sm placeholder-gray-500 outline-none"
+          style={{
+            flex: 1, minWidth: 80, background: 'transparent', color: 'white', fontSize: 13,
+            border: 'none', outline: 'none', padding: 0,
+          }}
         />
       </div>
-      <p className="text-xs text-gray-600 mt-1">Press Enter or comma to add a tag</p>
+      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 4 }}>Press Enter or comma to add a tag</p>
     </div>
   );
 }
@@ -378,7 +459,6 @@ function AnalysisModal({ media, onClose }) {
 
       if (isVideo) {
         if (!frameBase64) { setError('Could not extract video frame.'); setStep('pre'); return; }
-        // Extract multiple frames for richer analysis
         let multiFrames = [];
         try { multiFrames = await extractMultipleFrames(media.url); } catch {}
         if (multiFrames.length > 1) {
@@ -426,7 +506,6 @@ function AnalysisModal({ media, onClose }) {
       setAnalysis(data.analysis);
       setStep('done');
 
-      // Auto-save the new analysis
       try {
         const saveRes = await apiFetch(`/trainer-media/${media.id}/analyses`, {
           method: 'POST',
@@ -486,7 +565,6 @@ function AnalysisModal({ media, onClose }) {
       }
       setChatHistory(updatedHistory);
 
-      // Persist chat history
       if (activeAnalysisId) {
         try {
           await apiFetch(`/trainer-media/analyses/${activeAnalysisId}`, {
@@ -505,73 +583,117 @@ function AnalysisModal({ media, onClose }) {
     const parts = str.split(/\*\*(.+?)\*\*/g);
     if (parts.length === 1) return str;
     return parts.map((part, j) =>
-      j % 2 === 1 ? <strong key={j} className="font-bold text-white">{part}</strong> : part
+      j % 2 === 1 ? <strong key={j} style={{ fontWeight: 700, color: 'white' }}>{part}</strong> : part
     );
   }
 
   function renderText(text) {
     return text.split('\n').map((line, i) => {
       if (line.startsWith('**') && line.endsWith('**') && line.length > 4)
-        return <h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-3 mb-1">{line.replace(/\*\*/g, '')}</h3>;
+        return <h3 key={i} style={{ fontSize: 13, fontWeight: 900, color: 'white', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 14, marginBottom: 4 }}>{line.replace(/\*\*/g, '')}</h3>;
       if (line.startsWith('- ') || line.startsWith('• '))
-        return <li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{inlineBold(line.slice(2))}</li>;
+        return <li key={i} style={{ fontSize: 13, color: 'var(--text-secondary)', marginLeft: 16, lineHeight: 1.7 }}>{inlineBold(line.slice(2))}</li>;
       if (line.trim() === '') return null;
-      return <p key={i} className="text-sm text-gray-300 leading-relaxed">{inlineBold(line)}</p>;
+      return <p key={i} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{inlineBold(line)}</p>;
     });
   }
 
   const frameUrl = isSupabaseImage(media.url) ? media.url : (frameBase64 ? `data:image/jpeg;base64,${frameBase64}` : null);
 
+  const glassBtn = (active) => ({
+    flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+    border: active ? '1px solid rgba(var(--primary-rgb),0.4)' : '1px solid var(--glass-border)',
+    background: active ? 'rgba(var(--primary-rgb),0.15)' : 'var(--glass-input-bg)',
+    color: active ? 'var(--primary)' : 'var(--text-muted)',
+    transition: 'all 0.25s ease',
+  });
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-      <div className="w-full max-w-xl rounded-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]" style={{ backgroundColor: '#1e1e30' }}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700 flex-shrink-0">
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 16, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)',
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 580, borderRadius: 24, overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', maxHeight: '90vh',
+        background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid var(--glass-border)', boxShadow: '0 32px 100px rgba(0,0,0,0.6)',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 24px', borderBottom: '1px solid var(--glass-border)', flexShrink: 0,
+        }}>
           <div>
-            <h2 className="text-lg font-black text-white">AI Film Analysis</h2>
-            <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{media.title || 'Untitled'}</p>
+            <h2 style={{ fontSize: 17, fontWeight: 900, color: 'white', margin: 0 }}>AI Film Analysis</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{media.title || 'Untitled'}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {step === 'done' && (
-              <button onClick={handleShare}
-                className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex-shrink-0"
-                style={{ backgroundColor: '#16a34a', color: 'white' }}>
+              <button onClick={handleShare} style={{
+                fontSize: 12, padding: '7px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer',
+                border: '1px solid rgba(74,222,128,0.3)',
+                background: 'rgba(74,222,128,0.12)', color: '#4ade80',
+                transition: 'all 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(74,222,128,0.2)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(74,222,128,0.12)'; }}
+              >
                 {shareMsg || 'Share to Team'}
               </button>
             )}
-            <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+            <button onClick={onClose} style={{
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(255,255,255,0.5)', fontSize: 18, cursor: 'pointer', transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+            >&times;</button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {step === 'loading' && (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+              <div className="film-spinner" />
             </div>
           )}
 
           {step === 'history' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-white">Previous Analyses ({savedAnalyses.length})</p>
-                <button onClick={() => setStep('pre')}
-                  className="text-xs px-3 py-1.5 rounded-lg font-bold text-white"
-                  style={{ backgroundColor: '#2563eb' }}>
-                  + New Analysis
-                </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>Previous Analyses ({savedAnalyses.length})</p>
+                <button onClick={() => setStep('pre')} style={{
+                  fontSize: 12, padding: '7px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer',
+                  border: '1px solid rgba(var(--primary-rgb),0.3)', background: 'rgba(var(--primary-rgb),0.12)',
+                  color: 'var(--primary)', transition: 'all 0.2s',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.12)'}
+                >+ New Analysis</button>
               </div>
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {savedAnalyses.map(sa => (
                   <button key={sa.id} onClick={() => loadSavedAnalysis(sa)}
-                    className="w-full text-left p-3 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors"
-                    style={{ backgroundColor: '#16213e' }}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-white capitalize">{sa.focus || 'General'} Analysis</span>
-                      <span className="text-xs text-gray-500">{new Date(sa.created_at).toLocaleDateString()}</span>
+                    className="film-saved-analysis-btn"
+                    style={{
+                      width: '100%', textAlign: 'left', padding: 14, borderRadius: 14,
+                      border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                      cursor: 'pointer', transition: 'all 0.25s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'; e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.06)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.background = 'var(--glass-input-bg)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'white', textTransform: 'capitalize' }}>{sa.focus || 'General'} Analysis</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(sa.created_at).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-xs text-gray-400 line-clamp-2">{sa.analysis.slice(0, 150)}...</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{sa.analysis.slice(0, 150)}...</p>
                     {sa.chat_history?.length > 0 && (
-                      <span className="text-xs text-blue-400 mt-1 inline-block">{sa.chat_history.length} follow-up messages</span>
+                      <span style={{ fontSize: 11, color: 'var(--primary)', marginTop: 6, display: 'inline-block' }}>{sa.chat_history.length} follow-up messages</span>
                     )}
                   </button>
                 ))}
@@ -580,24 +702,26 @@ function AnalysisModal({ media, onClose }) {
           )}
 
           {(step === 'pre') && (
-            <div className="space-y-5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {savedAnalyses.length > 0 && (
                 <button onClick={() => setStep('history')}
-                  className="text-xs text-blue-400 hover:underline">
-                  &larr; View previous analyses ({savedAnalyses.length})
-                </button>
+                  style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                  onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                >&larr; View previous analyses ({savedAnalyses.length})</button>
               )}
-              {error && <div className="px-3 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{error}</div>}
+              {error && (
+                <div style={{
+                  padding: '10px 14px', borderRadius: 12, fontSize: 13,
+                  border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#f87171',
+                }}>{error}</div>
+              )}
 
               <div>
-                <p className="text-sm font-bold text-white mb-2">What's the focus?</p>
-                <div className="flex gap-2">
+                <p style={{ fontSize: 14, fontWeight: 700, color: 'white', marginBottom: 10 }}>What&apos;s the focus?</p>
+                <div style={{ display: 'flex', gap: 8 }}>
                   {[['offense', 'Offense'], ['defense', 'Defense'], ['both', 'Both']].map(([val, label]) => (
-                    <button key={val} onClick={() => setFocus(val)}
-                      className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-                      style={focus === val
-                        ? { backgroundColor: '#2563eb', color: 'white' }
-                        : { backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }}>
+                    <button key={val} onClick={() => setFocus(val)} style={glassBtn(focus === val)}>
                       {label}
                     </button>
                   ))}
@@ -605,75 +729,101 @@ function AnalysisModal({ media, onClose }) {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-bold text-white">Focus on a specific player? <span className="text-gray-500 font-normal">(optional)</span></p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>
+                    Focus on a specific player? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
+                  </p>
                   {!detectedPlayers.length && frameUrl && (
                     <button onClick={detectPlayers} disabled={detecting}
-                      className="text-xs text-blue-400 hover:underline disabled:opacity-50">
-                      {detecting ? 'Detecting...' : 'Auto-detect players'}
-                    </button>
+                      style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', opacity: detecting ? 0.5 : 1 }}
+                      onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                    >{detecting ? 'Detecting...' : 'Auto-detect players'}</button>
                   )}
                 </div>
 
                 {frameUrl ? (
-                  <div className="relative rounded-lg overflow-hidden cursor-crosshair border border-gray-700" ref={frameRef} onClick={handleFrameClick}>
-                    <img src={frameUrl} alt="Film frame" className="w-full object-contain" style={{ maxHeight: 220 }} />
+                  <div ref={frameRef} onClick={handleFrameClick} style={{
+                    position: 'relative', borderRadius: 14, overflow: 'hidden', cursor: 'crosshair',
+                    border: '1px solid var(--glass-border)',
+                  }}>
+                    <img src={frameUrl} alt="Film frame" style={{ width: '100%', objectFit: 'contain', maxHeight: 220, display: 'block' }} />
 
                     {detectedPlayers.map(p => (
                       <button key={p.id} onClick={e => { e.stopPropagation(); setPlayerFocus({ x: p.x, y: p.y }); }}
-                        className="absolute rounded-full border-2 transition-all hover:scale-110"
                         style={{
+                          position: 'absolute', borderRadius: '50%', border: '2px solid',
+                          transition: 'all 0.2s', cursor: 'pointer',
                           left: `${p.x * 100}%`, top: `${p.y * 100}%`,
                           transform: 'translate(-50%, -50%)',
-                          width: 32, height: 32,
-                          backgroundColor: playerFocus?.x === p.x ? 'rgba(37,99,235,0.7)' : 'rgba(0,0,0,0.5)',
+                          width: 32, height: 32, background: 'none', padding: 0,
+                          backgroundColor: playerFocus?.x === p.x ? 'rgba(var(--primary-rgb),0.5)' : 'rgba(0,0,0,0.5)',
                           borderColor: p.team === 'offense' ? 'white' : '#ef4444',
                         }} />
                     ))}
 
                     {playerFocus && !detectedPlayers.length && (
-                      <div className="absolute pointer-events-none"
-                        style={{ left: `${playerFocus.x * 100}%`, top: `${playerFocus.y * 100}%`, transform: 'translate(-50%, -50%)' }}>
-                        <div className="w-7 h-7 rounded-full border-2 border-yellow-400 bg-yellow-400/30" />
+                      <div style={{
+                        position: 'absolute', pointerEvents: 'none',
+                        left: `${playerFocus.x * 100}%`, top: `${playerFocus.y * 100}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: '50%',
+                          border: '2px solid #facc15', background: 'rgba(250,204,21,0.3)',
+                        }} />
                       </div>
                     )}
 
-                    <div className="absolute bottom-1 left-1 right-1 text-center">
-                      <span className="text-xs text-white/60 bg-black/40 px-2 py-0.5 rounded">
+                    <div style={{ position: 'absolute', bottom: 6, left: 6, right: 6, textAlign: 'center' }}>
+                      <span style={{
+                        fontSize: 11, color: 'rgba(255,255,255,0.7)', background: 'rgba(0,0,0,0.5)',
+                        padding: '3px 10px', borderRadius: 8, backdropFilter: 'blur(4px)',
+                      }}>
                         {playerFocus ? 'Player selected — click elsewhere to change' : 'Click on a player to focus on them'}
                       </span>
                     </div>
                   </div>
                 ) : frameLoading ? (
-                  <div className="rounded-lg border border-gray-700 h-32 flex items-center justify-center text-gray-500 text-sm">
-                    Loading frame...
-                  </div>
+                  <div style={{
+                    borderRadius: 14, border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                    height: 128, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--text-muted)', fontSize: 13,
+                  }}>Loading frame...</div>
                 ) : (
-                  <div className="rounded-lg border border-gray-700 h-20 flex items-center justify-center text-gray-500 text-xs">
-                    No preview available
-                  </div>
+                  <div style={{
+                    borderRadius: 14, border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                    height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--text-muted)', fontSize: 12,
+                  }}>No preview available</div>
                 )}
 
                 {playerFocus && (
                   <button onClick={() => { setPlayerFocus(null); setDetectedPlayers([]); }}
-                    className="text-xs text-gray-500 hover:text-gray-300 mt-1">
-                    Clear player focus &times;
-                  </button>
+                    style={{ fontSize: 12, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0 }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  >Clear player focus &times;</button>
                 )}
               </div>
 
-              <button onClick={analyzeFilm}
-                className="w-full py-3 rounded-lg font-bold text-white hover:opacity-90"
-                style={{ backgroundColor: '#2563eb' }}>
-                Analyze Film
-              </button>
+              <button onClick={analyzeFilm} style={{
+                width: '100%', padding: '13px 0', borderRadius: 14, fontWeight: 800, fontSize: 14,
+                color: 'white', cursor: 'pointer', border: 'none',
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-light, #f08050))',
+                boxShadow: '0 4px 20px rgba(var(--primary-rgb),0.3)',
+                transition: 'all 0.25s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(var(--primary-rgb),0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(var(--primary-rgb),0.3)'; }}
+              >Analyze Film</button>
             </div>
           )}
 
           {step === 'analyzing' && (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-              <p className="text-gray-400 text-sm">Analyzing your film...</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', gap: 16 }}>
+              <div className="film-spinner" />
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Analyzing your film...</p>
             </div>
           )}
 
@@ -681,26 +831,47 @@ function AnalysisModal({ media, onClose }) {
             <>
               {savedAnalyses.length > 0 && (
                 <button onClick={() => setStep('history')}
-                  className="text-xs text-blue-400 hover:underline">
-                  &larr; View all analyses ({savedAnalyses.length})
-                </button>
+                  style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                  onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                >&larr; View all analyses ({savedAnalyses.length})</button>
               )}
-              <div className="space-y-1">{renderText(analysis)}</div>
+
+              {/* Analysis results in a glass card */}
+              <div style={{
+                padding: 16, borderRadius: 14, background: 'var(--glass-input-bg)',
+                border: '1px solid var(--glass-border)',
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{renderText(analysis)}</div>
+              </div>
+
+              {/* Chat history */}
               {chatHistory.length > 0 && (
-                <div className="border-t border-gray-700 pt-4 space-y-4">
+                <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {chatHistory.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                        style={{ backgroundColor: msg.role === 'user' ? '#2563eb' : '#16213e', color: 'white',
-                          borderBottomRightRadius: msg.role === 'user' ? 4 : undefined,
-                          borderBottomLeftRadius: msg.role === 'assistant' ? 4 : undefined }}>
-                        {msg.role === 'assistant' ? <div className="space-y-1">{renderText(msg.content)}</div> : msg.content}
+                    <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                      <div style={{
+                        maxWidth: '85%', padding: '10px 16px', borderRadius: 18, fontSize: 13, lineHeight: 1.6,
+                        background: msg.role === 'user'
+                          ? 'linear-gradient(135deg, var(--primary), var(--primary-light, #f08050))'
+                          : 'var(--glass-input-bg)',
+                        color: 'white',
+                        border: msg.role === 'assistant' ? '1px solid var(--glass-border)' : 'none',
+                        borderBottomRightRadius: msg.role === 'user' ? 4 : 18,
+                        borderBottomLeftRadius: msg.role === 'assistant' ? 4 : 18,
+                        boxShadow: msg.role === 'user' ? '0 4px 16px rgba(var(--primary-rgb),0.2)' : 'none',
+                      }}>
+                        {msg.role === 'assistant' ? <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{renderText(msg.content)}</div> : msg.content}
                       </div>
                     </div>
                   ))}
                   {chatLoading && (
-                    <div className="flex justify-start">
-                      <div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{ backgroundColor: '#16213e' }}>Thinking...</div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                      <div style={{
+                        padding: '10px 16px', borderRadius: 18, fontSize: 13, color: 'var(--text-muted)',
+                        background: 'var(--glass-input-bg)', border: '1px solid var(--glass-border)',
+                        borderBottomLeftRadius: 4,
+                      }}>Thinking...</div>
                     </div>
                   )}
                 </div>
@@ -710,16 +881,31 @@ function AnalysisModal({ media, onClose }) {
           )}
         </div>
 
+        {/* Chat input bar */}
         {step === 'done' && (
-          <form onSubmit={handleChatSend} className="px-4 py-3 border-t border-gray-700 flex gap-2 flex-shrink-0">
+          <form onSubmit={handleChatSend} style={{
+            padding: '14px 20px', borderTop: '1px solid var(--glass-border)',
+            display: 'flex', gap: 10, flexShrink: 0, background: 'rgba(0,0,0,0.15)',
+          }}>
             <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)}
               placeholder="Ask a follow-up question about this film..."
               disabled={chatLoading}
-              className="flex-1 px-4 py-2 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50"
-              style={{ backgroundColor: '#16213e' }} />
+              style={{
+                flex: 1, padding: '10px 16px', borderRadius: 14,
+                border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                color: 'white', fontSize: 13, outline: 'none',
+                opacity: chatLoading ? 0.5 : 1, transition: 'border-color 0.2s',
+              }}
+              onFocus={e => e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'}
+              onBlur={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+            />
             <button type="submit" disabled={chatLoading || !chatInput.trim()}
-              className="px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-50 hover:opacity-90 flex-shrink-0"
-              style={{ backgroundColor: '#2563eb' }}>Ask</button>
+              style={{
+                padding: '10px 18px', borderRadius: 14, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                border: 'none', color: 'white', opacity: (chatLoading || !chatInput.trim()) ? 0.4 : 1,
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-light, #f08050))',
+                transition: 'all 0.2s', flexShrink: 0,
+              }}>Ask</button>
           </form>
         )}
       </div>
@@ -744,6 +930,7 @@ export default function TrainerFilmRoomPage() {
   const [deleteLoading, setDeleteLoading] = useState(null);
   const fileInputRef = useRef(null);
   const dropRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
 
   // Search & filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -755,7 +942,11 @@ export default function TrainerFilmRoomPage() {
   const [editingTagsFor, setEditingTagsFor] = useState(null);
   const [editTags, setEditTags] = useState([]);
 
-  useEffect(() => { loadMedia(); }, []);
+  useEffect(() => {
+    loadMedia();
+    const t = setTimeout(() => setMounted(true), 60);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const tags = new Set();
@@ -901,284 +1092,493 @@ export default function TrainerFilmRoomPage() {
   const isTrainerUpload = (m) => m.user_email === localStorage.getItem('email');
   const hasFilters = searchQuery.trim() || activeTagFilters.length > 0;
 
+  const inputStyle = {
+    width: '100%', padding: '10px 16px', borderRadius: 12,
+    border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+    color: 'white', fontSize: 13, outline: 'none', transition: 'border-color 0.2s',
+  };
+
   return (
-    <div>
-      {analyzingMedia && (
-        <AnalysisModal media={analyzingMedia} onClose={() => setAnalyzingMedia(null)} />
-      )}
+    <>
+      <style>{`
+        :root {
+          --primary: #e85d26;
+          --primary-light: #f08050;
+          --primary-rgb: 232,93,38;
+          --bg-dark: #0f0f1a;
+          --glass-bg: rgba(255,255,255,0.03);
+          --glass-border: rgba(255,255,255,0.06);
+          --glass-input-bg: rgba(255,255,255,0.04);
+          --glass-hover: rgba(255,255,255,0.06);
+          --text-primary: #ffffff;
+          --text-secondary: rgba(255,255,255,0.6);
+          --text-muted: rgba(255,255,255,0.3);
+          --success: #4ade80;
+          --danger: #ef4444;
+        }
+        @keyframes gradientLine {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes filmCardIn {
+          from { opacity: 0; transform: translateY(20px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .film-spinner {
+          width: 36px; height: 36px; border-radius: 50%;
+          border: 2px solid rgba(var(--primary-rgb),0.2);
+          border-top-color: var(--primary);
+          animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .film-media-card {
+          animation: filmCardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .film-media-card:hover {
+          border-color: rgba(var(--primary-rgb),0.3) !important;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(var(--primary-rgb),0.1) !important;
+          transform: translateY(-2px) !important;
+        }
+        .film-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        @media (max-width: 1024px) { .film-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .film-grid { grid-template-columns: 1fr; } }
+      `}</style>
 
-      {editingTagsFor && (
-        <Modal title="Edit Tags" onClose={() => setEditingTagsFor(null)}>
-          <TagInput tags={editTags} onChange={setEditTags} />
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => setEditingTagsFor(null)} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">
-              Cancel
-            </button>
-            <button onClick={() => saveEditedTags(editingTagsFor)} className="flex-1 py-2.5 rounded-lg font-bold text-white" style={{ backgroundColor: '#2563eb' }}>
-              Save Tags
-            </button>
-          </div>
-        </Modal>
-      )}
+      <div>
+        {analyzingMedia && (
+          <AnalysisModal media={analyzingMedia} onClose={() => setAnalyzingMedia(null)} />
+        )}
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-black text-white">Film Room</h1>
-          <p className="text-gray-400 mt-1">Upload and analyze film from you and your players</p>
-        </div>
-        <button
-          onClick={() => { setShowModal(true); resetModal(); }}
-          className="px-5 py-2.5 rounded-lg font-bold text-white hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#2563eb' }}
-        >
-          + Add Film
-        </button>
-      </div>
-
-      {/* Search & Filter Bar */}
-      {!loading && allMedia.length > 0 && (
-        <div className="mb-6 p-4 rounded-xl border border-gray-800" style={{ backgroundColor: '#1e1e30' }}>
-          <div className="flex gap-3 items-center mb-3">
-            <div className="flex-1 relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by title or tags..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
-                style={{ backgroundColor: '#16213e' }}
-              />
+        {editingTagsFor && (
+          <Modal title="Edit Tags" onClose={() => setEditingTagsFor(null)}>
+            <TagInput tags={editTags} onChange={setEditTags} />
+            <div style={{ display: 'flex', gap: 12, paddingTop: 20 }}>
+              <button type="button" onClick={() => setEditingTagsFor(null)}
+                style={{
+                  flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer',
+                  border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                  color: 'var(--text-secondary)', fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >Cancel</button>
+              <button onClick={() => saveEditedTags(editingTagsFor)}
+                style={{
+                  flex: 1, padding: '11px 0', borderRadius: 12, fontWeight: 700, fontSize: 14,
+                  color: 'white', cursor: 'pointer', border: 'none',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >Save Tags</button>
             </div>
-            {hasFilters && (
-              <button onClick={clearFilters} className="text-xs text-gray-400 hover:text-white whitespace-nowrap">
-                Clear filters
-              </button>
+          </Modal>
+        )}
+
+        {/* Page Header */}
+        <div style={{
+          opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)',
+          transition: 'opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)',
+          marginBottom: 32,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.02em' }}>Film Room</h1>
+              <p style={{ color: 'var(--text-secondary)', marginTop: 4, fontSize: 14 }}>Upload and analyze film from you and your players</p>
+            </div>
+            <button
+              onClick={() => { setShowModal(true); resetModal(); }}
+              style={{
+                padding: '10px 22px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                color: 'white', cursor: 'pointer', border: 'none',
+                background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                boxShadow: '0 4px 20px rgba(var(--primary-rgb),0.25)',
+                transition: 'all 0.25s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(var(--primary-rgb),0.35)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(var(--primary-rgb),0.25)'; }}
+            >+ Add Film</button>
+          </div>
+          {/* Animated gradient line */}
+          <div style={{
+            height: 2, borderRadius: 2, marginTop: 4,
+            background: 'linear-gradient(90deg, var(--primary), #f08050, #3b82f6, var(--primary))',
+            backgroundSize: '300% 100%',
+            animation: 'gradientLine 4s ease infinite',
+            opacity: 0.6,
+          }} />
+        </div>
+
+        {/* Search & Filter Bar */}
+        {!loading && allMedia.length > 0 && (
+          <GlassCard style={{
+            marginBottom: 24, padding: 20,
+            opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(16px)',
+            transition: 'all 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s',
+          }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: allTags.length > 0 ? 14 : 0 }}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <svg style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--text-muted)' }}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by title or tags..."
+                  style={{
+                    ...inputStyle, paddingLeft: 42,
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                />
+              </div>
+              {hasFilters && (
+                <button onClick={clearFilters}
+                  style={{
+                    fontSize: 12, color: 'var(--text-muted)', background: 'none', border: 'none',
+                    cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'white'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >Clear filters</button>
+              )}
+            </div>
+            {allTags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {allTags.map(tag => {
+                  const active = activeTagFilters.includes(tag);
+                  return (
+                    <button key={tag} onClick={() => toggleTagFilter(tag)}
+                      style={{
+                        fontSize: 12, padding: '5px 14px', borderRadius: 20, fontWeight: 600, cursor: 'pointer',
+                        border: active ? '1px solid rgba(var(--primary-rgb),0.4)' : '1px solid var(--glass-border)',
+                        background: active ? 'rgba(var(--primary-rgb),0.15)' : 'var(--glass-input-bg)',
+                        color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                        transition: 'all 0.25s ease',
+                      }}>
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
             )}
+          </GlassCard>
+        )}
+
+        {/* Content */}
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+            <div className="film-spinner" />
           </div>
-          {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {allTags.map(tag => (
-                <button key={tag} onClick={() => toggleTagFilter(tag)}
-                  className="text-xs px-3 py-1 rounded-full font-medium transition-all"
-                  style={activeTagFilters.includes(tag)
-                    ? { backgroundColor: 'var(--primary)', color: 'white' }
-                    : { backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }
-                  }>
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="text-gray-400 text-center py-12">Loading...</div>
-      ) : media.length === 0 ? (
-        <div className="rounded-xl p-12 border border-gray-800 text-center" style={{ backgroundColor: '#1e1e30' }}>
-          {hasFilters ? (
-            <>
-              <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-xl font-bold text-white mb-2">No results</h3>
-              <p className="text-gray-400 mb-6">No film matches your search or filters.</p>
-              <button onClick={clearFilters} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
-                Clear Filters
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="text-5xl mb-4">🎬</div>
-              <h3 className="text-xl font-bold text-white mb-2">No film yet</h3>
-              <p className="text-gray-400 mb-6">Upload game film, practice clips, or highlight reels.</p>
-              <button onClick={() => { setShowModal(true); resetModal(); }} className="px-6 py-3 rounded-lg font-bold text-white hover:opacity-90" style={{ backgroundColor: '#2563eb' }}>
-                Upload First Clip
-              </button>
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {media.map((m) => {
-            const embedUrl = isYouTube(m.url) ? getYouTubeEmbed(m.url) : null;
-            const isVideo = isSupabaseVideo(m.url);
-            const isImage = isSupabaseImage(m.url);
-            const playerName = !isTrainerUpload(m) ? `${m.first_name || ''} ${m.last_name || ''}`.trim() : '';
-            return (
-              <div key={m.id} className="rounded-xl border border-gray-800 overflow-hidden hover:border-blue-600 transition-colors" style={{ backgroundColor: '#1e1e30' }}>
-                <div className="aspect-video bg-gray-900 flex items-center justify-center relative overflow-hidden">
-                  {embedUrl ? (
-                    <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                  ) : isVideo ? (
-                    <video src={m.url} controls className="w-full h-full object-contain" />
-                  ) : isImage ? (
-                    <img src={m.url} alt={m.title} className="w-full h-full object-cover" />
-                  ) : m.thumbnail_url ? (
-                    <img src={m.thumbnail_url} alt={m.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-gray-600">
-                      <span className="text-4xl">🎬</span>
-                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: '#2563eb' }}>Open Link</a>
-                    </div>
-                  )}
+        ) : media.length === 0 ? (
+          <GlassCard style={{
+            padding: 48, textAlign: 'center',
+            opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.97)',
+            transition: 'all 0.6s cubic-bezier(0.16,1,0.3,1) 0.15s',
+          }}>
+            {hasFilters ? (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                  </svg>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-white text-sm mb-1 truncate">{m.title || 'Untitled'}</h3>
-                  {m.description && <p className="text-xs text-gray-400 mb-2 line-clamp-2">{m.description}</p>}
-                  {playerName && (
-                    <p className="text-xs text-blue-400 mb-2">{playerName}</p>
-                  )}
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: 'white', marginBottom: 8 }}>No results</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 24, fontSize: 14 }}>No film matches your search or filters.</p>
+                <button onClick={clearFilters} style={{
+                  padding: '11px 28px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                  color: 'white', cursor: 'pointer', border: 'none',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                  transition: 'all 0.2s',
+                }}>Clear Filters</button>
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/>
+                  </svg>
+                </div>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: 'white', marginBottom: 8 }}>No film yet</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 24, fontSize: 14 }}>Upload game film, practice clips, or highlight reels.</p>
+                <button onClick={() => { setShowModal(true); resetModal(); }} style={{
+                  padding: '11px 28px', borderRadius: 14, fontWeight: 700, fontSize: 14,
+                  color: 'white', cursor: 'pointer', border: 'none',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                  transition: 'all 0.2s',
+                }}>Upload First Clip</button>
+              </>
+            )}
+          </GlassCard>
+        ) : (
+          <div className="film-grid">
+            {media.map((m, idx) => {
+              const embedUrl = isYouTube(m.url) ? getYouTubeEmbed(m.url) : null;
+              const isVideo = isSupabaseVideo(m.url);
+              const isImage = isSupabaseImage(m.url);
+              const playerName = !isTrainerUpload(m) ? `${m.first_name || ''} ${m.last_name || ''}`.trim() : '';
+              return (
+                <div key={m.id} className="film-media-card" style={{
+                  borderRadius: 20, overflow: 'hidden',
+                  background: 'var(--glass-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid var(--glass-border)',
+                  transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+                  animationDelay: `${idx * 0.05}s`,
+                }}>
+                  {/* Thumbnail */}
+                  <div style={{
+                    aspectRatio: '16/9', background: 'rgba(0,0,0,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative', overflow: 'hidden',
+                  }}>
+                    {embedUrl ? (
+                      <iframe src={embedUrl} style={{ width: '100%', height: '100%', border: 'none' }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    ) : isVideo ? (
+                      <video src={m.url} controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : isImage ? (
+                      <img src={m.url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : m.thumbnail_url ? (
+                      <img src={m.thumbnail_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: 'var(--text-muted)' }}>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/>
+                        </svg>
+                        <a href={m.url} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                        >Open Link</a>
+                      </div>
+                    )}
+                  </div>
 
-                  {/* Tags */}
-                  {m.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {m.tags.map(tag => (
-                        <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#16213e', color: '#9ca3af', border: '1px solid #374151' }}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {/* Card info */}
+                  <div style={{ padding: 16 }}>
+                    <h3 style={{ fontWeight: 700, color: 'white', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {m.title || 'Untitled'}
+                    </h3>
+                    {m.description && (
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {m.description}
+                      </p>
+                    )}
+                    {playerName && (
+                      <p style={{ fontSize: 12, color: 'var(--primary)', marginBottom: 8, fontWeight: 600 }}>{playerName}</p>
+                    )}
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">{new Date(m.created_at).toLocaleDateString()}</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => { setEditingTagsFor(m.id); setEditTags(m.tags || []); }}
-                        className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500"
-                        title="Edit tags">
-                        Tags
-                      </button>
-                      {(isSupabaseImage(m.url) || isSupabaseVideo(m.url)) && (
+                    {/* Tags */}
+                    {m.tags?.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
+                        {m.tags.map(tag => (
+                          <span key={tag} style={{
+                            fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 600,
+                            background: 'rgba(var(--primary-rgb),0.1)', color: 'rgba(var(--primary-rgb),0.8)',
+                            border: '1px solid rgba(var(--primary-rgb),0.15)',
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(m.created_at).toLocaleDateString()}</span>
+                      <div style={{ display: 'flex', gap: 6 }}>
                         <button
-                          onClick={() => setAnalyzingMedia(m)}
-                          className="text-xs px-2.5 py-1 rounded border font-medium hover:opacity-80"
-                          style={{ borderColor: '#2563eb', color: '#2563eb' }}
-                        >
-                          Analyze
-                        </button>
-                      )}
-                      {isTrainerUpload(m) && (
-                        <button onClick={() => handleDelete(m)} disabled={deleteLoading === m.id} className="text-xs px-2.5 py-1 rounded border border-red-900 text-red-400 hover:bg-red-900/20 disabled:opacity-50">
-                          Delete
-                        </button>
-                      )}
+                          onClick={() => { setEditingTagsFor(m.id); setEditTags(m.tags || []); }}
+                          style={{
+                            fontSize: 11, padding: '5px 10px', borderRadius: 8, cursor: 'pointer',
+                            border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                            color: 'var(--text-secondary)', transition: 'all 0.2s', fontWeight: 600,
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                          title="Edit tags"
+                        >Tags</button>
+
+                        {(isSupabaseImage(m.url) || isSupabaseVideo(m.url)) && (
+                          <button
+                            onClick={() => setAnalyzingMedia(m)}
+                            style={{
+                              fontSize: 11, padding: '5px 12px', borderRadius: 8, fontWeight: 700, cursor: 'pointer',
+                              border: '1px solid rgba(var(--primary-rgb),0.3)',
+                              background: 'rgba(var(--primary-rgb),0.1)', color: 'var(--primary)',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.2)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.1)'; }}
+                          >Analyze</button>
+                        )}
+
+                        {isTrainerUpload(m) && (
+                          <button onClick={() => handleDelete(m)} disabled={deleteLoading === m.id}
+                            style={{
+                              fontSize: 11, padding: '5px 12px', borderRadius: 8, fontWeight: 600, cursor: 'pointer',
+                              border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.08)',
+                              color: '#f87171', transition: 'all 0.2s',
+                              opacity: deleteLoading === m.id ? 0.5 : 1,
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                          >Delete</button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {showModal && (
-        <Modal title="Add Film" onClose={() => { setShowModal(false); resetModal(); }}>
-          <div className="flex gap-2 mb-5">
-            {['file', 'url'].map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => { setUploadMode(mode); resetModal(); }}
-                className="flex-1 py-2 rounded-lg font-semibold text-sm transition-all"
-                style={{
-                  backgroundColor: uploadMode === mode ? '#2563eb' : '#16213e',
-                  color: uploadMode === mode ? 'white' : '#9ca3af',
-                  border: `1px solid ${uploadMode === mode ? '#2563eb' : '#374151'}`,
-                }}
-              >
-                {mode === 'file' ? 'Upload File' : 'Paste URL'}
-              </button>
-            ))}
+              );
+            })}
           </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {formError && <div className="px-4 py-2 rounded-lg border border-red-800 bg-red-900/20 text-red-400 text-sm">{formError}</div>}
+        {/* Upload Modal */}
+        {showModal && (
+          <Modal title="Add Film" onClose={() => { setShowModal(false); resetModal(); }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {['file', 'url'].map((mode) => {
+                const active = uploadMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => { setUploadMode(mode); resetModal(); }}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                      border: active ? '1px solid rgba(var(--primary-rgb),0.4)' : '1px solid var(--glass-border)',
+                      background: active ? 'rgba(var(--primary-rgb),0.15)' : 'var(--glass-input-bg)',
+                      color: active ? 'var(--primary)' : 'var(--text-muted)',
+                      transition: 'all 0.25s',
+                    }}
+                  >
+                    {mode === 'file' ? 'Upload File' : 'Paste URL'}
+                  </button>
+                );
+              })}
+            </div>
 
-            {uploadMode === 'file' ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">File *</label>
-                <div
-                  ref={dropRef}
-                  onDrop={handleDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
-                  style={{ backgroundColor: '#16213e' }}
-                >
-                  {file ? (
-                    <div>
-                      {filePreview
-                        ? <img src={filePreview} alt="preview" className="w-full h-32 object-contain mb-2 rounded" />
-                        : <div className="text-4xl mb-2">🎬</div>
-                      }
-                      <p className="text-sm text-white font-medium">{file.name}</p>
-                      <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-4xl mb-2">📁</div>
-                      <p className="text-sm text-gray-400">Drop file here or click to browse</p>
-                      <p className="text-xs text-gray-600 mt-1">MP4, MOV, JPG, PNG · Max 100MB</p>
-                    </div>
-                  )}
-                  <input ref={fileInputRef} type="file" accept="video/*,image/*" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {formError && (
+                <div style={{
+                  padding: '10px 14px', borderRadius: 12, fontSize: 13,
+                  border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#f87171',
+                }}>{formError}</div>
+              )}
+
+              {uploadMode === 'file' ? (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>File *</label>
+                  <div
+                    ref={dropRef}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed var(--glass-border)', borderRadius: 16, padding: 24,
+                      textAlign: 'center', cursor: 'pointer', background: 'var(--glass-input-bg)',
+                      transition: 'all 0.25s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                  >
+                    {file ? (
+                      <div>
+                        {filePreview
+                          ? <img src={filePreview} alt="preview" style={{ width: '100%', height: 128, objectFit: 'contain', marginBottom: 8, borderRadius: 8 }} />
+                          : <div style={{ marginBottom: 8 }}>
+                              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/>
+                              </svg>
+                            </div>
+                        }
+                        <p style={{ fontSize: 13, color: 'white', fontWeight: 600 }}>{file.name}</p>
+                        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ marginBottom: 8 }}>
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                          </svg>
+                        </div>
+                        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Drop file here or click to browse</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>MP4, MOV, JPG, PNG -- Max 100MB</p>
+                      </div>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="video/*,image/*" style={{ display: 'none' }}
+                      onChange={(e) => handleFileSelect(e.target.files[0])} />
+                  </div>
                 </div>
-              </div>
-            ) : (
+              ) : (
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>URL *</label>
+                  <input
+                    type="url"
+                    value={form.url}
+                    onChange={(e) => setForm({ ...form, url: e.target.value })}
+                    placeholder="https://youtube.com/watch?v=... or direct link"
+                    required
+                    style={inputStyle}
+                    onFocus={e => e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'}
+                    onBlur={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                  />
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>YouTube links embed automatically</p>
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">URL *</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Title</label>
                 <input
-                  type="url"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                  placeholder="https://youtube.com/watch?v=... or direct link"
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                  style={{ backgroundColor: '#16213e' }}
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="e.g. Shooting Form - Practice 3/17"
+                  style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
                 />
-                <p className="text-xs text-gray-500 mt-1">YouTube links embed automatically</p>
               </div>
-            )}
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Notes about this clip..."
+                  rows={2}
+                  style={{ ...inputStyle, resize: 'none' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.4)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Shooting Form - Practice 3/17"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                style={{ backgroundColor: '#16213e' }}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Notes about this clip..."
-                rows={2}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
-                style={{ backgroundColor: '#16213e' }}
-              />
-            </div>
+              <TagInput tags={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
 
-            <TagInput tags={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
-
-            <div className="flex gap-3 pt-2">
-              <button type="button" onClick={() => { setShowModal(false); resetModal(); }} className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 hover:text-white">
-                Cancel
-              </button>
-              <button type="submit" disabled={uploading} className="flex-1 py-2.5 rounded-lg font-bold text-white disabled:opacity-50" style={{ backgroundColor: '#2563eb' }}>
-                {uploading ? (uploadProgress || 'Uploading...') : 'Add Film'}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-    </div>
+              <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
+                <button type="button" onClick={() => { setShowModal(false); resetModal(); }}
+                  style={{
+                    flex: 1, padding: '11px 0', borderRadius: 12, cursor: 'pointer',
+                    border: '1px solid var(--glass-border)', background: 'var(--glass-input-bg)',
+                    color: 'var(--text-secondary)', fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                >Cancel</button>
+                <button type="submit" disabled={uploading}
+                  style={{
+                    flex: 1, padding: '11px 0', borderRadius: 12, fontWeight: 700, fontSize: 14,
+                    color: 'white', cursor: 'pointer', border: 'none',
+                    background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                    opacity: uploading ? 0.5 : 1, transition: 'all 0.2s',
+                  }}
+                >{uploading ? (uploadProgress || 'Uploading...') : 'Add Film'}</button>
+              </div>
+            </form>
+          </Modal>
+        )}
+      </div>
+    </>
   );
 }

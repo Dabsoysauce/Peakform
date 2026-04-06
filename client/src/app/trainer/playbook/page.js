@@ -47,6 +47,107 @@ function parsePlayerTool(tool) {
 function isPlayerTool(tool) { return parsePlayerTool(tool) !== null; }
 
 // ============================================================
+// GLASS DESIGN SYSTEM
+// ============================================================
+
+const MOUNT_KEYFRAMES = `
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+`;
+
+const cssVars = {
+  '--glass-bg': 'rgba(255,255,255,0.03)',
+  '--glass-bg-strong': 'rgba(30, 30, 48, 0.85)',
+  '--glass-border': 'rgba(255, 255, 255, 0.06)',
+  '--glass-border-hover': 'rgba(255, 255, 255, 0.15)',
+  '--glass-blur': 'blur(16px)',
+  '--glass-blur-strong': 'blur(40px)',
+  '--primary': '#e85d26',
+  '--primary-rgb': '232, 93, 38',
+  '--primary-light': '#ff7a45',
+  '--primary-light-rgb': '255, 122, 69',
+  '--primary-glow': 'rgba(232, 93, 38, 0.3)',
+  '--accent': '#2563eb',
+  '--accent-light': '#3b82f6',
+  '--accent-glow': 'rgba(37, 99, 235, 0.25)',
+  '--surface': '#16213e',
+  '--surface-light': 'rgba(22, 33, 62, 0.7)',
+  '--bg-dark': '#0f0f1a',
+  '--card-bg': 'rgba(30, 30, 48, 0.5)',
+  '--text-primary': '#ffffff',
+  '--text-secondary': '#9ca3af',
+  '--text-muted': '#6b7280',
+  '--success': '#4ade80',
+  '--danger': '#ef4444',
+};
+
+const glassCard = {
+  background: 'rgba(255,255,255,0.03)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  border: '1px solid rgba(255,255,255,0.06)',
+};
+
+const glassCardStrong = {
+  background: 'var(--glass-bg-strong)',
+  backdropFilter: 'var(--glass-blur-strong)',
+  WebkitBackdropFilter: 'var(--glass-blur-strong)',
+  border: '1px solid rgba(255,255,255,0.06)',
+};
+
+const glassInput = {
+  background: 'rgba(22, 33, 62, 0.5)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  border: '1px solid rgba(255,255,255,0.06)',
+};
+
+const gradientBtn = {
+  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+  boxShadow: '0 4px 15px rgba(var(--primary-rgb), 0.3)',
+};
+
+const accentBtn = {
+  background: 'linear-gradient(135deg, var(--accent), var(--accent-light))',
+  boxShadow: '0 4px 15px var(--accent-glow)',
+};
+
+const glassToolBtn = (active) => ({
+  background: active ? 'linear-gradient(135deg, var(--accent), var(--accent-light))' : 'rgba(255,255,255,0.03)',
+  backdropFilter: active ? 'none' : 'blur(16px)',
+  WebkitBackdropFilter: active ? 'none' : 'blur(16px)',
+  border: active ? '1.5px solid var(--accent-light)' : '1px solid rgba(255,255,255,0.06)',
+  color: active ? 'white' : '#d1d5db',
+  boxShadow: active ? '0 2px 10px var(--accent-glow)' : 'none',
+  transition: 'all 0.2s ease',
+});
+
+const glassToolBtnMuted = (active) => ({
+  background: active ? 'linear-gradient(135deg, var(--accent), var(--accent-light))' : 'rgba(255,255,255,0.03)',
+  backdropFilter: active ? 'none' : 'blur(16px)',
+  WebkitBackdropFilter: active ? 'none' : 'blur(16px)',
+  border: active ? '1.5px solid var(--accent-light)' : '1px solid rgba(255,255,255,0.06)',
+  color: active ? 'white' : '#9ca3af',
+  boxShadow: active ? '0 2px 10px var(--accent-glow)' : 'none',
+  transition: 'all 0.2s ease',
+});
+
+// ============================================================
 // UTILITIES
 // ============================================================
 
@@ -138,7 +239,6 @@ function hitControlPt(px,py,objs,selId) {
   const o=objs.find(x=>x.id===selId);
   if(!o||!ARROW_SUBTYPES.includes(o.type)) return null;
   const r=resolveArrow(o,objs);
-  // Always show midpoint handle for selected arrows
   const mx = o.shape===1 && o.mx!=null ? o.mx : (r.x1+r.x2)/2;
   const my = o.shape===1 && o.my!=null ? o.my : (r.y1+r.y2)/2;
   if(dist(px,py,mx,my)<8) return { id:o.id };
@@ -181,7 +281,6 @@ function generateNextFrame(phase) {
         break;
     }
   }
-  // Remove arrows, keep players and text
   const newObjs = objs.filter(o => !ARROW_SUBTYPES.includes(o.type)).map(o => ({ ...o, id: uid() }));
   return { id: uid(), title: '', objects: newObjs };
 }
@@ -292,7 +391,6 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
   const col=color, sw=2;
   const dash = strokeType==='dashed'?'8 5':strokeType==='dotted'?'3 3':undefined;
 
-  // Snap indicators (small circles at linked endpoints)
   const snapDots = (
     <g>
       {obj.startLink && <circle cx={x1} cy={y1} r={3} fill="#3b82f6" opacity={0.6}/>}
@@ -316,7 +414,6 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
     return (<g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
       {isSelected&&<line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#3b82f6" strokeWidth={6} opacity={0.3} strokeLinecap="round"/>}
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth={sw} strokeLinecap="round"/>
-      {/* Perpendicular bars at each end and middle */}
       <line x1={hx+Math.cos(p)*bl} y1={hy+Math.sin(p)*bl} x2={hx-Math.cos(p)*bl} y2={hy-Math.sin(p)*bl} stroke={col} strokeWidth={3} strokeLinecap="round"/>
       <line x1={x1+Math.cos(p)*8} y1={y1+Math.sin(p)*8} x2={x1-Math.cos(p)*8} y2={y1-Math.sin(p)*8} stroke={col} strokeWidth={2} strokeLinecap="round"/>
       <line x1={x2+Math.cos(p)*8} y1={y2+Math.sin(p)*8} x2={x2-Math.cos(p)*8} y2={y2-Math.sin(p)*8} stroke={col} strokeWidth={2} strokeLinecap="round"/>
@@ -348,7 +445,6 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
 
   const ah = arrowhead!==false ? arrowheadPts(afX,afY,x2,y2,10) : null;
 
-  // Midpoint handle coords (for curve dragging)
   const handleX = isCurved ? mx : (x1+x2)/2;
   const handleY = isCurved ? my : (y1+y2)/2;
 
@@ -359,7 +455,6 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
       {ah&&<polygon points={ah.map(p=>p.join(',')).join(' ')} fill={col}/>}
       {obj.step>0&&(()=>{const bx=isCurved?ptOnBez(x1,y1,mx,my,x2,y2,0.5).x:(x1+x2)/2,by=isCurved?ptOnBez(x1,y1,mx,my,x2,y2,0.5).y:(y1+y2)/2;return(<g><circle cx={bx} cy={by} r={9} fill="#2563eb"/><text x={bx} y={by+1} textAnchor="middle" dominantBaseline="central" fill="white" fontSize={10} fontWeight={700}>{obj.step}</text></g>);})()}
       {snapDots}
-      {/* Draggable midpoint handle */}
       {showCP && (
         <circle cx={handleX} cy={handleY} r={5} fill="#2563eb" stroke="white" strokeWidth={1.5} style={{cursor:'move'}} data-control={id}/>
       )}
@@ -375,7 +470,6 @@ function renderTextObj(obj, isSelected, onMD) {
   </g>);
 }
 
-// Ball animation renderer (during phase transitions)
 function renderBallAnim(ballPos) {
   if (!ballPos) return null;
   return (
@@ -397,6 +491,7 @@ function PlayGeneratorModal({ onClose, onApply }) {
   const [pendingPlay, setPendingPlay] = useState(null);
   const bottomRef = useRef(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }); }, [history]);
+
   async function handleSend(e) {
     e.preventDefault(); if(!input.trim()||loading) return;
     const msg=input.trim(); setInput(''); setLoading(true);
@@ -407,12 +502,18 @@ function PlayGeneratorModal({ onClose, onApply }) {
   }
   function renderText(t){return(t||'').split('\n').map((l,i)=>{if(!l.trim())return null;const ps=l.split(/\*\*(.+?)\*\*/g);const rd=ps.map((p,j)=>j%2===1?<strong key={j} className="font-bold text-white">{p}</strong>:p);if(l.startsWith('- ')||l.startsWith('\u2022 '))return<li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{rd}</li>;return<p key={i} className="text-sm text-gray-300 leading-relaxed">{rd}</p>;});}
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-700 flex flex-col max-h-[90vh]" style={{backgroundColor:'#1e1e30'}}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700"><div><h2 className="text-lg font-black text-white">Ask AI For Help</h2><p className="text-xs text-gray-500">Describe your team — AI will design a custom play</p></div><button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button></div>
-        <div className="flex-1 overflow-y-auto p-5 space-y-3">{history.map((m,i)=>(<div key={i} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}>{m.role==='assistant'&&<div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mr-2 mt-0.5 text-xs font-black" style={{backgroundColor:'#2563eb',color:'white'}}>AI</div>}<div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm space-y-1" style={{backgroundColor:m.role==='user'?'#2563eb':'#16213e',color:'white',borderBottomRightRadius:m.role==='user'?4:undefined,borderBottomLeftRadius:m.role==='assistant'?4:undefined}}>{m.role==='assistant'?renderText(m.content):m.content}</div></div>))}{loading&&<div className="flex justify-start"><div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mr-2 text-xs font-black" style={{backgroundColor:'#2563eb',color:'white'}}>AI</div><div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{backgroundColor:'#16213e'}}>Designing...</div></div>}<div ref={bottomRef}/></div>
-        {pendingPlay&&<div className="mx-4 mb-2 px-4 py-3 rounded-xl border border-green-700/50 flex items-center justify-between gap-3" style={{backgroundColor:'rgba(22,163,74,0.1)'}}><div><p className="text-sm font-bold text-green-400">&ldquo;{pendingPlay.name}&rdquo; ready!</p><p className="text-xs text-gray-500">Apply to see the diagram</p></div><button onClick={()=>{onApply(pendingPlay);onClose();}} className="px-4 py-2 rounded-lg font-bold text-white text-sm" style={{backgroundColor:'#16a34a'}}>Apply</button></div>}
-        <form onSubmit={handleSend} className="px-4 py-3 border-t border-gray-700 flex gap-2"><input value={input} onChange={e=>setInput(e.target.value)} disabled={loading} placeholder="Describe your team..." className="flex-1 px-4 py-2 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50" style={{backgroundColor:'#16213e'}} autoFocus/><button type="submit" disabled={loading||!input.trim()} className="px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-50" style={{backgroundColor:'#2563eb'}}>Send</button></form>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+      <div className="w-full max-w-lg rounded-2xl flex flex-col max-h-[90vh]" style={{...glassCardStrong, boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 60px rgba(var(--primary-rgb),0.05)', animation:'fadeSlideIn 0.35s ease forwards'}}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div>
+            <h2 className="text-lg font-black text-white">Ask AI For Help</h2>
+            <p className="text-xs text-gray-500">Describe your team -- AI will design a custom play</p>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all text-lg">x</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3" style={{scrollbarWidth:'thin',scrollbarColor:'rgba(255,255,255,0.1) transparent'}}>{history.map((m,i)=>(<div key={i} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}>{m.role==='assistant'&&<div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mr-2 mt-0.5 text-xs font-black text-white" style={{background:'linear-gradient(135deg, var(--primary), var(--accent))', boxShadow:'0 2px 8px rgba(var(--primary-rgb),0.3)'}}>AI</div>}<div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm space-y-1" style={m.role==='user'?{background:'linear-gradient(135deg, var(--primary), #c44a1a)',color:'white',borderBottomRightRadius:4,boxShadow:'0 2px 12px rgba(var(--primary-rgb),0.3)'}:{background:'rgba(255,255,255,0.04)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:'1px solid rgba(255,255,255,0.06)',color:'white',borderBottomLeftRadius:4}}>{m.role==='assistant'?renderText(m.content):m.content}</div></div>))}{loading&&<div className="flex justify-start"><div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mr-2 text-xs font-black text-white" style={{background:'linear-gradient(135deg, var(--primary), var(--accent))'}}>AI</div><div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{background:'rgba(255,255,255,0.04)',backdropFilter:'blur(16px)',border:'1px solid rgba(255,255,255,0.06)'}}>Designing...</div></div>}<div ref={bottomRef}/></div>
+        {pendingPlay&&<div className="mx-4 mb-2 px-4 py-3 rounded-xl flex items-center justify-between gap-3" style={{background:'rgba(74, 222, 128, 0.06)', border:'1px solid rgba(74, 222, 128, 0.15)', backdropFilter:'blur(12px)'}}><div><p className="text-sm font-bold text-green-400">&ldquo;{pendingPlay.name}&rdquo; ready!</p><p className="text-xs text-gray-500">Apply to see the diagram</p></div><button onClick={()=>{onApply(pendingPlay);onClose();}} className="px-4 py-2 rounded-xl font-bold text-white text-sm hover:opacity-90 transition-all" style={{background:'linear-gradient(135deg, #16a34a, #22c55e)', boxShadow:'0 4px 12px rgba(22,163,74,0.3)', border:'1px solid rgba(34,197,94,0.3)'}}>Apply</button></div>}
+        <form onSubmit={handleSend} className="px-4 py-3 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}><input value={input} onChange={e=>setInput(e.target.value)} disabled={loading} placeholder="Describe your team..." className="flex-1 px-4 py-2.5 rounded-xl text-white placeholder-gray-600 focus:outline-none text-sm disabled:opacity-50 transition-all" style={{...glassInput}} autoFocus onFocus={e=>{e.target.style.border='1px solid rgba(var(--primary-rgb),0.4)';e.target.style.boxShadow='0 0 0 3px rgba(var(--primary-rgb),0.08)';}} onBlur={e=>{e.target.style.border='1px solid rgba(255,255,255,0.06)';e.target.style.boxShadow='none';}}/><button type="submit" disabled={loading||!input.trim()} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-30 hover:opacity-90 transition-all hover:scale-[1.02]" style={{...gradientBtn, border:'1px solid rgba(var(--primary-light-rgb),0.3)'}}>Send</button></form>
       </div>
     </div>
   );
@@ -427,11 +528,20 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
   function ib(s){const p=s.split(/\*\*(.+?)\*\*/g);if(p.length===1)return s;return p.map((x,j)=>j%2===1?<strong key={j} className="font-bold text-white">{x}</strong>:x);}
   function rt(t){return(t||'').split('\n').map((l,i)=>{if(l.startsWith('**')&&l.endsWith('**')&&l.length>4)return<h3 key={i} className="text-sm font-black text-white uppercase tracking-wide mt-3 mb-1">{l.replace(/\*\*/g,'')}</h3>;if(l.startsWith('- ')||l.startsWith('\u2022 '))return<li key={i} className="text-sm text-gray-300 ml-4 leading-relaxed">{ib(l.slice(2))}</li>;if(!l.trim())return null;return<p key={i} className="text-sm text-gray-300 leading-relaxed">{ib(l)}</p>;});}
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-700 flex flex-col max-h-[90vh]" style={{backgroundColor:'#1e1e30'}}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700"><div><h2 className="text-lg font-black text-white">AI Play Analysis</h2>{playName&&<p className="text-xs text-gray-500">{playName}</p>}</div><div className="flex items-center gap-3">{!loading&&analysis&&<button onClick={handleShare} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{backgroundColor:'#16a34a',color:'white'}}>{shareMsg||'Share to Team'}</button>}<button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">&times;</button></div></div>
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">{loading?<div className="flex flex-col items-center py-12 gap-3"><div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"/><p className="text-gray-400 text-sm">Analyzing...</p></div>:<><div className="space-y-1">{rt(analysis)}</div>{chatHistory.length>0&&<div className="border-t border-gray-700 pt-4 space-y-3">{chatHistory.map((m,i)=>(<div key={i} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}><div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm" style={{backgroundColor:m.role==='user'?'#2563eb':'#16213e',color:'white',borderBottomRightRadius:m.role==='user'?4:undefined,borderBottomLeftRadius:m.role==='assistant'?4:undefined}}>{m.role==='assistant'?<div className="space-y-1">{rt(m.content)}</div>:m.content}</div></div>))}{chatLoading&&<div className="flex justify-start"><div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{backgroundColor:'#16213e'}}>Thinking...</div></div>}</div>}<div ref={bottomRef}/></>}</div>
-        {!loading&&<form onSubmit={handleChat} className="px-4 py-3 border-t border-gray-700 flex gap-2"><input value={input} onChange={e=>setInput(e.target.value)} disabled={chatLoading} placeholder="Ask about this play..." className="flex-1 px-4 py-2 rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50" style={{backgroundColor:'#16213e'}}/><button type="submit" disabled={chatLoading||!input.trim()} className="px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-50" style={{backgroundColor:'#2563eb'}}>Ask</button></form>}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+      <div className="w-full max-w-lg rounded-2xl flex flex-col max-h-[90vh]" style={{...glassCardStrong, boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 60px rgba(var(--primary-rgb),0.05)', animation:'fadeSlideIn 0.35s ease forwards'}}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div>
+            <h2 className="text-lg font-black text-white">AI Play Analysis</h2>
+            {playName&&<p className="text-xs text-gray-500">{playName}</p>}
+          </div>
+          <div className="flex items-center gap-3">
+            {!loading&&analysis&&<button onClick={handleShare} className="text-xs px-3 py-1.5 rounded-xl font-bold text-white hover:opacity-90 transition-all hover:scale-[1.02]" style={{background:'linear-gradient(135deg, #16a34a, #22c55e)', boxShadow:'0 2px 8px rgba(22,163,74,0.3)', border:'1px solid rgba(34,197,94,0.3)'}}>{shareMsg||'Share to Team'}</button>}
+            <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all text-lg">x</button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{scrollbarWidth:'thin',scrollbarColor:'rgba(255,255,255,0.1) transparent'}}>{loading?<div className="flex flex-col items-center py-12 gap-3"><div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin" style={{borderColor:'var(--primary)', borderTopColor:'transparent'}}/><p className="text-gray-400 text-sm">Analyzing...</p></div>:<><div className="space-y-1">{rt(analysis)}</div>{chatHistory.length>0&&<div className="pt-4 space-y-3" style={{borderTop:'1px solid rgba(255,255,255,0.06)'}}>{chatHistory.map((m,i)=>(<div key={i} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}><div className="max-w-xs px-4 py-2.5 rounded-2xl text-sm" style={m.role==='user'?{background:'linear-gradient(135deg, var(--primary), #c44a1a)',color:'white',borderBottomRightRadius:4,boxShadow:'0 2px 12px rgba(var(--primary-rgb),0.3)'}:{background:'rgba(255,255,255,0.04)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:'1px solid rgba(255,255,255,0.06)',color:'white',borderBottomLeftRadius:4}}>{m.role==='assistant'?<div className="space-y-1">{rt(m.content)}</div>:m.content}</div></div>))}{chatLoading&&<div className="flex justify-start"><div className="px-4 py-2.5 rounded-2xl text-sm text-gray-400" style={{background:'rgba(255,255,255,0.04)',backdropFilter:'blur(16px)',border:'1px solid rgba(255,255,255,0.06)'}}>Thinking...</div></div>}</div>}<div ref={bottomRef}/></>}</div>
+        {!loading&&<form onSubmit={handleChat} className="px-4 py-3 flex gap-2" style={{borderTop:'1px solid rgba(255,255,255,0.06)'}}><input value={input} onChange={e=>setInput(e.target.value)} disabled={chatLoading} placeholder="Ask about this play..." className="flex-1 px-4 py-2.5 rounded-xl text-white placeholder-gray-600 focus:outline-none text-sm disabled:opacity-50 transition-all" style={glassInput} onFocus={e=>{e.target.style.border='1px solid rgba(var(--primary-rgb),0.4)';e.target.style.boxShadow='0 0 0 3px rgba(var(--primary-rgb),0.08)';}} onBlur={e=>{e.target.style.border='1px solid rgba(255,255,255,0.06)';e.target.style.boxShadow='none';}}/><button type="submit" disabled={chatLoading||!input.trim()} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-30 hover:opacity-90 transition-all hover:scale-[1.02]" style={{...gradientBtn, border:'1px solid rgba(var(--primary-light-rgb),0.3)'}}>Ask</button></form>}
       </div>
     </div>
   );
@@ -443,13 +553,16 @@ function AnalysisModal({ canvasPng, playName, onClose }) {
 
 function SettingsPanel({ settings:s, onChange, onClose }) {
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-72 border-l border-gray-700 shadow-2xl overflow-y-auto" style={{backgroundColor:'#1e1e30'}}>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700"><h3 className="font-black text-white text-sm">Court Settings</h3><button onClick={onClose} className="text-gray-400 hover:text-white">&times;</button></div>
+    <div className="fixed inset-y-0 right-0 z-40 w-72 overflow-y-auto" style={{...glassCardStrong, borderLeft:'1px solid rgba(255,255,255,0.06)', boxShadow:'-10px 0 50px rgba(0,0,0,0.4)', animation:'fadeSlideIn 0.3s ease forwards', scrollbarWidth:'thin', scrollbarColor:'rgba(255,255,255,0.1) transparent'}}>
+      <div className="flex items-center justify-between px-4 py-3" style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+        <h3 className="font-black text-white text-sm">Court Settings</h3>
+        <button onClick={onClose} className="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all">x</button>
+      </div>
       <div className="p-4 space-y-5">
-        <div><label className="text-xs text-gray-400 font-semibold mb-2 block">Court Type</label><div className="grid grid-cols-2 gap-2">{Object.entries(COURT_TYPES).map(([k,ct])=>(<button key={k} onClick={()=>onChange({...s,courtType:k})} className="px-3 py-2 rounded-lg text-xs font-semibold transition-all" style={{backgroundColor:s.courtType===k?'#2563eb':'#16213e',color:s.courtType===k?'white':'#9ca3af',border:s.courtType===k?'1px solid #3b82f6':'1px solid #374151'}}>{ct.label}</button>))}</div></div>
-        <div><label className="text-xs text-gray-400 font-semibold mb-2 block">Court Size</label><div className="flex gap-2"><button onClick={()=>onChange({...s,fullCourt:false})} className="flex-1 py-2 rounded-lg text-xs font-semibold" style={{backgroundColor:!s.fullCourt?'#2563eb':'#16213e',color:!s.fullCourt?'white':'#9ca3af',border:!s.fullCourt?'1px solid #3b82f6':'1px solid #374151'}}>Half Court</button><button onClick={()=>onChange({...s,fullCourt:true})} className="flex-1 py-2 rounded-lg text-xs font-semibold" style={{backgroundColor:s.fullCourt?'#2563eb':'#16213e',color:s.fullCourt?'white':'#9ca3af',border:s.fullCourt?'1px solid #3b82f6':'1px solid #374151'}}>Full Court</button></div></div>
-        <div><label className="text-xs text-gray-400 font-semibold mb-2 block">Court Color</label><div className="flex gap-2 flex-wrap">{COLOR_PRESETS.map(cp=>(<button key={cp.id} onClick={()=>onChange({...s,courtColor:cp})} className="w-9 h-9 rounded-lg border-2 transition-all" style={{backgroundColor:cp.bg,borderColor:s.courtColor?.id===cp.id?'#3b82f6':'#374151'}} title={cp.label}/>))}</div></div>
-        <div><label className="flex items-center gap-2 text-xs text-gray-400 font-semibold cursor-pointer"><input type="checkbox" checked={s.showGrid||false} onChange={e=>onChange({...s,showGrid:e.target.checked})} className="rounded"/>Show Grid</label>{s.showGrid&&<div className="mt-2"><label className="text-xs text-gray-500 block mb-1">Spacing: {s.gridSpacing||5}ft</label><input type="range" min={1} max={10} step={1} value={s.gridSpacing||5} onChange={e=>onChange({...s,gridSpacing:Number(e.target.value)})} className="w-full accent-blue-500"/></div>}</div>
+        <div><label className="text-xs text-gray-400 font-semibold mb-2 block">Court Type</label><div className="grid grid-cols-2 gap-2">{Object.entries(COURT_TYPES).map(([k,ct])=>(<button key={k} onClick={()=>onChange({...s,courtType:k})} className="px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]" style={glassToolBtnMuted(s.courtType===k)}>{ct.label}</button>))}</div></div>
+        <div><label className="text-xs text-gray-400 font-semibold mb-2 block">Court Size</label><div className="flex gap-2"><button onClick={()=>onChange({...s,fullCourt:false})} className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all" style={glassToolBtnMuted(!s.fullCourt)}>Half Court</button><button onClick={()=>onChange({...s,fullCourt:true})} className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all" style={glassToolBtnMuted(s.fullCourt)}>Full Court</button></div></div>
+        <div><label className="text-xs text-gray-400 font-semibold mb-2 block">Court Color</label><div className="flex gap-2 flex-wrap">{COLOR_PRESETS.map(cp=>(<button key={cp.id} onClick={()=>onChange({...s,courtColor:cp})} className="w-9 h-9 rounded-xl transition-all hover:scale-110" style={{backgroundColor:cp.bg,border:s.courtColor?.id===cp.id?'2px solid var(--accent-light)':'2px solid var(--glass-border)',boxShadow:s.courtColor?.id===cp.id?'0 0 10px var(--accent-glow)':'none'}} title={cp.label}/>))}</div></div>
+        <div><label className="flex items-center gap-2 text-xs text-gray-400 font-semibold cursor-pointer"><input type="checkbox" checked={s.showGrid||false} onChange={e=>onChange({...s,showGrid:e.target.checked})} className="rounded accent-orange-500"/>Show Grid</label>{s.showGrid&&<div className="mt-2"><label className="text-xs text-gray-500 block mb-1">Spacing: {s.gridSpacing||5}ft</label><input type="range" min={1} max={10} step={1} value={s.gridSpacing||5} onChange={e=>onChange({...s,gridSpacing:Number(e.target.value)})} className="w-full accent-orange-500"/></div>}</div>
       </div>
     </div>
   );
@@ -466,34 +579,34 @@ function PropertyPanel({ obj, onUpdate, onDelete }) {
   if (obj.type==='player') {
     return (<div className="space-y-3">
       <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Player</h4>
-      <div><label className="text-xs text-gray-500 block mb-1">Type</label><div className="flex gap-1">{[['offense','O'],['defense','X'],['ball','BH']].map(([t,l])=>(<button key={t} onClick={()=>u({team:t,color:t==='defense'?'#ef4444':'#ffffff'})} className="flex-1 py-1.5 rounded text-xs font-bold" style={{backgroundColor:obj.team===t?'#2563eb':'#16213e',color:obj.team===t?'white':'#9ca3af'}}>{l}</button>))}</div></div>
-      <div><label className="text-xs text-gray-500 block mb-1">Label</label><div className="flex gap-1">{['1','2','3','4','5'].map(n=>(<button key={n} onClick={()=>u({number:n})} className="w-8 h-8 rounded text-xs font-bold" style={{backgroundColor:obj.number===n?'#2563eb':'#16213e',color:obj.number===n?'white':'#9ca3af'}}>{n}</button>))}</div><div className="flex gap-1 mt-1">{['PG','SG','SF','PF','C'].map(n=>(<button key={n} onClick={()=>u({number:n})} className="flex-1 py-1 rounded text-[10px] font-bold" style={{backgroundColor:obj.number===n?'#2563eb':'#16213e',color:obj.number===n?'white':'#9ca3af'}}>{n}</button>))}</div></div>
-      <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer"><input type="checkbox" checked={obj.hasBall||false} onChange={e=>u({hasBall:e.target.checked})} className="rounded"/>Has Ball</label>
-      <div><label className="text-xs text-gray-500 block mb-1">Color</label><input type="color" value={obj.color||'#ffffff'} onChange={e=>u({color:e.target.value})} className="w-8 h-8 rounded cursor-pointer border border-gray-600"/></div>
-      <button onClick={()=>onDelete(obj.id)} className="w-full py-2 rounded-lg text-xs font-bold text-red-400 border border-red-800 hover:bg-red-900/20">Delete</button>
+      <div><label className="text-xs text-gray-500 block mb-1">Type</label><div className="flex gap-1">{[['offense','O'],['defense','X'],['ball','BH']].map(([t,l])=>(<button key={t} onClick={()=>u({team:t,color:t==='defense'?'#ef4444':'#ffffff'})} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={glassToolBtnMuted(obj.team===t)}>{l}</button>))}</div></div>
+      <div><label className="text-xs text-gray-500 block mb-1">Label</label><div className="flex gap-1">{['1','2','3','4','5'].map(n=>(<button key={n} onClick={()=>u({number:n})} className="w-8 h-8 rounded-lg text-xs font-bold transition-all" style={glassToolBtnMuted(obj.number===n)}>{n}</button>))}</div><div className="flex gap-1 mt-1">{['PG','SG','SF','PF','C'].map(n=>(<button key={n} onClick={()=>u({number:n})} className="flex-1 py-1 rounded-lg text-[10px] font-bold transition-all" style={glassToolBtnMuted(obj.number===n)}>{n}</button>))}</div></div>
+      <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer"><input type="checkbox" checked={obj.hasBall||false} onChange={e=>u({hasBall:e.target.checked})} className="rounded accent-orange-500"/>Has Ball</label>
+      <div><label className="text-xs text-gray-500 block mb-1">Color</label><input type="color" value={obj.color||'#ffffff'} onChange={e=>u({color:e.target.value})} className="w-8 h-8 rounded-lg cursor-pointer" style={{border:'1px solid var(--glass-border)'}}/></div>
+      <button onClick={()=>onDelete(obj.id)} className="w-full py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-900/20 transition-all" style={{border:'1px solid rgba(239,68,68,0.3)'}}>Delete</button>
     </div>);
   }
 
   if (ARROW_SUBTYPES.includes(obj.type)) {
     return (<div className="space-y-3">
       <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Action</h4>
-      <div><label className="text-xs text-gray-500 block mb-1">Type</label><div className="grid grid-cols-3 gap-1">{[['cut','Cut'],['pass','Pass'],['dribble','Dribble'],['screen','Screen'],['shot','Shot'],['handoff','Handoff']].map(([t,l])=>(<button key={t} onClick={()=>u({type:t,strokeType:t==='pass'?'dashed':t==='shot'?'dotted':'solid'})} className="py-1.5 rounded text-[10px] font-bold" style={{backgroundColor:obj.type===t?'#2563eb':'#16213e',color:obj.type===t?'white':'#9ca3af'}}>{l}</button>))}</div></div>
-      <div><label className="text-xs text-gray-500 block mb-1">Shape</label><div className="flex gap-1"><button onClick={()=>u({shape:0})} className="flex-1 py-1.5 rounded text-xs font-bold" style={{backgroundColor:(obj.shape||0)===0?'#2563eb':'#16213e',color:(obj.shape||0)===0?'white':'#9ca3af'}}>Straight</button><button onClick={()=>{const r=resolveArrow(obj,[]);const c=midCP(r.x1,r.y1,r.x2,r.y2,30);u({shape:1,mx:c.x,my:c.y});}} className="flex-1 py-1.5 rounded text-xs font-bold" style={{backgroundColor:obj.shape===1?'#2563eb':'#16213e',color:obj.shape===1?'white':'#9ca3af'}}>Curved</button></div></div>
-      {obj.type!=='screen'&&obj.type!=='handoff'&&<div><label className="text-xs text-gray-500 block mb-1">Line Style</label><div className="flex gap-1">{[['solid','Solid'],['dashed','Dashed'],['dotted','Dotted']].map(([t,l])=>(<button key={t} onClick={()=>u({strokeType:t})} className="flex-1 py-1.5 rounded text-[10px] font-bold" style={{backgroundColor:obj.strokeType===t?'#2563eb':'#16213e',color:obj.strokeType===t?'white':'#9ca3af'}}>{l}</button>))}</div></div>}
-      <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer"><input type="checkbox" checked={obj.arrowhead!==false} onChange={e=>u({arrowhead:e.target.checked})} className="rounded"/>Arrowhead</label>
-      <div><label className="text-xs text-gray-500 block mb-1">Step #</label><div className="flex gap-1">{[0,1,2,3,4,5,6].map(n=>(<button key={n} onClick={()=>u({step:n})} className="w-7 h-7 rounded text-[10px] font-bold" style={{backgroundColor:(obj.step||0)===n?'#2563eb':'#16213e',color:(obj.step||0)===n?'white':'#9ca3af'}}>{n===0?'-':n}</button>))}</div></div>
-      <div><label className="text-xs text-gray-500 block mb-1">Color</label><input type="color" value={obj.color||'#ffffff'} onChange={e=>u({color:e.target.value})} className="w-8 h-8 rounded cursor-pointer border border-gray-600"/></div>
-      <button onClick={()=>onDelete(obj.id)} className="w-full py-2 rounded-lg text-xs font-bold text-red-400 border border-red-800 hover:bg-red-900/20">Delete</button>
+      <div><label className="text-xs text-gray-500 block mb-1">Type</label><div className="grid grid-cols-3 gap-1">{[['cut','Cut'],['pass','Pass'],['dribble','Dribble'],['screen','Screen'],['shot','Shot'],['handoff','Handoff']].map(([t,l])=>(<button key={t} onClick={()=>u({type:t,strokeType:t==='pass'?'dashed':t==='shot'?'dotted':'solid'})} className="py-1.5 rounded-lg text-[10px] font-bold transition-all" style={glassToolBtnMuted(obj.type===t)}>{l}</button>))}</div></div>
+      <div><label className="text-xs text-gray-500 block mb-1">Shape</label><div className="flex gap-1"><button onClick={()=>u({shape:0})} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={glassToolBtnMuted((obj.shape||0)===0)}>Straight</button><button onClick={()=>{const r=resolveArrow(obj,[]);const c=midCP(r.x1,r.y1,r.x2,r.y2,30);u({shape:1,mx:c.x,my:c.y});}} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={glassToolBtnMuted(obj.shape===1)}>Curved</button></div></div>
+      {obj.type!=='screen'&&obj.type!=='handoff'&&<div><label className="text-xs text-gray-500 block mb-1">Line Style</label><div className="flex gap-1">{[['solid','Solid'],['dashed','Dashed'],['dotted','Dotted']].map(([t,l])=>(<button key={t} onClick={()=>u({strokeType:t})} className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all" style={glassToolBtnMuted(obj.strokeType===t)}>{l}</button>))}</div></div>}
+      <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer"><input type="checkbox" checked={obj.arrowhead!==false} onChange={e=>u({arrowhead:e.target.checked})} className="rounded accent-orange-500"/>Arrowhead</label>
+      <div><label className="text-xs text-gray-500 block mb-1">Step #</label><div className="flex gap-1">{[0,1,2,3,4,5,6].map(n=>(<button key={n} onClick={()=>u({step:n})} className="w-7 h-7 rounded-lg text-[10px] font-bold transition-all" style={glassToolBtnMuted((obj.step||0)===n)}>{n===0?'-':n}</button>))}</div></div>
+      <div><label className="text-xs text-gray-500 block mb-1">Color</label><input type="color" value={obj.color||'#ffffff'} onChange={e=>u({color:e.target.value})} className="w-8 h-8 rounded-lg cursor-pointer" style={{border:'1px solid var(--glass-border)'}}/></div>
+      <button onClick={()=>onDelete(obj.id)} className="w-full py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-900/20 transition-all" style={{border:'1px solid rgba(239,68,68,0.3)'}}>Delete</button>
     </div>);
   }
 
   if (obj.type==='text') {
     return (<div className="space-y-3">
       <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Text</h4>
-      <div><label className="text-xs text-gray-500 block mb-1">Content</label><input type="text" value={obj.value||''} onChange={e=>u({value:e.target.value})} className="w-full px-2 py-1.5 rounded border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500" style={{backgroundColor:'#16213e'}}/></div>
-      <div><label className="text-xs text-gray-500 block mb-1">Size</label><div className="flex gap-1 flex-wrap">{[10,12,14,18,24].map(s=>(<button key={s} onClick={()=>u({fontSize:s})} className="px-2 py-1 rounded text-[10px] font-bold" style={{backgroundColor:(obj.fontSize||14)===s?'#2563eb':'#16213e',color:(obj.fontSize||14)===s?'white':'#9ca3af'}}>{s}</button>))}</div></div>
-      <div><label className="text-xs text-gray-500 block mb-1">Color</label><input type="color" value={obj.color||'#ffffff'} onChange={e=>u({color:e.target.value})} className="w-8 h-8 rounded cursor-pointer border border-gray-600"/></div>
-      <button onClick={()=>onDelete(obj.id)} className="w-full py-2 rounded-lg text-xs font-bold text-red-400 border border-red-800 hover:bg-red-900/20">Delete</button>
+      <div><label className="text-xs text-gray-500 block mb-1">Content</label><input type="text" value={obj.value||''} onChange={e=>u({value:e.target.value})} className="w-full px-2 py-1.5 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-orange-500/40 transition-all" style={glassInput}/></div>
+      <div><label className="text-xs text-gray-500 block mb-1">Size</label><div className="flex gap-1 flex-wrap">{[10,12,14,18,24].map(s=>(<button key={s} onClick={()=>u({fontSize:s})} className="px-2 py-1 rounded-lg text-[10px] font-bold transition-all" style={glassToolBtnMuted((obj.fontSize||14)===s)}>{s}</button>))}</div></div>
+      <div><label className="text-xs text-gray-500 block mb-1">Color</label><input type="color" value={obj.color||'#ffffff'} onChange={e=>u({color:e.target.value})} className="w-8 h-8 rounded-lg cursor-pointer" style={{border:'1px solid var(--glass-border)'}}/></div>
+      <button onClick={()=>onDelete(obj.id)} className="w-full py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-900/20 transition-all" style={{border:'1px solid rgba(239,68,68,0.3)'}}>Delete</button>
     </div>);
   }
   return null;
@@ -517,7 +630,7 @@ export default function PlaybookPage() {
   const [dragging, setDragging] = useState(null);
   const [dragCP, setDragCP] = useState(null);
   const [mousePos, setMousePos] = useState(null);
-  const [snapPreview, setSnapPreview] = useState(null); // { x, y } of snap target
+  const [snapPreview, setSnapPreview] = useState(null);
 
   // Settings
   const [settings, setSettings] = useState({ courtType:'NBA', courtColor:COLOR_PRESETS[0], fullCourt:false, showGrid:false, gridSpacing:5 });
@@ -545,7 +658,7 @@ export default function PlaybookPage() {
   const [animPlaying, setAnimPlaying] = useState(false);
   const [animPaused, setAnimPaused] = useState(false);
   const [animSpeed, setAnimSpeed] = useState(1);
-  const [animProgress, setAnimProgress] = useState(0); // 0 to phases.length-1 (continuous)
+  const [animProgress, setAnimProgress] = useState(0);
   const animFrameRef = useRef(null);
   const animStartRef = useRef(null);
   const animPausedProgress = useRef(0);
@@ -617,7 +730,6 @@ export default function PlaybookPage() {
     }
 
     if (ARROW_SUBTYPES.includes(tool)) {
-      // Snap start to nearest player
       const snap = findSnap(pos.x, pos.y, objects);
       const sx = snap ? snap.x : pos.x;
       const sy = snap ? snap.y : pos.y;
@@ -652,14 +764,12 @@ export default function PlaybookPage() {
     const pos = getPos(e);
     setMousePos(pos);
 
-    // Show snap preview while drawing
     if (drawing) {
       const snap = findSnap(pos.x, pos.y, objects);
       setSnapPreview(snap ? { x:snap.x, y:snap.y } : null);
     }
 
     if (dragCP) {
-      // Dragging curve control point — set shape to curved
       updateObjs(objects.map(o => o.id===dragCP.id ? {...o, shape:1, mx:pos.x, my:pos.y} : o));
       return;
     }
@@ -688,7 +798,6 @@ export default function PlaybookPage() {
       const { x1, y1, type, startLink } = drawing;
       const dx=pos.x-x1, dy=pos.y-y1;
       if (Math.hypot(dx,dy) > 15) {
-        // Snap end to nearest player
         const snap = findSnap(pos.x, pos.y, objects);
         const ex = snap ? snap.x : pos.x;
         const ey = snap ? snap.y : pos.y;
@@ -821,7 +930,6 @@ export default function PlaybookPage() {
     const toPhase = phases[Math.min(phaseIdx + 1, phases.length - 1)];
     if (!fromPhase || !toPhase || fromPhase.id === toPhase.id) return fromPhase?.objects || [];
 
-    // Blend player positions
     const blended = [];
     for (const toObj of toPhase.objects) {
       if (toObj.type === 'player') {
@@ -831,14 +939,11 @@ export default function PlaybookPage() {
         } else blended.push(toObj);
       }
     }
-    // Include arrows from the "from" phase (fading out) and "to" phase (fading in)
     const arrowsFrom = fromPhase.objects.filter(o => ARROW_SUBTYPES.includes(o.type));
     const arrowsTo = toPhase.objects.filter(o => ARROW_SUBTYPES.includes(o.type));
-    // Show from arrows fading, to arrows appearing
     if (eased < 0.5) blended.push(...arrowsFrom);
     else blended.push(...arrowsTo);
 
-    // Text from destination phase
     blended.push(...toPhase.objects.filter(o => o.type === 'text'));
 
     return blended;
@@ -852,7 +957,6 @@ export default function PlaybookPage() {
     const fromPhase = phases[Math.min(phaseIdx, phases.length - 1)];
     if (!fromPhase) return null;
 
-    // Find pass arrows in the from phase
     const passArrows = fromPhase.objects.filter(o => o.type === 'pass' && o.startLink && o.endLink);
     if (passArrows.length === 0) return null;
     const pa = passArrows[0];
@@ -899,45 +1003,56 @@ export default function PlaybookPage() {
   // RENDER
   // ============================================================
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
+
   return (
-    <div>
+    <div style={cssVars}>
+      <style dangerouslySetInnerHTML={{ __html: MOUNT_KEYFRAMES }} />
       {showPlayGenerator && <PlayGeneratorModal onClose={()=>setShowPlayGenerator(false)} onApply={applyGenPlay}/>}
       {analysisModal && <AnalysisModal canvasPng={analysisModal.png} playName={analysisModal.name} onClose={()=>setAnalysisModal(null)}/>}
       {showSettings && <SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)}/>}
 
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div><h1 className="text-3xl font-black text-white">Play Creator</h1><p className="text-gray-400 mt-1 text-sm">Design plays, animate, and get AI analysis</p></div>
-        <div className="flex items-center gap-2">
-          <button onClick={()=>setShowPlayGenerator(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white text-sm hover:opacity-90" style={{backgroundColor:'#7c3aed'}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/></svg>AI Generate
-          </button>
-          <button onClick={()=>setShowSettings(!showSettings)} className="px-3 py-2 rounded-xl text-sm border border-gray-700 text-gray-300" style={{backgroundColor:'#16213e'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          </button>
+      <div className="mb-6" style={{ animation: mounted ? 'fadeSlideIn 0.5s ease forwards' : 'none', opacity: mounted ? 1 : 0 }}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h1 className="text-3xl font-black text-white tracking-tight">Play Creator</h1>
+            <p className="text-gray-500 mt-1 text-sm">Design plays, animate, and get AI analysis</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={()=>setShowPlayGenerator(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm hover:opacity-90 transition-all hover:scale-[1.02]" style={{background:'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow:'0 4px 20px rgba(124,58,237,0.3)', border:'1px solid rgba(168,85,247,0.3)'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4l3 3"/></svg>AI Generate
+            </button>
+            <button onClick={()=>setShowSettings(!showSettings)} className="px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:text-white transition-all hover:scale-[1.02]" style={{...glassCard, boxShadow:'0 2px 10px rgba(0,0,0,0.15)'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </button>
+          </div>
         </div>
+        {/* Animated gradient line */}
+        <div style={{ height: 2, borderRadius: 1, background: 'linear-gradient(90deg, var(--primary), var(--accent), var(--primary-light), var(--primary))', backgroundSize: '200% 100%', animation: 'gradientShift 4s ease infinite', opacity: 0.7 }} />
       </div>
 
-      <div className="flex gap-3 items-start">
+      <div className="flex gap-3 items-start" style={{ animation: mounted ? 'fadeSlideIn 0.6s ease 0.1s both' : 'none', opacity: 0 }}>
         {/* ===== LEFT TOOLBAR ===== */}
-        <div className="flex-shrink-0 w-[148px] rounded-xl border border-gray-800 p-2 space-y-2" style={{backgroundColor:'#1e1e30'}}>
+        <div className="flex-shrink-0 w-[148px] rounded-2xl p-2 space-y-2" style={{...glassCard, borderRadius:16, boxShadow:'0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
           {/* General */}
           <div className="flex gap-1">
             {[['select','Select',(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>)],['erase','Erase',(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>)]].map(([id,label,icon])=>(
-              <button key={id} onClick={()=>{setTool(id);setDrawing(null);}} className="flex-1 py-2 rounded-lg flex items-center justify-center gap-1 text-[10px] font-bold transition-all" style={{backgroundColor:tool===id?'#2563eb':'#16213e',color:tool===id?'white':'#9ca3af',border:tool===id?'1px solid #3b82f6':'1px solid #374151'}}>{icon}<span>{label}</span></button>
+              <button key={id} onClick={()=>{setTool(id);setDrawing(null);}} className="flex-1 py-2 rounded-xl flex items-center justify-center gap-1 text-[10px] font-bold transition-all hover:scale-[1.03]" style={glassToolBtn(tool===id)}>{icon}<span>{label}</span></button>
             ))}
           </div>
 
           {/* Actions */}
-          <div className="border-t border-gray-700/50 pt-2">
+          <div className="pt-2" style={{borderTop:'1px solid var(--glass-border)'}}>
             <div className="text-[9px] text-gray-500 font-semibold uppercase tracking-wider mb-1.5">Add Actions</div>
             <div className="grid grid-cols-2 gap-1">
               {ACTION_TOOLS.map(at => {
                 const active = tool === at.id;
                 return (
                   <button key={at.id} onClick={()=>{setTool(at.id);setDrawing(null);}}
-                    className="py-2 px-1 rounded-lg flex items-center justify-center gap-1 text-[10px] font-bold transition-all"
-                    style={{backgroundColor:active?'#2563eb':'#16213e',color:active?'white':'#d1d5db',border:active?'1.5px solid #3b82f6':'1px solid #374151'}}>
+                    className="py-2 px-1 rounded-xl flex items-center justify-center gap-1 text-[10px] font-bold transition-all hover:scale-[1.03]"
+                    style={glassToolBtn(active)}>
                     <svg width="20" height="10" viewBox="0 0 20 10">
                       {at.id==='dribble'&&<><path d="M1 5Q4 1 7 5Q10 9 13 5" stroke="currentColor" strokeWidth="1.5" fill="none"/><polygon points="17,5 13,2.5 13,7.5" fill="currentColor"/></>}
                       {at.id==='pass'&&<><line x1="1" y1="5" x2="13" y2="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2"/><polygon points="17,5 13,2.5 13,7.5" fill="currentColor"/></>}
@@ -954,11 +1069,11 @@ export default function PlaybookPage() {
           </div>
 
           {/* Players */}
-          <div className="border-t border-gray-700/50 pt-2">
+          <div className="pt-2" style={{borderTop:'1px solid var(--glass-border)'}}>
             <div className="text-[9px] text-gray-500 font-semibold uppercase tracking-wider mb-1.5">Offense</div>
             <div className="grid grid-cols-5 gap-1">
               {['1','2','3','4','5'].map(n=>{const tid=`offense_${n}`,ac=tool===tid;return(
-                <button key={tid} onClick={()=>{setTool(tid);setDrawing(null);}} title={`Offense #${n}`} className="h-8 rounded-md flex items-center justify-center transition-all" style={{backgroundColor:ac?'#2563eb':'#16213e',border:ac?'1.5px solid #3b82f6':'1px solid #374151'}}>
+                <button key={tid} onClick={()=>{setTool(tid);setDrawing(null);}} title={`Offense #${n}`} className="h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105" style={{background:ac?'linear-gradient(135deg, var(--accent), var(--accent-light))':'rgba(22,33,62,0.4)',border:ac?'1.5px solid var(--accent-light)':'1px solid var(--glass-border)'}}>
                   <svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="9" fill="white" stroke={ac?'#60a5fa':'#666'} strokeWidth="1.5"/><text x="11" y="12" textAnchor="middle" dominantBaseline="central" fill="#333" fontSize="10" fontWeight="700">{n}</text></svg>
                 </button>
               );})}
@@ -966,28 +1081,28 @@ export default function PlaybookPage() {
             <div className="text-[9px] text-gray-500 font-semibold uppercase tracking-wider mb-1.5 mt-2">Defense</div>
             <div className="grid grid-cols-5 gap-1">
               {['1','2','3','4','5'].map(n=>{const tid=`defense_${n}`,ac=tool===tid;return(
-                <button key={tid} onClick={()=>{setTool(tid);setDrawing(null);}} title={`Defense #${n}`} className="h-8 rounded-md flex items-center justify-center transition-all" style={{backgroundColor:ac?'#2563eb':'#16213e',border:ac?'1.5px solid #3b82f6':'1px solid #374151'}}>
+                <button key={tid} onClick={()=>{setTool(tid);setDrawing(null);}} title={`Defense #${n}`} className="h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105" style={{background:ac?'linear-gradient(135deg, var(--accent), var(--accent-light))':'rgba(22,33,62,0.4)',border:ac?'1.5px solid var(--accent-light)':'1px solid var(--glass-border)'}}>
                   <svg width="22" height="22" viewBox="0 0 22 22"><line x1="4" y1="4" x2="18" y2="18" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/><line x1="18" y1="4" x2="4" y2="18" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/><text x="11" y="11" textAnchor="middle" dominantBaseline="central" fill="white" fontSize="8" fontWeight="800">{n}</text></svg>
                 </button>
               );})}
             </div>
-            <button onClick={()=>{setTool('ball_1');setDrawing(null);}} className="w-full mt-1.5 py-1.5 rounded-md flex items-center justify-center gap-1.5 text-[10px] font-bold transition-all" style={{backgroundColor:tool.startsWith('ball_')?'#2563eb':'#16213e',color:tool.startsWith('ball_')?'white':'#9ca3af',border:tool.startsWith('ball_')?'1.5px solid #3b82f6':'1px solid #374151'}}>
+            <button onClick={()=>{setTool('ball_1');setDrawing(null);}} className="w-full mt-1.5 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-[10px] font-bold transition-all hover:scale-[1.02]" style={glassToolBtn(tool.startsWith('ball_'))}>
               <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="white" stroke="#333" strokeWidth="2"/><circle cx="12" cy="12" r="3" fill="#333"/></svg>Ball Handler
             </button>
           </div>
 
           {/* Annotate */}
-          <div className="border-t border-gray-700/50 pt-2">
-            <button onClick={()=>{setTool('text');setDrawing(null);}} className="w-full py-2 rounded-lg flex items-center justify-center gap-1.5 text-[10px] font-bold transition-all" style={{backgroundColor:tool==='text'?'#2563eb':'#16213e',color:tool==='text'?'white':'#9ca3af',border:tool==='text'?'1.5px solid #3b82f6':'1px solid #374151'}}>
+          <div className="pt-2" style={{borderTop:'1px solid var(--glass-border)'}}>
+            <button onClick={()=>{setTool('text');setDrawing(null);}} className="w-full py-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-bold transition-all hover:scale-[1.02]" style={glassToolBtn(tool==='text')}>
               <span className="text-sm font-black">T</span> Text
             </button>
           </div>
 
           {/* Undo/Redo/Clear */}
-          <div className="border-t border-gray-700/50 pt-2 flex gap-1">
-            <button onClick={undo} disabled={!past.length} title="Undo" className="flex-1 h-8 rounded-md flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
-            <button onClick={redo} disabled={!future.length} title="Redo" className="flex-1 h-8 rounded-md flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></button>
-            <button onClick={clearCanvas} title="Clear" className="flex-1 h-8 rounded-md flex items-center justify-center text-gray-500 hover:text-red-400"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+          <div className="pt-2 flex gap-1" style={{borderTop:'1px solid var(--glass-border)'}}>
+            <button onClick={undo} disabled={!past.length} title="Undo" className="flex-1 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-20 transition-all" style={{background:'rgba(22,33,62,0.3)', border:'1px solid var(--glass-border)'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+            <button onClick={redo} disabled={!future.length} title="Redo" className="flex-1 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-20 transition-all" style={{background:'rgba(22,33,62,0.3)', border:'1px solid var(--glass-border)'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></button>
+            <button onClick={clearCanvas} title="Clear" className="flex-1 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 transition-all" style={{background:'rgba(22,33,62,0.3)', border:'1px solid var(--glass-border)'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
           </div>
         </div>
 
@@ -995,13 +1110,13 @@ export default function PlaybookPage() {
         <div className="flex-1 min-w-0">
           {/* Name + actions */}
           <div className="flex items-center gap-2 mb-2">
-            <input value={playName} onChange={e=>setPlayName(e.target.value)} className="flex-1 px-3 py-2 rounded-lg border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500" style={{backgroundColor:'#16213e'}} placeholder="Play name..."/>
-            <button onClick={savePlay} disabled={saving} className="px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-50 hover:opacity-90" style={{backgroundColor:'#2563eb'}}>{saving?'...':saveMsg||'Save'}</button>
-            <button onClick={openAnalysis} className="px-4 py-2 rounded-lg font-bold text-sm hover:opacity-90" style={{backgroundColor:'#16a34a',color:'white'}}>Analyze</button>
+            <input value={playName} onChange={e=>setPlayName(e.target.value)} className="flex-1 px-4 py-2.5 rounded-xl text-white text-sm focus:outline-none transition-all" style={{...glassInput, boxShadow:'inset 0 1px 0 rgba(255,255,255,0.02)', outline:'none'}} onFocus={e=>{e.target.style.border='1px solid rgba(var(--primary-rgb),0.4)';e.target.style.boxShadow='0 0 0 3px rgba(var(--primary-rgb),0.08), inset 0 1px 0 rgba(255,255,255,0.02)';}} onBlur={e=>{e.target.style.border='1px solid rgba(255,255,255,0.06)';e.target.style.boxShadow='inset 0 1px 0 rgba(255,255,255,0.02)';}} placeholder="Play name..."/>
+            <button onClick={savePlay} disabled={saving} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-50 hover:opacity-90 transition-all hover:scale-[1.02]" style={{...accentBtn, border:'1px solid rgba(59,130,246,0.3)'}}>{saving?'...':saveMsg||'Save'}</button>
+            <button onClick={openAnalysis} className="px-5 py-2.5 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-all hover:scale-[1.02]" style={{background:'linear-gradient(135deg, #16a34a, #22c55e)', boxShadow:'0 4px 15px rgba(22,163,74,0.3)', border:'1px solid rgba(34,197,94,0.3)'}}>Analyze</button>
           </div>
 
           {/* SVG Court */}
-          <div className="rounded-xl border border-gray-700 overflow-hidden" style={{maxWidth:700}}>
+          <div className="rounded-2xl overflow-hidden" style={{maxWidth:700, ...glassCard, boxShadow:'0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
             <svg ref={svgRef} viewBox={`0 0 ${COURT_W} ${courtH}`} className="w-full block" style={{cursor}} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave}>
               <CourtSVG courtType={settings.courtType} colors={settings.courtColor} showGrid={settings.showGrid} gridSpacing={settings.gridSpacing} fullCourt={settings.fullCourt}/>
 
@@ -1024,11 +1139,11 @@ export default function PlaybookPage() {
           </div>
 
           {/* Phase Bar */}
-          <div className="mt-2 rounded-xl border border-gray-800 px-3 py-2" style={{backgroundColor:'#1e1e30'}}>
+          <div className="mt-2 rounded-2xl px-3 py-2" style={{...glassCard, boxShadow:'0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
             <div className="flex items-center gap-2 overflow-x-auto">
               {phases.map((phase, i) => (
                 <div key={phase.id} className="flex-shrink-0">
-                  <button onClick={()=>{setActivePhaseId(phase.id);setSelectedId(null);}} className="rounded-lg border-2 overflow-hidden transition-all" style={{borderColor:phase.id===activePhaseId?'#3b82f6':'#374151',width:80}}>
+                  <button onClick={()=>{setActivePhaseId(phase.id);setSelectedId(null);}} className="rounded-xl overflow-hidden transition-all hover:scale-[1.03]" style={{border:phase.id===activePhaseId?'2px solid var(--accent-light)':'2px solid var(--glass-border)',width:80,boxShadow:phase.id===activePhaseId?'0 0 12px var(--accent-glow)':'none'}}>
                     <svg viewBox={`0 0 ${COURT_W} ${courtH}`} width={80} height={settings.fullCourt?75:70} className="block">
                       <rect width={COURT_W} height={courtH} fill={settings.courtColor?.bg||'#1a5c2a'}/>
                       {(phase.objects||[]).map(o=>{
@@ -1043,28 +1158,28 @@ export default function PlaybookPage() {
               ))}
               {/* Frame buttons */}
               <div className="flex-shrink-0 flex flex-col gap-1 ml-1">
-                <button onClick={addPhase} className="h-7 px-2 rounded border border-dashed border-gray-600 text-[9px] text-gray-500 hover:text-white hover:border-gray-400 font-semibold" title="Add empty frame">+ Empty</button>
-                <button onClick={duplicatePhase} className="h-7 px-2 rounded border border-gray-700 text-[9px] text-gray-500 hover:text-white font-semibold" title="Duplicate frame">Duplicate</button>
-                <button onClick={genNextFrame} className="h-7 px-2 rounded border border-blue-700/50 text-[9px] text-blue-400 hover:text-blue-300 font-bold" title="Generate next frame from actions" style={{backgroundColor:'rgba(37,99,235,0.1)'}}>Next &rarr;</button>
-                {phases.length>1&&<button onClick={deletePhase} className="h-7 px-2 rounded border border-red-800/50 text-[9px] text-red-500/60 hover:text-red-400 font-semibold">Delete</button>}
+                <button onClick={addPhase} className="h-7 px-2 rounded-lg text-[9px] text-gray-500 hover:text-white font-semibold transition-all" style={{border:'1px dashed var(--glass-border-hover)'}} title="Add empty frame">+ Empty</button>
+                <button onClick={duplicatePhase} className="h-7 px-2 rounded-lg text-[9px] text-gray-500 hover:text-white font-semibold transition-all" style={{border:'1px solid var(--glass-border)'}} title="Duplicate frame">Duplicate</button>
+                <button onClick={genNextFrame} className="h-7 px-2 rounded-lg text-[9px] font-bold transition-all hover:opacity-90" style={{background:'rgba(37,99,235,0.1)',border:'1px solid rgba(37,99,235,0.3)',color:'var(--accent-light)'}} title="Generate next frame from actions">Next &rarr;</button>
+                {phases.length>1&&<button onClick={deletePhase} className="h-7 px-2 rounded-lg text-[9px] text-red-500/60 hover:text-red-400 font-semibold transition-all" style={{border:'1px solid rgba(239,68,68,0.2)'}}>Delete</button>}
               </div>
             </div>
           </div>
 
           {/* Animation Controls */}
-          <div className="mt-2 rounded-xl border border-gray-800 px-4 py-3" style={{backgroundColor:'#1e1e30'}}>
+          <div className="mt-2 rounded-2xl px-4 py-3" style={{...glassCard, boxShadow:'0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
             <div className="flex items-center gap-3">
               {/* Play/Pause/Stop */}
               {!animPlaying ? (
-                <button onClick={startAnim} disabled={phases.length<2} className="flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-white text-sm disabled:opacity-30 hover:opacity-90" style={{backgroundColor:'#2563eb'}}>
+                <button onClick={startAnim} disabled={phases.length<2} className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-white text-sm disabled:opacity-30 hover:opacity-90 transition-all hover:scale-[1.02]" style={accentBtn}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>Play
                 </button>
               ) : (
                 <>
-                  <button onClick={togglePause} className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90" style={{backgroundColor:animPaused?'#2563eb':'#f59e0b'}}>
+                  <button onClick={togglePause} className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-white text-sm hover:opacity-90 transition-all" style={animPaused?accentBtn:{background:'linear-gradient(135deg, #f59e0b, #fbbf24)', boxShadow:'0 4px 12px rgba(245,158,11,0.3)'}}>
                     {animPaused ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>Resume</> : <><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>Pause</>}
                   </button>
-                  <button onClick={stopAnim} className="px-3 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90" style={{backgroundColor:'#ef4444'}}>
+                  <button onClick={stopAnim} className="px-3 py-2 rounded-xl font-bold text-white text-sm hover:opacity-90 transition-all" style={{background:'linear-gradient(135deg, #ef4444, #f87171)', boxShadow:'0 4px 12px rgba(239,68,68,0.3)'}}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
                   </button>
                 </>
@@ -1072,14 +1187,14 @@ export default function PlaybookPage() {
 
               {/* Seek Bar */}
               <div className="flex-1 flex items-center gap-2">
-                <input type="range" min={0} max={Math.max(phases.length-1,0.01)} step={0.01} value={animProgress} onChange={handleSeek} className="flex-1 accent-blue-500 h-2" disabled={phases.length<2}/>
+                <input type="range" min={0} max={Math.max(phases.length-1,0.01)} step={0.01} value={animProgress} onChange={handleSeek} className="flex-1 accent-orange-500 h-2" disabled={phases.length<2}/>
                 <span className="text-[10px] text-gray-500 w-16 text-right">Phase {Math.floor(animProgress)+1}/{phases.length}</span>
               </div>
 
               {/* Speed */}
               <div className="flex gap-0.5">
                 {[0.5,1,1.5,2].map(s=>(
-                  <button key={s} onClick={()=>setAnimSpeed(s)} className="px-2 py-1 rounded text-[10px] font-bold" style={{backgroundColor:animSpeed===s?'#2563eb':'#16213e',color:animSpeed===s?'white':'#9ca3af'}}>{s}x</button>
+                  <button key={s} onClick={()=>setAnimSpeed(s)} className="px-2 py-1 rounded-lg text-[10px] font-bold transition-all" style={glassToolBtnMuted(animSpeed===s)}>{s}x</button>
                 ))}
               </div>
             </div>
@@ -1097,28 +1212,33 @@ export default function PlaybookPage() {
         </div>
 
         {/* ===== RIGHT PANEL ===== */}
-        <div className="w-48 flex-shrink-0 space-y-3">
+        <div className="w-48 flex-shrink-0 space-y-3" style={{ animation: mounted ? 'fadeSlideIn 0.6s ease 0.2s both' : 'none', opacity: 0 }}>
           {selectedObj && (
-            <div className="rounded-xl border border-gray-800 p-3" style={{backgroundColor:'#1e1e30'}}>
+            <div className="rounded-2xl p-3" style={{...glassCard, boxShadow:'0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)', animation:'fadeSlideIn 0.3s ease forwards'}}>
               <PropertyPanel obj={selectedObj} onUpdate={updateObj} onDelete={deleteObj}/>
             </div>
           )}
           {editingTextId && selectedObj?.type==='text' && (
-            <div className="rounded-xl border border-gray-800 p-3" style={{backgroundColor:'#1e1e30'}}>
+            <div className="rounded-2xl p-3" style={{...glassCard, animation:'fadeSlideIn 0.3s ease forwards'}}>
               <label className="text-xs text-gray-400 font-semibold block mb-1">Edit Text</label>
-              <input autoFocus value={selectedObj.value||''} onChange={e=>updateObj(editingTextId,{value:e.target.value})} onBlur={()=>setEditingTextId(null)} onKeyDown={e=>e.key==='Enter'&&setEditingTextId(null)} className="w-full px-2 py-1.5 rounded border border-gray-700 text-white text-sm focus:outline-none focus:border-blue-500" style={{backgroundColor:'#16213e'}}/>
+              <input autoFocus value={selectedObj.value||''} onChange={e=>updateObj(editingTextId,{value:e.target.value})} onBlur={()=>setEditingTextId(null)} onKeyDown={e=>e.key==='Enter'&&setEditingTextId(null)} className="w-full px-2 py-1.5 rounded-lg text-white text-sm focus:outline-none transition-all" style={{...glassInput}}/>
             </div>
           )}
-          <div className="rounded-xl border border-gray-800 overflow-hidden" style={{backgroundColor:'#1e1e30'}}>
-            <button onClick={()=>setShowSaved(p=>!p)} className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-800 hover:bg-white/5">
+          <div className="rounded-2xl overflow-hidden" style={{...glassCard, boxShadow:'0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
+            <button onClick={()=>setShowSaved(p=>!p)} className="w-full flex items-center justify-between px-4 py-3 transition-all group" style={{borderBottom:'1px solid rgba(255,255,255,0.06)', background:'transparent'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.03)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
               <h3 className="font-black text-white text-sm">Saved Plays</h3>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" className={`transition-transform ${showSaved?'rotate-180':''}`}><polyline points="6 9 12 15 18 9"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{transition:'transform 0.3s ease', transform:showSaved?'rotate(180deg)':'rotate(0deg)'}}><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            {showSaved&&<div className="divide-y divide-gray-800 max-h-[300px] overflow-y-auto">
-              {loading?<p className="text-gray-500 text-xs text-center py-6">Loading...</p>:savedPlays.length===0?<p className="text-gray-500 text-xs text-center py-6 px-3">No plays saved yet.</p>:savedPlays.map(play=>(
-                <div key={play.id} className={`px-3 py-2.5 hover:bg-white/5 ${currentPlayId===play.id?'bg-white/5':''}`}>
-                  <button onClick={()=>loadPlay(play)} className="w-full text-left"><p className="text-xs font-semibold text-white truncate">{play.name}</p><p className="text-[10px] text-gray-600">{new Date(play.created_at).toLocaleDateString()}</p></button>
-                  <button onClick={()=>deletePlay(play.id)} className="text-[10px] text-red-500/50 hover:text-red-400 mt-0.5">Delete</button>
+            {showSaved&&<div className="max-h-[300px] overflow-y-auto" style={{scrollbarWidth:'thin',scrollbarColor:'rgba(255,255,255,0.1) transparent'}}>
+              {loading?<div className="flex items-center justify-center py-8"><div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{borderColor:'var(--primary)', borderTopColor:'transparent'}}/></div>:savedPlays.length===0?<p className="text-gray-600 text-xs text-center py-6 px-3">No plays saved yet.</p>:savedPlays.map(play=>(
+                <div key={play.id} className="px-3 py-2.5 transition-all" style={{borderBottom:'1px solid rgba(255,255,255,0.04)', background:currentPlayId===play.id?'rgba(var(--primary-rgb),0.06)':'transparent'}}
+                  onMouseEnter={e=>{if(currentPlayId!==play.id)e.currentTarget.style.background='rgba(255,255,255,0.03)';}}
+                  onMouseLeave={e=>{if(currentPlayId!==play.id)e.currentTarget.style.background='transparent';}}>
+                  <button onClick={()=>loadPlay(play)} className="w-full text-left">
+                    <p className="text-xs font-semibold text-white truncate" style={{transition:'color 0.2s ease'}}>{play.name}</p>
+                    <p className="text-[10px] text-gray-600">{new Date(play.created_at).toLocaleDateString()}</p>
+                  </button>
+                  <button onClick={()=>deletePlay(play.id)} className="text-[10px] text-red-500/40 hover:text-red-400 mt-0.5 transition-all hover:translate-x-0.5">Delete</button>
                 </div>
               ))}
             </div>}

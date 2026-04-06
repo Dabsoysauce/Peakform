@@ -5,6 +5,69 @@ import { apiFetch } from '../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
+const glassCard = {
+  background: 'rgba(255,255,255,0.03)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  border: '1px solid rgba(255,255,255,0.06)',
+  borderRadius: '20px',
+};
+
+const inputBase = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '12px',
+  color: '#fff',
+  outline: 'none',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
+  width: '100%',
+  padding: '10px 14px',
+  fontSize: '14px',
+};
+
+const sectionHeader = {
+  fontSize: '13px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  color: 'rgba(255,255,255,0.35)',
+  fontWeight: 600,
+};
+
+const gradientBtn = {
+  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+  border: 'none',
+  borderRadius: '12px',
+  color: '#fff',
+  fontWeight: 700,
+  cursor: 'pointer',
+  padding: '10px 20px',
+  fontSize: '14px',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+};
+
+function SkeletonGrid() {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{ ...glassCard, padding: '20px', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ height: '20px', width: '70%', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', marginBottom: '12px' }} />
+          <div style={{ height: '14px', width: '50%', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', marginBottom: '8px' }} />
+          <div style={{ height: '14px', width: '30%', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px' }} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ height: '30px', width: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)' }} />
+            <div style={{ height: '30px', width: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }} />
+          </div>
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)',
+            animation: 'shimmer 1.8s ease-in-out infinite',
+          }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function PracticePlansPage() {
   const router = useRouter();
   const [tab, setTab] = useState('plans');
@@ -23,8 +86,9 @@ export default function PracticePlansPage() {
   const [showTplCreate, setShowTplCreate] = useState(false);
   const [tplForm, setTplForm] = useState({ title: '', template_type: 'block', focus_area: '', notes: '' });
   const [tplCreating, setTplCreating] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { setMounted(true); loadData(); }, []);
 
   async function loadData() {
     try {
@@ -113,81 +177,202 @@ export default function PracticePlansPage() {
     } catch {}
   }
 
+  const fadeIn = (delay = 0) => ({
+    opacity: mounted ? 1 : 0,
+    transform: mounted ? 'translateY(0)' : 'translateY(16px)',
+    transition: `opacity 0.5s ease ${delay}s, transform 0.5s ease ${delay}s`,
+  });
+
+  const handleInputFocus = (e) => {
+    e.target.style.borderColor = 'rgba(var(--primary-rgb), 0.4)';
+    e.target.style.boxShadow = '0 0 0 3px rgba(var(--primary-rgb), 0.1)';
+  };
+  const handleInputBlur = (e) => {
+    e.target.style.borderColor = 'rgba(255,255,255,0.08)';
+    e.target.style.boxShadow = 'none';
+  };
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-white">Practice Plans</h1>
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .glass-input:focus {
+          border-color: rgba(var(--primary-rgb), 0.4) !important;
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1) !important;
+        }
+        .gradient-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.3);
+        }
+        .plan-card {
+          transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .plan-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+          border-color: rgba(var(--primary-rgb), 0.2) !important;
+        }
+        .tpl-card {
+          transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .tpl-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+          border-color: rgba(168,85,247,0.25) !important;
+        }
+        .action-btn {
+          padding: 6px 14px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s;
+          border: none;
+        }
+        .action-btn:hover {
+          transform: translateY(-1px);
+        }
+        .tab-btn {
+          padding: 10px 20px;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 600;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .cancel-btn {
+          background: transparent;
+          border: none;
+          color: rgba(255,255,255,0.4);
+          font-weight: 600;
+          cursor: pointer;
+          padding: 10px 20px;
+          font-size: 14px;
+          transition: color 0.15s;
+        }
+        .cancel-btn:hover {
+          color: rgba(255,255,255,0.7);
+        }
+        .modal-backdrop {
+          animation: fadeInBackdrop 0.2s ease;
+        }
+        .modal-content {
+          animation: slideUp 0.3s ease;
+        }
+        @keyframes fadeInBackdrop {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ ...fadeIn(0), marginBottom: '24px' }}>
+        <p style={sectionHeader}>Planning</p>
+        <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#fff', margin: '4px 0 0' }}>Practice Plans</h1>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit" style={{ backgroundColor: '#1e1e30' }}>
+      <div style={{
+        ...fadeIn(0.05),
+        display: 'inline-flex',
+        gap: '4px',
+        padding: '4px',
+        borderRadius: '16px',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        marginBottom: '24px',
+      }}>
         <button
           onClick={() => setTab('plans')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'plans' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-          style={tab === 'plans' ? { backgroundColor: '#2563eb' } : {}}
+          className="tab-btn"
+          style={{
+            background: tab === 'plans' ? 'linear-gradient(135deg, var(--primary), var(--primary-light))' : 'transparent',
+            color: tab === 'plans' ? '#fff' : 'rgba(255,255,255,0.4)',
+          }}
         >
           Plans
         </button>
         <button
           onClick={() => setTab('templates')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === 'templates' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
-          style={tab === 'templates' ? { backgroundColor: '#2563eb' } : {}}
+          className="tab-btn"
+          style={{
+            background: tab === 'templates' ? 'linear-gradient(135deg, var(--primary), var(--primary-light))' : 'transparent',
+            color: tab === 'templates' ? '#fff' : 'rgba(255,255,255,0.4)',
+          }}
         >
           Templates
         </button>
       </div>
 
+      {/* Plans Tab */}
       {tab === 'plans' && (
         <>
-          <div className="flex justify-end mb-4">
+          <div style={{ ...fadeIn(0.1), display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
             <button
               onClick={() => setShowCreate(!showCreate)}
-              className="px-4 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90"
-              style={{ backgroundColor: '#2563eb' }}
+              className="gradient-btn"
+              style={gradientBtn}
             >
               + New Plan
             </button>
           </div>
 
+          {/* Create Form */}
           {showCreate && (
-            <form onSubmit={handleCreate} className="rounded-xl border border-gray-700 p-5 mb-6" style={{ backgroundColor: '#1e1e30' }}>
-              <h2 className="font-bold text-white mb-4">Create Practice Plan</h2>
-              <div className="space-y-3">
+            <form
+              onSubmit={handleCreate}
+              style={{ ...glassCard, padding: '24px', marginBottom: '24px', ...fadeIn(0.12) }}
+            >
+              <h2 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '16px' }}>Create Practice Plan</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <input
                   type="text"
                   placeholder="Plan title *"
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
                   required
-                  className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  className="glass-input"
+                  style={inputBase}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
                 <input
                   type="date"
                   value={form.plan_date}
                   onChange={e => setForm({ ...form, plan_date: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white focus:outline-none focus:border-blue-500"
+                  className="glass-input"
+                  style={{ ...inputBase, colorScheme: 'dark' }}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
                 <textarea
                   placeholder="Notes (optional)"
                   value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   rows={2}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                  className="glass-input"
+                  style={{ ...inputBase, resize: 'none' }}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
-                <div className="flex gap-3">
+                <div style={{ display: 'flex', gap: '12px', paddingTop: '4px' }}>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="px-5 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: '#2563eb' }}
+                    className="gradient-btn"
+                    style={{ ...gradientBtn, opacity: creating ? 0.5 : 1 }}
                   >
                     {creating ? 'Creating...' : 'Create Plan'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreate(false)}
-                    className="px-5 py-2 rounded-lg font-bold text-gray-400 text-sm hover:text-white"
-                  >
+                  <button type="button" onClick={() => setShowCreate(false)} className="cancel-btn">
                     Cancel
                   </button>
                 </div>
@@ -195,43 +380,60 @@ export default function PracticePlansPage() {
             </form>
           )}
 
+          {/* Plans List */}
           {loading ? (
-            <div className="text-gray-400 text-center py-12">Loading...</div>
+            <SkeletonGrid />
           ) : plans.length === 0 ? (
-            <div className="rounded-xl border border-gray-800 p-12 text-center" style={{ backgroundColor: '#1e1e30' }}>
-              <div className="text-4xl mb-3">📋</div>
-              <p className="text-gray-400">No practice plans yet. Create one above!</p>
+            <div style={{ ...glassCard, padding: '48px', textAlign: 'center', ...fadeIn(0.15) }}>
+              <div style={{ fontSize: '40px', marginBottom: '12px', opacity: 0.6 }}>&#128203;</div>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>No practice plans yet. Create one above!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {plans.map(plan => (
-                <div key={plan.id} className="rounded-xl border border-gray-800 p-5 hover:border-blue-600 transition-colors" style={{ backgroundColor: '#1e1e30' }}>
-                  <h3 className="font-black text-white text-lg mb-1 truncate">{plan.title}</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              {plans.map((plan, i) => (
+                <div
+                  key={plan.id}
+                  className="plan-card"
+                  style={{ ...glassCard, padding: '20px', ...fadeIn(0.1 + i * 0.04) }}
+                >
+                  <h3 style={{
+                    fontWeight: 800,
+                    color: '#fff',
+                    fontSize: '17px',
+                    marginBottom: '6px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {plan.title}
+                  </h3>
                   {plan.plan_date && (
-                    <p className="text-sm text-gray-400 mb-1">
-                      📆 {new Date(plan.plan_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>
+                      {new Date(plan.plan_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 mb-4">{plan.block_count} block{plan.block_count !== 1 ? 's' : ''}</p>
-                  <div className="flex gap-2 flex-wrap">
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', marginBottom: '16px' }}>
+                    {plan.block_count} block{plan.block_count !== 1 ? 's' : ''}
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button
                       onClick={() => router.push(`/trainer/practice-plans/${plan.id}`)}
-                      className="text-xs px-3 py-1.5 rounded font-medium text-white hover:opacity-90"
-                      style={{ backgroundColor: '#2563eb' }}
+                      className="action-btn"
+                      style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))', color: '#fff' }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => { setShareModal({ planId: plan.id }); setShareMsg(''); setShareTeamId(''); }}
-                      className="text-xs px-3 py-1.5 rounded font-medium border hover:opacity-80"
-                      style={{ borderColor: '#4ade80', color: '#4ade80' }}
+                      className="action-btn"
+                      style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}
                     >
                       Share
                     </button>
                     <button
                       onClick={() => handleDelete(plan.id)}
-                      className="text-xs px-3 py-1.5 rounded font-medium border hover:opacity-80"
-                      style={{ borderColor: '#ef4444', color: '#ef4444' }}
+                      className="action-btn"
+                      style={{ background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.7)', border: '1px solid rgba(239,68,68,0.15)' }}
                     >
                       Delete
                     </button>
@@ -243,50 +445,64 @@ export default function PracticePlansPage() {
         </>
       )}
 
+      {/* Templates Tab */}
       {tab === 'templates' && (
         <>
-          <div className="flex justify-end mb-4">
+          <div style={{ ...fadeIn(0.1), display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
             <button
               onClick={() => setShowTplCreate(!showTplCreate)}
-              className="px-4 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90"
-              style={{ backgroundColor: '#2563eb' }}
+              className="gradient-btn"
+              style={gradientBtn}
             >
               + New Template
             </button>
           </div>
 
+          {/* Create Template Form */}
           {showTplCreate && (
-            <form onSubmit={handleTplCreate} className="rounded-xl border border-gray-700 p-5 mb-6" style={{ backgroundColor: '#1e1e30' }}>
-              <h2 className="font-bold text-white mb-4">Create Template</h2>
-              <div className="space-y-3">
+            <form
+              onSubmit={handleTplCreate}
+              style={{ ...glassCard, padding: '24px', marginBottom: '24px', ...fadeIn(0.12) }}
+            >
+              <h2 style={{ fontWeight: 700, color: '#fff', marginBottom: '16px', fontSize: '16px' }}>Create Template</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <input
                   type="text"
                   placeholder="Template name *"
                   value={tplForm.title}
                   onChange={e => setTplForm({ ...tplForm, title: e.target.value })}
                   required
-                  className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  className="glass-input"
+                  style={inputBase}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-400 mb-1 block">Type</label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ ...sectionHeader, display: 'block', marginBottom: '6px', fontSize: '11px' }}>Type</label>
                     <select
                       value={tplForm.template_type}
                       onChange={e => setTplForm({ ...tplForm, template_type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-700 bg-transparent text-white focus:outline-none focus:border-blue-500"
+                      className="glass-input"
+                      style={{ ...inputBase }}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
                     >
-                      <option value="block">Block (single drill)</option>
-                      <option value="practice">Full Practice</option>
+                      <option value="block" style={{ background: '#1a1a2e' }}>Block (single drill)</option>
+                      <option value="practice" style={{ background: '#1a1a2e' }}>Full Practice</option>
                     </select>
                   </div>
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-400 mb-1 block">Focus area</label>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ ...sectionHeader, display: 'block', marginBottom: '6px', fontSize: '11px' }}>Focus Area</label>
                     <input
                       type="text"
                       placeholder="e.g. Warm-up, Defense"
                       value={tplForm.focus_area}
                       onChange={e => setTplForm({ ...tplForm, focus_area: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                      className="glass-input"
+                      style={inputBase}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
                     />
                   </div>
                 </div>
@@ -295,22 +511,21 @@ export default function PracticePlansPage() {
                   value={tplForm.notes}
                   onChange={e => setTplForm({ ...tplForm, notes: e.target.value })}
                   rows={2}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-transparent text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                  className="glass-input"
+                  style={{ ...inputBase, resize: 'none' }}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
-                <div className="flex gap-3">
+                <div style={{ display: 'flex', gap: '12px', paddingTop: '4px' }}>
                   <button
                     type="submit"
                     disabled={tplCreating}
-                    className="px-5 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90 disabled:opacity-50"
-                    style={{ backgroundColor: '#2563eb' }}
+                    className="gradient-btn"
+                    style={{ ...gradientBtn, opacity: tplCreating ? 0.5 : 1 }}
                   >
                     {tplCreating ? 'Creating...' : 'Create Template'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTplCreate(false)}
-                    className="px-5 py-2 rounded-lg font-bold text-gray-400 text-sm hover:text-white"
-                  >
+                  <button type="button" onClick={() => setShowTplCreate(false)} className="cancel-btn">
                     Cancel
                   </button>
                 </div>
@@ -318,44 +533,69 @@ export default function PracticePlansPage() {
             </form>
           )}
 
+          {/* Templates List */}
           {loading ? (
-            <div className="text-gray-400 text-center py-12">Loading...</div>
+            <SkeletonGrid />
           ) : templates.length === 0 ? (
-            <div className="rounded-xl border border-gray-800 p-12 text-center" style={{ backgroundColor: '#1e1e30' }}>
-              <div className="text-4xl mb-3">📝</div>
-              <p className="text-gray-400 mb-1">No templates yet.</p>
-              <p className="text-xs text-gray-500">Create block or full-practice templates to reuse in your plans.</p>
+            <div style={{ ...glassCard, padding: '48px', textAlign: 'center', ...fadeIn(0.15) }}>
+              <div style={{ fontSize: '40px', marginBottom: '12px', opacity: 0.6 }}>&#128221;</div>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', marginBottom: '4px' }}>No templates yet.</p>
+              <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '13px' }}>Create block or full-practice templates to reuse in your plans.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {templates.map(tpl => (
-                <div key={tpl.id} className="rounded-xl border border-gray-800 p-5 hover:border-purple-600 transition-colors" style={{ backgroundColor: '#1e1e30' }}>
-                  <div className="flex items-start justify-between mb-1">
-                    <h3 className="font-black text-white text-lg truncate flex-1">{tpl.title}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${
-                      tpl.template_type === 'practice'
-                        ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30'
-                        : 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
-                    }`}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              {templates.map((tpl, i) => (
+                <div
+                  key={tpl.id}
+                  className="tpl-card"
+                  style={{ ...glassCard, padding: '20px', ...fadeIn(0.1 + i * 0.04) }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <h3 style={{
+                      fontWeight: 800,
+                      color: '#fff',
+                      fontSize: '17px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                    }}>
+                      {tpl.title}
+                    </h3>
+                    <span style={{
+                      fontSize: '11px',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontWeight: 600,
+                      marginLeft: '8px',
+                      flexShrink: 0,
+                      background: tpl.template_type === 'practice'
+                        ? 'rgba(168,85,247,0.1)'
+                        : 'rgba(var(--primary-rgb),0.1)',
+                      color: tpl.template_type === 'practice' ? '#c084fc' : 'var(--primary-light)',
+                      border: `1px solid ${tpl.template_type === 'practice' ? 'rgba(168,85,247,0.2)' : 'rgba(var(--primary-rgb),0.2)'}`,
+                    }}>
                       {tpl.template_type === 'practice' ? 'Full Practice' : 'Block'}
                     </span>
                   </div>
                   {tpl.focus_area && (
-                    <p className="text-sm text-gray-400 mb-1">{tpl.focus_area}</p>
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>{tpl.focus_area}</p>
                   )}
-                  <p className="text-xs text-gray-500 mb-4">{tpl.block_count} block{tpl.block_count !== 1 ? 's' : ''}</p>
-                  <div className="flex gap-2 flex-wrap">
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', marginBottom: '16px' }}>
+                    {tpl.block_count} block{tpl.block_count !== 1 ? 's' : ''}
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button
                       onClick={() => router.push(`/trainer/practice-plans/templates/${tpl.id}`)}
-                      className="text-xs px-3 py-1.5 rounded font-medium text-white hover:opacity-90"
-                      style={{ backgroundColor: '#2563eb' }}
+                      className="action-btn"
+                      style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))', color: '#fff' }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleTplDelete(tpl.id)}
-                      className="text-xs px-3 py-1.5 rounded font-medium border hover:opacity-80"
-                      style={{ borderColor: '#ef4444', color: '#ef4444' }}
+                      className="action-btn"
+                      style={{ background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.7)', border: '1px solid rgba(239,68,68,0.15)' }}
                     >
                       Delete
                     </button>
@@ -369,34 +609,89 @@ export default function PracticePlansPage() {
 
       {/* Share Modal */}
       {shareModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-          <div className="w-full max-w-sm rounded-2xl border border-gray-700 p-6" style={{ backgroundColor: '#1e1e30' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-black text-white">Share Practice Plan</h2>
-              <button onClick={() => setShareModal(null)} className="text-gray-400 hover:text-white text-xl">×</button>
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShareModal(null); }}
+        >
+          <div
+            className="modal-content"
+            style={{
+              ...glassCard,
+              width: '100%',
+              maxWidth: '400px',
+              padding: '28px',
+              background: 'rgba(20,20,35,0.95)',
+              backdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h2 style={{ fontWeight: 800, color: '#fff', fontSize: '18px' }}>Share Practice Plan</h2>
+              <button
+                onClick={() => setShareModal(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.4)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '10px',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+              >
+                &times;
+              </button>
             </div>
-            <form onSubmit={handleShare} className="space-y-4">
+            <form onSubmit={handleShare} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Send to team (or all teams)</label>
+                <label style={{ ...sectionHeader, display: 'block', marginBottom: '8px', fontSize: '11px' }}>Send to team (or all teams)</label>
                 <select
                   value={shareTeamId}
                   onChange={e => setShareTeamId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-700 bg-transparent text-white focus:outline-none focus:border-blue-500"
+                  className="glass-input"
+                  style={inputBase}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 >
-                  <option value="">All my players</option>
-                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  <option value="" style={{ background: '#1a1a2e' }}>All my players</option>
+                  {teams.map(t => <option key={t.id} value={t.id} style={{ background: '#1a1a2e' }}>{t.name}</option>)}
                 </select>
               </div>
               <button
                 type="submit"
                 disabled={sharing}
-                className="w-full py-2 rounded-lg font-bold text-white text-sm hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: '#2563eb' }}
+                className="gradient-btn"
+                style={{ ...gradientBtn, width: '100%', opacity: sharing ? 0.5 : 1 }}
               >
                 {sharing ? 'Sending...' : 'Send as DM'}
               </button>
               {shareMsg && (
-                <div className={`text-sm px-3 py-2 rounded ${shareMsg.includes('Sent') ? 'text-green-400' : 'text-red-400'}`}>
+                <div style={{
+                  fontSize: '14px',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: shareMsg.includes('Sent') ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)',
+                  border: `1px solid ${shareMsg.includes('Sent') ? 'rgba(74,222,128,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                  color: shareMsg.includes('Sent') ? '#4ade80' : '#ef4444',
+                }}>
                   {shareMsg}
                 </div>
               )}

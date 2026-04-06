@@ -4,6 +4,64 @@ import { apiFetch } from '../../lib/api';
 
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
 
+const glassCard = {
+  background: 'rgba(255,255,255,0.03)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  border: '1px solid rgba(255,255,255,0.06)',
+  borderRadius: '20px',
+};
+
+const inputStyle = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '12px',
+  color: '#fff',
+  outline: 'none',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
+};
+
+const sectionHeader = {
+  fontSize: '13px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  color: 'rgba(255,255,255,0.35)',
+  fontWeight: 600,
+};
+
+const gradientBtn = {
+  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+  border: 'none',
+  borderRadius: '12px',
+  color: '#fff',
+  fontWeight: 700,
+  cursor: 'pointer',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+};
+
+function SkeletonCard() {
+  return (
+    <div style={{ ...glassCard, padding: '16px', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', marginBottom: '12px' }} />
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{ height: '36px', borderRadius: '8px', background: 'rgba(255,255,255,0.04)', marginBottom: '8px' }} />
+      ))}
+      <style jsx>{`
+        div { position: relative; overflow: hidden; }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)',
+        animation: 'shimmer 1.8s ease-in-out infinite',
+      }} />
+    </div>
+  );
+}
+
 export default function DepthChartPage() {
   const [teams, setTeams] = useState([]);
   const [selectedTeamId, setSelectedTeamId] = useState('');
@@ -13,8 +71,9 @@ export default function DepthChartPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [addingPos, setAddingPos] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { loadTeams(); }, []);
+  useEffect(() => { setMounted(true); loadTeams(); }, []);
   useEffect(() => { if (selectedTeamId) loadChartAndMembers(); }, [selectedTeamId]);
 
   async function loadTeams() {
@@ -43,10 +102,6 @@ export default function DepthChartPage() {
 
   function getAssignedUserIds() {
     return new Set(Object.values(chart).flat().map(e => e.user_id));
-  }
-
-  function getMemberById(userId) {
-    return members.find(m => m.id === userId || m.user_id === userId);
   }
 
   function addPlayerToPosition(pos, userId) {
@@ -110,15 +165,126 @@ export default function DepthChartPage() {
     return !chart[pos]?.some(e => e.user_id === uid);
   });
 
+  const fadeIn = (delay = 0) => ({
+    opacity: mounted ? 1 : 0,
+    transform: mounted ? 'translateY(0)' : 'translateY(16px)',
+    transition: `opacity 0.5s ease ${delay}s, transform 0.5s ease ${delay}s`,
+  });
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-2xl font-black text-white">Depth Chart</h1>
-        <div className="flex items-center gap-3 flex-wrap">
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .glass-input:focus {
+          border-color: rgba(var(--primary-rgb), 0.4) !important;
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+        .glass-select {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px;
+          color: #fff;
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .glass-select:focus {
+          border-color: rgba(var(--primary-rgb), 0.4);
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+        .glass-select option {
+          background: #1a1a2e;
+          color: #fff;
+        }
+        .save-btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.3);
+        }
+        .pos-card {
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .pos-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .player-row {
+          transition: background 0.15s;
+        }
+        .player-row:hover {
+          background: rgba(var(--primary-rgb), 0.08) !important;
+        }
+        .move-btn {
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: none;
+          background: rgba(255,255,255,0.04);
+          color: rgba(255,255,255,0.4);
+          cursor: pointer;
+          font-size: 11px;
+          transition: all 0.15s;
+        }
+        .move-btn:hover:not(:disabled) {
+          background: rgba(var(--primary-rgb), 0.15);
+          color: var(--primary);
+        }
+        .move-btn:disabled {
+          opacity: 0.2;
+          cursor: not-allowed;
+        }
+        .remove-btn {
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: none;
+          background: transparent;
+          color: rgba(255,255,255,0.25);
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.15s;
+        }
+        .remove-btn:hover {
+          background: rgba(239,68,68,0.15);
+          color: #ef4444;
+        }
+        .add-btn {
+          width: 100%;
+          padding: 8px;
+          border: 1px dashed rgba(255,255,255,0.08);
+          border-radius: 10px;
+          background: transparent;
+          color: rgba(255,255,255,0.3);
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .add-btn:hover {
+          border-color: rgba(var(--primary-rgb), 0.3);
+          color: var(--primary);
+          background: rgba(var(--primary-rgb), 0.04);
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ ...fadeIn(0), display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <p style={sectionHeader}>Team Roster</p>
+          <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#fff', margin: '4px 0 0' }}>Depth Chart</h1>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <select
             value={selectedTeamId}
             onChange={e => setSelectedTeamId(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white text-sm focus:outline-none focus:border-blue-500"
+            className="glass-select"
+            style={{ padding: '10px 14px', fontSize: '14px' }}
           >
             {teams.length === 0 && <option value="">No teams</option>}
             {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -126,53 +292,134 @@ export default function DepthChartPage() {
           <button
             onClick={saveChart}
             disabled={saving || !selectedTeamId}
-            className="px-4 py-2 rounded-lg font-bold text-white text-sm hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: '#2563eb' }}
+            className="save-btn"
+            style={{ ...gradientBtn, padding: '10px 20px', fontSize: '14px', opacity: (saving || !selectedTeamId) ? 0.5 : 1 }}
           >
             {saving ? 'Saving...' : 'Save Chart'}
           </button>
         </div>
       </div>
 
+      {/* Status Message */}
       {msg && (
-        <div className={`mb-4 px-4 py-2 rounded-lg text-sm ${msg.includes('saved') ? 'text-green-400 bg-green-900/20 border border-green-800' : 'text-red-400 bg-red-900/20 border border-red-800'}`}>
+        <div style={{
+          marginBottom: '16px', padding: '12px 16px', borderRadius: '12px', fontSize: '14px',
+          background: msg.includes('saved') ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)',
+          border: `1px solid ${msg.includes('saved') ? 'rgba(74,222,128,0.2)' : 'rgba(239,68,68,0.2)'}`,
+          color: msg.includes('saved') ? '#4ade80' : '#ef4444',
+          ...fadeIn(0),
+        }}>
           {msg}
         </div>
       )}
 
+      {/* Loading Skeletons */}
       {loading ? (
-        <div className="text-gray-400 text-center py-12">Loading...</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+          {POSITIONS.map((pos, i) => (
+            <div key={pos} style={fadeIn(0.05 * i)}>
+              <SkeletonCard />
+            </div>
+          ))}
+        </div>
       ) : !selectedTeamId ? (
-        <div className="text-gray-400 text-center py-12">Select a team to manage the depth chart.</div>
+        <div style={{ ...glassCard, padding: '48px', textAlign: 'center', ...fadeIn(0.1) }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px', opacity: 0.6 }}>&#127936;</div>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Select a team to manage the depth chart.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {POSITIONS.map(pos => (
-            <div key={pos} className="rounded-xl border border-gray-800 overflow-hidden" style={{ backgroundColor: '#1e1e30' }}>
-              <div className="px-3 py-2 border-b border-gray-800 font-black text-center text-sm" style={{ color: '#2563eb' }}>
-                {pos}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+          {POSITIONS.map((pos, posIdx) => (
+            <div
+              key={pos}
+              className="pos-card"
+              style={{
+                ...glassCard,
+                overflow: 'hidden',
+                ...fadeIn(0.06 * posIdx),
+              }}
+            >
+              {/* Position Header */}
+              <div style={{
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                textAlign: 'center',
+                background: 'rgba(var(--primary-rgb), 0.04)',
+              }}>
+                <span style={{
+                  fontSize: '16px',
+                  fontWeight: 900,
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '0.04em',
+                }}>
+                  {pos}
+                </span>
               </div>
-              <div className="p-2 space-y-2">
+
+              {/* Players List */}
+              <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {(chart[pos] || []).map((entry, idx) => (
-                  <div key={entry.user_id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}>
-                    <span className="text-xs font-black text-gray-500 w-4 flex-shrink-0">{idx + 1}</span>
-                    <span className="text-sm text-white flex-1 truncate">
+                  <div
+                    key={entry.user_id}
+                    className="player-row"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 10px',
+                      borderRadius: '10px',
+                      background: 'rgba(var(--primary-rgb), 0.04)',
+                    }}
+                  >
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      color: 'rgba(255,255,255,0.2)',
+                      width: '16px',
+                      flexShrink: 0,
+                      textAlign: 'center',
+                    }}>
+                      {idx + 1}
+                    </span>
+                    <span style={{
+                      fontSize: '13px',
+                      color: '#fff',
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 500,
+                    }}>
                       {entry.first_name || 'Player'} {entry.last_name || ''}
                     </span>
-                    <div className="flex flex-col gap-0.5 flex-shrink-0">
-                      <button onClick={() => moveEntry(pos, idx, -1)} disabled={idx === 0} className="text-gray-500 hover:text-white disabled:opacity-30 text-xs leading-none">↑</button>
-                      <button onClick={() => moveEntry(pos, idx, 1)} disabled={idx === (chart[pos]?.length || 0) - 1} className="text-gray-500 hover:text-white disabled:opacity-30 text-xs leading-none">↓</button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                      <button onClick={() => moveEntry(pos, idx, -1)} disabled={idx === 0} className="move-btn">&uarr;</button>
+                      <button onClick={() => moveEntry(pos, idx, 1)} disabled={idx === (chart[pos]?.length || 0) - 1} className="move-btn">&darr;</button>
                     </div>
-                    <button onClick={() => removeEntry(pos, entry.user_id)} className="text-gray-600 hover:text-red-400 text-xs flex-shrink-0">×</button>
+                    <button onClick={() => removeEntry(pos, entry.user_id)} className="remove-btn">&times;</button>
                   </div>
                 ))}
+
                 {(chart[pos] || []).length === 0 && (
-                  <div className="text-center text-gray-600 text-xs py-2">Empty</div>
+                  <div style={{
+                    textAlign: 'center',
+                    color: 'rgba(255,255,255,0.15)',
+                    fontSize: '12px',
+                    padding: '16px 0',
+                    fontStyle: 'italic',
+                  }}>
+                    No players assigned
+                  </div>
                 )}
+
                 {addingPos === pos ? (
-                  <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <select
                       onChange={e => { if (e.target.value) addPlayerToPosition(pos, e.target.value); }}
-                      className="w-full px-2 py-1 rounded border border-gray-700 bg-gray-900 text-white text-xs focus:outline-none"
+                      className="glass-select glass-input"
+                      style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
                       defaultValue=""
                     >
                       <option value="" disabled>Select player</option>
@@ -182,14 +429,23 @@ export default function DepthChartPage() {
                         </option>
                       ))}
                     </select>
-                    <button onClick={() => setAddingPos(null)} className="text-xs text-gray-500 hover:text-white mt-1 w-full text-center">Cancel</button>
+                    <button
+                      onClick={() => setAddingPos(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'rgba(255,255,255,0.3)',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        padding: '4px',
+                      }}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setAddingPos(pos)}
-                    className="w-full text-xs text-gray-500 hover:text-blue-400 py-1 border border-dashed border-gray-700 rounded hover:border-blue-600 transition-colors"
-                  >
-                    + Add
+                  <button onClick={() => setAddingPos(pos)} className="add-btn">
+                    + Add Player
                   </button>
                 )}
               </div>

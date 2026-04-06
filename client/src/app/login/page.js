@@ -27,39 +27,58 @@ export default function LoginPage() {
     setMounted(true);
   }, []);
 
-  // Particle animation on decorative panel
+  // Enhanced particle animation with connecting lines
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let animId;
     const particles = [];
+    let w, h;
     const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      w = canvas.offsetWidth;
+      h = canvas.offsetHeight;
+      canvas.width = w * window.devicePixelRatio;
+      canvas.height = h * window.devicePixelRatio;
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     };
     resize();
     window.addEventListener('resize', resize);
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
       particles.push({
-        x: Math.random() * canvas.offsetWidth,
-        y: Math.random() * canvas.offsetHeight,
+        x: Math.random() * (w || 800),
+        y: Math.random() * (h || 600),
         r: Math.random() * 2 + 0.5,
-        dx: (Math.random() - 0.5) * 0.3,
-        dy: (Math.random() - 0.5) * 0.3,
-        o: Math.random() * 0.4 + 0.1,
+        dx: (Math.random() - 0.5) * 0.4,
+        dy: (Math.random() - 0.5) * 0.4,
+        o: Math.random() * 0.5 + 0.1,
       });
     }
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+      ctx.clearRect(0, 0, w, h);
+      // Draw connecting lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(var(--primary-rgb),${0.06 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
       particles.forEach((p) => {
         p.x += p.dx;
         p.y += p.dy;
-        if (p.x < 0) p.x = canvas.offsetWidth;
-        if (p.x > canvas.offsetWidth) p.x = 0;
-        if (p.y < 0) p.y = canvas.offsetHeight;
-        if (p.y > canvas.offsetHeight) p.y = 0;
+        if (p.x < 0) p.x = w;
+        if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h;
+        if (p.y > h) p.y = 0;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(var(--primary-rgb),${p.o})`;
@@ -125,18 +144,30 @@ export default function LoginPage() {
       from { opacity: 0; transform: translateY(24px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes staggerIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     @keyframes pulseGlow {
       0%, 100% { box-shadow: 0 0 20px rgba(var(--primary-rgb),0.15); }
-      50% { box-shadow: 0 0 40px rgba(var(--primary-rgb),0.25); }
+      50% { box-shadow: 0 0 40px rgba(var(--primary-rgb),0.3); }
     }
     @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes borderPulse {
+      0%, 100% { border-color: rgba(255,255,255,0.07); }
+      50% { border-color: rgba(255,255,255,0.12); }
+    }
+    @keyframes glowOrb {
+      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
     }
   `;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#08081a' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg, #08081a)' }}>
       <style dangerouslySetInnerHTML={{ __html: keyframes }} />
 
       {/* Noise texture overlay */}
@@ -149,8 +180,11 @@ export default function LoginPage() {
       {/* Nav */}
       <nav style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '16px 24px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
         position: 'relative', zIndex: 20,
+        background: 'rgba(8,8,26,0.6)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}>
           <span style={{ fontSize: '20px', fontWeight: 900, color: 'var(--primary)' }}>ATHLETE</span>
@@ -159,9 +193,22 @@ export default function LoginPage() {
         <Link href="/register" style={{
           fontSize: '14px', fontWeight: 600, color: 'var(--primary)',
           textDecoration: 'none', padding: '8px 20px', borderRadius: '10px',
-          border: '1px solid rgba(var(--primary-rgb),0.3)', background: 'rgba(var(--primary-rgb),0.05)',
-          transition: 'all 0.2s',
-        }}>
+          border: '1px solid rgba(var(--primary-rgb),0.3)',
+          background: 'rgba(var(--primary-rgb),0.05)',
+          backdropFilter: 'blur(8px)',
+          transition: 'all 0.3s ease',
+        }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.12)';
+            e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.5)';
+            e.currentTarget.style.boxShadow = '0 0 20px rgba(var(--primary-rgb),0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.05)';
+            e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.3)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
           Create Account
         </Link>
       </nav>
@@ -209,10 +256,11 @@ export default function LoginPage() {
             <div style={{ position: 'relative', height: '260px' }}>
               <div style={{
                 position: 'absolute', top: '0', left: '0',
-                background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)',
+                background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
                 border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px',
                 padding: '20px 24px', minWidth: '200px',
                 animation: 'floatCard1 6s ease-in-out infinite',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)',
               }}>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Session Logged</div>
                 <div style={{ fontSize: '28px', fontWeight: 800, color: '#fff' }}>Upper Body</div>
@@ -221,10 +269,11 @@ export default function LoginPage() {
 
               <div style={{
                 position: 'absolute', top: '80px', right: '0',
-                background: 'rgba(var(--primary-rgb),0.08)', backdropFilter: 'blur(20px)',
+                background: 'rgba(var(--primary-rgb),0.06)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
                 border: '1px solid rgba(var(--primary-rgb),0.15)', borderRadius: '16px',
                 padding: '20px 24px', minWidth: '180px',
                 animation: 'floatCard2 7s ease-in-out infinite',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(var(--primary-rgb),0.1)',
               }}>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Goal Progress</div>
                 <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--primary)' }}>87%</div>
@@ -233,10 +282,11 @@ export default function LoginPage() {
 
               <div style={{
                 position: 'absolute', bottom: '0', left: '40px',
-                background: 'rgba(59,130,246,0.06)', backdropFilter: 'blur(20px)',
+                background: 'rgba(59,130,246,0.04)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
                 border: '1px solid rgba(59,130,246,0.12)', borderRadius: '16px',
                 padding: '16px 20px', minWidth: '220px',
                 animation: 'floatCard3 8s ease-in-out infinite',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(59,130,246,0.08)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -257,31 +307,39 @@ export default function LoginPage() {
           flex: '1 1 50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '40px 24px', position: 'relative',
         }}>
-          {/* Subtle ambient glow behind form */}
+          {/* Ambient glow orb behind form */}
           <div style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            position: 'absolute', top: '50%', left: '50%',
             width: '500px', height: '500px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(var(--primary-rgb),0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(var(--primary-rgb),0.06) 0%, transparent 70%)',
             pointerEvents: 'none',
+            animation: 'glowOrb 6s ease-in-out infinite',
           }} />
 
           <div style={{
             width: '100%', maxWidth: '420px', position: 'relative',
             opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(24px)',
-            transition: 'opacity 0.6s ease, transform 0.6s ease',
+            transition: 'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)',
           }}>
             {/* Glass card */}
             <div style={{
-              background: 'rgba(255,255,255,0.03)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)',
               backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
-              border: '1px solid rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '24px', padding: '40px',
-              boxShadow: '0 32px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+              boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05) inset, 0 1px 0 rgba(255,255,255,0.06) inset',
+              animation: 'borderPulse 4s ease-in-out infinite',
             }}>
-              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{
+                textAlign: 'center', marginBottom: '32px',
+                animation: mounted ? 'staggerIn 0.5s ease 0.1s both' : 'none',
+              }}>
                 <h1 style={{
                   fontSize: '30px', fontWeight: 900, color: '#fff', marginBottom: '8px',
                   letterSpacing: '-0.5px',
+                  background: 'linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}>Welcome Back</h1>
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
                   Sign in to your Athlete Edge account
@@ -290,55 +348,74 @@ export default function LoginPage() {
 
               {error && (
                 <div style={{
-                  marginBottom: '24px', padding: '12px 16px', borderRadius: '12px', fontSize: '14px',
-                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                  color: '#f87171', backdropFilter: 'blur(10px)',
+                  marginBottom: '24px', padding: '14px 16px', borderRadius: '14px', fontSize: '14px',
+                  background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+                  color: '#f87171',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                   animation: 'fadeInUp 0.3s ease',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  boxShadow: '0 4px 16px rgba(239,68,68,0.08)',
                 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
                   {error}
                 </div>
               )}
 
               {/* Google OAuth */}
-              <a
-                href={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000'}/api/auth/google`}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                  width: '100%', padding: '12px', borderRadius: '14px',
-                  fontWeight: 600, color: '#fff', fontSize: '14px',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-                  textDecoration: 'none', transition: 'all 0.2s', cursor: 'pointer',
-                  backdropFilter: 'blur(10px)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-                Continue with Google
-              </a>
+              <div style={{ animation: mounted ? 'staggerIn 0.5s ease 0.15s both' : 'none' }}>
+                <a
+                  href={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000'}/api/auth/google`}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+                    width: '100%', padding: '13px', borderRadius: '14px',
+                    fontWeight: 600, color: '#fff', fontSize: '14px',
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                    textDecoration: 'none', transition: 'all 0.3s ease', cursor: 'pointer',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04)',
+                    boxSizing: 'border-box',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04)';
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+                  Continue with Google
+                </a>
+              </div>
 
               {/* Divider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', fontWeight: 500 }}>or</span>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0',
+                animation: mounted ? 'staggerIn 0.5s ease 0.2s both' : 'none',
+              }}>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', fontWeight: 500, letterSpacing: '0.5px' }}>or</span>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
               </div>
 
               <form onSubmit={handleSubmit}>
                 {/* Email field */}
-                <div style={{ marginBottom: '20px', position: 'relative' }}>
+                <div style={{
+                  marginBottom: '20px', position: 'relative',
+                  animation: mounted ? 'staggerIn 0.5s ease 0.25s both' : 'none',
+                }}>
                   <label style={{
                     display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px',
                     color: emailFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
-                    transition: 'color 0.2s',
+                    transition: 'color 0.3s ease',
+                    letterSpacing: '0.2px',
                   }}>Email</label>
                   <input
                     type="email"
@@ -349,29 +426,38 @@ export default function LoginPage() {
                     onFocus={() => setEmailFocused(true)}
                     onBlur={() => setEmailFocused(false)}
                     style={{
-                      width: '100%', padding: '12px 16px', borderRadius: '12px',
+                      width: '100%', padding: '13px 16px', borderRadius: '12px',
                       color: '#fff', fontSize: '14px', outline: 'none',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: emailFocused ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
-                      boxShadow: emailFocused ? '0 0 0 3px rgba(var(--primary-rgb),0.12), 0 0 20px rgba(var(--primary-rgb),0.05)' : 'none',
-                      transition: 'all 0.25s ease',
+                      background: emailFocused ? 'rgba(var(--primary-rgb),0.04)' : 'rgba(255,255,255,0.04)',
+                      border: emailFocused ? '1px solid rgba(var(--primary-rgb),0.5)' : '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: emailFocused
+                        ? '0 0 0 3px rgba(var(--primary-rgb),0.1), 0 0 24px rgba(var(--primary-rgb),0.06), inset 0 1px 0 rgba(var(--primary-rgb),0.08)'
+                        : 'inset 0 1px 0 rgba(255,255,255,0.03)',
+                      transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
                       boxSizing: 'border-box',
                     }}
                   />
                 </div>
 
                 {/* Password field */}
-                <div style={{ marginBottom: '24px', position: 'relative' }}>
+                <div style={{
+                  marginBottom: '24px', position: 'relative',
+                  animation: mounted ? 'staggerIn 0.5s ease 0.3s both' : 'none',
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <label style={{
                       fontSize: '13px', fontWeight: 600,
                       color: passwordFocused ? 'var(--primary)' : 'rgba(255,255,255,0.45)',
-                      transition: 'color 0.2s',
+                      transition: 'color 0.3s ease',
+                      letterSpacing: '0.2px',
                     }}>Password</label>
                     <Link href="/forgot-password" style={{
                       fontSize: '12px', fontWeight: 600, color: 'var(--primary)',
-                      textDecoration: 'none',
-                    }}>
+                      textDecoration: 'none', transition: 'opacity 0.2s',
+                    }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                    >
                       Forgot?
                     </Link>
                   </div>
@@ -385,12 +471,14 @@ export default function LoginPage() {
                       onFocus={() => setPasswordFocused(true)}
                       onBlur={() => setPasswordFocused(false)}
                       style={{
-                        width: '100%', padding: '12px 48px 12px 16px', borderRadius: '12px',
+                        width: '100%', padding: '13px 48px 13px 16px', borderRadius: '12px',
                         color: '#fff', fontSize: '14px', outline: 'none',
-                        background: 'rgba(255,255,255,0.04)',
-                        border: passwordFocused ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.08)',
-                        boxShadow: passwordFocused ? '0 0 0 3px rgba(var(--primary-rgb),0.12), 0 0 20px rgba(var(--primary-rgb),0.05)' : 'none',
-                        transition: 'all 0.25s ease',
+                        background: passwordFocused ? 'rgba(var(--primary-rgb),0.04)' : 'rgba(255,255,255,0.04)',
+                        border: passwordFocused ? '1px solid rgba(var(--primary-rgb),0.5)' : '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: passwordFocused
+                          ? '0 0 0 3px rgba(var(--primary-rgb),0.1), 0 0 24px rgba(var(--primary-rgb),0.06), inset 0 1px 0 rgba(var(--primary-rgb),0.08)'
+                          : 'inset 0 1px 0 rgba(255,255,255,0.03)',
+                        transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
                         boxSizing: 'border-box',
                       }}
                     />
@@ -401,7 +489,10 @@ export default function LoginPage() {
                         position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
                         background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
                         color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center',
+                        transition: 'color 0.2s',
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)'; }}
                     >
                       {showPassword ? (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -413,36 +504,53 @@ export default function LoginPage() {
                 </div>
 
                 {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: '100%', padding: '14px', borderRadius: '14px',
-                    fontWeight: 700, color: '#fff', fontSize: '15px', border: 'none',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
-                    opacity: loading ? 0.5 : 1,
-                    transition: 'all 0.25s ease',
-                    animation: !loading ? 'pulseGlow 3s ease-in-out infinite' : 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading) {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(var(--primary-rgb),0.4)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '';
-                  }}
-                >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </button>
+                <div style={{ animation: mounted ? 'staggerIn 0.5s ease 0.35s both' : 'none' }}>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      width: '100%', padding: '14px', borderRadius: '14px',
+                      fontWeight: 700, color: '#fff', fontSize: '15px', border: 'none',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      background: loading
+                        ? 'linear-gradient(135deg, var(--primary), var(--primary-light))'
+                        : 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+                      backgroundSize: '200% auto',
+                      opacity: loading ? 0.5 : 1,
+                      transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+                      animation: !loading ? 'pulseGlow 3s ease-in-out infinite, shimmer 3s linear infinite' : 'none',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      letterSpacing: '0.3px',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!loading) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 30px rgba(var(--primary-rgb),0.45), 0 0 60px rgba(var(--primary-rgb),0.1)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '';
+                    }}
+                  >
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </button>
+                </div>
               </form>
 
-              <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>
+              <p style={{
+                textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'rgba(255,255,255,0.3)',
+                animation: mounted ? 'staggerIn 0.5s ease 0.4s both' : 'none',
+              }}>
                 Don&apos;t have an account?{' '}
-                <Link href="/register" style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
+                <Link href="/register" style={{
+                  fontWeight: 600, color: 'var(--primary)', textDecoration: 'none',
+                  transition: 'opacity 0.2s',
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                >
                   Create one
                 </Link>
               </p>
