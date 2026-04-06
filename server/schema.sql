@@ -277,3 +277,10 @@ CREATE INDEX IF NOT EXISTS idx_profile_views_player_id ON profile_views(player_i
 CREATE INDEX IF NOT EXISTS idx_depth_chart_team_id ON depth_chart_entries(team_id);
 CREATE INDEX IF NOT EXISTS idx_media_tags ON media USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_media_analyses_media_id ON media_analyses(media_id);
+
+CREATE TABLE IF NOT EXISTS film_analysis_preferences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  custom_instructions TEXT DEFAULT '',
+  updated_at TIMESTAMP DEFAULT NOW()
+);

@@ -340,12 +340,43 @@ function AnalysisModal({ media, onClose }) {
 
   const [savedAnalyses, setSavedAnalyses] = useState([]);
   const [activeAnalysisId, setActiveAnalysisId] = useState(null);
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsSaved, setPrefsSaved] = useState(false);
 
   useEffect(() => {
     loadFrame();
     loadSavedAnalyses();
+    loadPreferences();
   }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, analysis]);
+
+  async function loadPreferences() {
+    try {
+      const res = await apiFetch('/ai/film-preferences');
+      if (res.ok) {
+        const data = await res.json();
+        setCustomInstructions(data.custom_instructions || '');
+      }
+    } catch {}
+  }
+
+  async function savePreferences() {
+    setPrefsSaving(true);
+    setPrefsSaved(false);
+    try {
+      const res = await apiFetch('/ai/film-preferences', {
+        method: 'PUT',
+        body: JSON.stringify({ custom_instructions: customInstructions }),
+      });
+      if (res.ok) {
+        setPrefsSaved(true);
+        setTimeout(() => setPrefsSaved(false), 2000);
+      }
+    } catch {}
+    setPrefsSaving(false);
+  }
 
   async function loadSavedAnalyses() {
     try {
@@ -806,6 +837,61 @@ function AnalysisModal({ media, onClose }) {
                   >Clear player focus &times;</button>
                 )}
               </div>
+
+              {/* Personalize toggle */}
+              <button onClick={() => setShowPrefs(!showPrefs)}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: 12, fontWeight: 600, fontSize: 13,
+                  color: customInstructions ? 'var(--primary-light)' : 'rgba(255,255,255,0.4)',
+                  background: showPrefs ? 'rgba(var(--primary-rgb),0.1)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${showPrefs ? 'rgba(var(--primary-rgb),0.25)' : 'rgba(255,255,255,0.06)'}`,
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(var(--primary-rgb),0.08)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb),0.2)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = showPrefs ? 'rgba(var(--primary-rgb),0.1)' : 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = showPrefs ? 'rgba(var(--primary-rgb),0.25)' : 'rgba(255,255,255,0.06)'; }}
+              >
+                <span style={{ fontSize: 16 }}>{showPrefs ? '\u25BC' : '\u25B6'}</span>
+                Personalize AI Analysis
+                {customInstructions && <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.6 }}>Active</span>}
+              </button>
+
+              {showPrefs && (
+                <div style={{
+                  padding: 14, borderRadius: 14,
+                  border: '1px solid rgba(var(--primary-rgb),0.15)',
+                  background: 'rgba(var(--primary-rgb),0.04)',
+                }}>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, lineHeight: 1.5 }}>
+                    Tell the AI what to focus on. This applies to all your future analyses.
+                  </p>
+                  <textarea
+                    value={customInstructions}
+                    onChange={e => setCustomInstructions(e.target.value)}
+                    placeholder="e.g., Focus on pick-and-roll defense. Analyze help-side rotations and closeout technique. Pay attention to transition offense and fast break decisions."
+                    maxLength={2000}
+                    rows={4}
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 10,
+                      border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)',
+                      color: '#fff', fontSize: 13, lineHeight: 1.5, resize: 'vertical',
+                      outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+                    }}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>{customInstructions.length}/2000</span>
+                    <button onClick={savePreferences}
+                      disabled={prefsSaving}
+                      style={{
+                        padding: '6px 16px', borderRadius: 8, fontWeight: 700, fontSize: 12,
+                        color: '#fff', background: prefsSaved ? '#4ade80' : 'rgba(var(--primary-rgb),0.8)',
+                        border: 'none', cursor: prefsSaving ? 'not-allowed' : 'pointer',
+                        opacity: prefsSaving ? 0.6 : 1, transition: 'all 0.2s',
+                      }}
+                    >{prefsSaving ? 'Saving...' : prefsSaved ? 'Saved!' : 'Save'}</button>
+                  </div>
+                </div>
+              )}
 
               <button onClick={analyzeFilm} style={{
                 width: '100%', padding: '13px 0', borderRadius: 14, fontWeight: 800, fontSize: 14,

@@ -86,6 +86,37 @@ router.post('/chat', authMiddleware, async (req, res) => {
   }
 });
 
+// ── Film Analysis Preferences ────────────────────────────────────────────────
+
+router.get('/film-preferences', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT custom_instructions FROM film_analysis_preferences WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json({ custom_instructions: result.rows[0]?.custom_instructions || '' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load preferences' });
+  }
+});
+
+router.put('/film-preferences', authMiddleware, async (req, res) => {
+  try {
+    const { custom_instructions } = req.body;
+    await pool.query(
+      `INSERT INTO film_analysis_preferences (user_id, custom_instructions, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET custom_instructions = $2, updated_at = NOW()`,
+      [req.user.id, (custom_instructions || '').substring(0, 2000)]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save preferences' });
+  }
+});
+
 const FILM_ANALYSIS_PROMPT = `You are an elite basketball performance analyst with expertise in biomechanics, game strategy, player development, and film study. You have the analytical eye of a top-tier NBA scout combined with the coaching knowledge of a veteran head coach.
 
 Your job is to provide the most insightful, specific, and actionable film analysis possible. You are not generic — you notice the small details that separate good players from great ones.
@@ -181,6 +212,18 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
       previousAnalyses = prevRes.rows;
     } catch {}
 
+    // Fetch user's personalized analysis preferences
+    let customInstructions = '';
+    try {
+      const prefRes = await pool.query(
+        'SELECT custom_instructions FROM film_analysis_preferences WHERE user_id = $1',
+        [req.user.id]
+      );
+      if (prefRes.rows[0]?.custom_instructions) {
+        customInstructions = prefRes.rows[0].custom_instructions;
+      }
+    } catch {}
+
     // Fetch recent workout data for training context
     let workoutContext = '';
     try {
@@ -220,10 +263,14 @@ router.post('/analyze-film', authMiddleware, async (req, res) => {
       { type: 'text', text: base64_frames.length > 1 ? `[${base64_frames.length} frames extracted at intervals across the video]\n${userText}` : userText },
     ];
 
+    const systemPrompt = customInstructions
+      ? `${FILM_ANALYSIS_PROMPT}\n\n--- PERSONALIZED INSTRUCTIONS (the user has specifically requested you pay extra attention to these areas) ---\n${customInstructions}`
+      : FILM_ANALYSIS_PROMPT;
+
     const response = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 2500,
-      system: FILM_ANALYSIS_PROMPT,
+      system: systemPrompt,
       messages: [{ role: 'user', content: contentItems }],
     });
 
