@@ -28,16 +28,26 @@ router.get('/', authMiddleware, requireRole('trainer'), async (req, res) => {
     }
 
     const result = await pool.query(
-      `(SELECT m.*, u.first_name, u.last_name, u.email as user_email
+      `(SELECT m.*,
+              COALESCE(ap.first_name, tp.first_name) as first_name,
+              COALESCE(ap.last_name, tp.last_name) as last_name,
+              u.email as user_email
         FROM media m
         JOIN team_members tm ON tm.user_id = m.user_id
         JOIN teams t ON t.id = tm.team_id
         JOIN users u ON u.id = m.user_id
+        LEFT JOIN athlete_profiles ap ON ap.user_id = m.user_id
+        LEFT JOIN trainer_profiles tp ON tp.user_id = m.user_id
         WHERE t.trainer_id = $1${searchClause}${tagsClause})
        UNION ALL
-       (SELECT m.*, u.first_name, u.last_name, u.email as user_email
+       (SELECT m.*,
+              COALESCE(ap.first_name, tp.first_name) as first_name,
+              COALESCE(ap.last_name, tp.last_name) as last_name,
+              u.email as user_email
         FROM media m
         JOIN users u ON u.id = m.user_id
+        LEFT JOIN athlete_profiles ap ON ap.user_id = m.user_id
+        LEFT JOIN trainer_profiles tp ON tp.user_id = m.user_id
         WHERE m.user_id = $1${searchClause}${tagsClause})
        ORDER BY created_at DESC`,
       params
