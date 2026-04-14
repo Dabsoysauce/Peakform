@@ -362,7 +362,7 @@ function renderPlayer(obj, isSelected, onMD, showBall=true) {
   if (team==='defense') {
     const s=PLAYER_R-4;
     return (
-      <g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+      <g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
         {isSelected&&<circle cx={x} cy={y} r={PLAYER_R+4} fill="none" stroke={sel} strokeWidth={3} strokeDasharray="4 2"/>}
         <line x1={x-s} y1={y-s} x2={x+s} y2={y+s} stroke={color||'#ef4444'} strokeWidth={2.5} strokeLinecap="round"/>
         <line x1={x+s} y1={y-s} x2={x-s} y2={y+s} stroke={color||'#ef4444'} strokeWidth={2.5} strokeLinecap="round"/>
@@ -374,7 +374,7 @@ function renderPlayer(obj, isSelected, onMD, showBall=true) {
 
   const isBall = team==='ball';
   return (
-    <g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+    <g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
       {isSelected&&<circle cx={x} cy={y} r={PLAYER_R+4} fill="none" stroke={sel} strokeWidth={3} strokeDasharray="4 2"/>}
       <circle cx={x} cy={y} r={PLAYER_R} fill={isBall?'#ffffff':'#ffffff'} stroke={isBall?'#374151':'#333'} strokeWidth={isBall?2.5:2}/>
       {isBall&&<circle cx={x+6} cy={y-6} r={3.5} fill="none" stroke="#374151" strokeWidth={1.5}/>}
@@ -400,7 +400,7 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
 
   if (type==='screen') {
     const a=Math.atan2(y2-y1,x2-x1), p=a+Math.PI/2, bl=18;
-    return (<g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+    return (<g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
       {isSelected&&<line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#3b82f6" strokeWidth={6} opacity={0.3} strokeLinecap="round"/>}
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth={sw} strokeLinecap="round"/>
       <line x1={x2+Math.cos(p)*bl} y1={y2+Math.sin(p)*bl} x2={x2-Math.cos(p)*bl} y2={y2-Math.sin(p)*bl} stroke={col} strokeWidth={3} strokeLinecap="round"/>
@@ -411,7 +411,7 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
   if (type==='handoff') {
     const hx=(x1+x2)/2, hy=(y1+y2)/2;
     const a=Math.atan2(y2-y1,x2-x1), p=a+Math.PI/2, bl=12;
-    return (<g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+    return (<g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
       {isSelected&&<line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#3b82f6" strokeWidth={6} opacity={0.3} strokeLinecap="round"/>}
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth={sw} strokeLinecap="round"/>
       <line x1={hx+Math.cos(p)*bl} y1={hy+Math.sin(p)*bl} x2={hx-Math.cos(p)*bl} y2={hy-Math.sin(p)*bl} stroke={col} strokeWidth={3} strokeLinecap="round"/>
@@ -427,7 +427,7 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
   if (type==='shot') {
     if (isCurved) { pathD=`M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`; afX=mx; afY=my; }
     else { const c=midCP(x1,y1,x2,y2,-40); pathD=`M ${x1} ${y1} Q ${c.x} ${c.y} ${x2} ${y2}`; afX=c.x; afY=c.y; }
-    return (<g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+    return (<g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
       {isSelected&&<path d={pathD} stroke="#3b82f6" strokeWidth={6} fill="none" opacity={0.3}/>}
       <path d={pathD} stroke={col} strokeWidth={sw} fill="none" strokeDasharray="4 4" strokeLinecap="round"/>
       {snapDots}
@@ -449,7 +449,7 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
   const handleY = isCurved ? my : (y1+y2)/2;
 
   return (
-    <g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+    <g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
       {isSelected&&<path d={pathD} stroke="#3b82f6" strokeWidth={6} fill="none" opacity={0.3} strokeLinecap="round"/>}
       <path d={pathD} stroke={col} strokeWidth={sw} fill="none" strokeDasharray={dash} strokeLinecap="round"/>
       {ah&&<polygon points={ah.map(p=>p.join(',')).join(' ')} fill={col}/>}
@@ -464,7 +464,7 @@ function renderArrow(obj, isSelected, onMD, objects, showCP) {
 
 function renderTextObj(obj, isSelected, onMD) {
   const {id,x,y,value,fontSize=14,color='#ffffff'}=obj;
-  return (<g key={id} onMouseDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
+  return (<g key={id} onPointerDown={e=>onMD(e,id)} style={{cursor:'pointer'}}>
     {isSelected&&<rect x={x-4} y={y-fontSize-2} width={(obj.width||80)+8} height={fontSize+8} fill="none" stroke="#3b82f6" strokeWidth={2} strokeDasharray="4 2" rx={3}/>}
     <text x={x} y={y} fill={color} fontSize={fontSize} fontWeight={600} style={{userSelect:'none'}}>{value||'Text'}</text>
   </g>);
@@ -747,6 +747,7 @@ export default function PlaybookPage() {
 
   function handleObjMD(e, id) {
     e.stopPropagation();
+    try { svgRef.current?.setPointerCapture?.(e.pointerId); } catch {}
     if (animPlaying) return;
     const pos = getPos(e);
     const obj = objects.find(o => o.id === id);
@@ -816,6 +817,17 @@ export default function PlaybookPage() {
   }
 
   function handleMouseLeave() { setMousePos(null); setDrawing(null); setDragging(null); setDragCP(null); setSnapPreview(null); }
+
+  // Pointer events unify mouse + touch + pen. Capture keeps events flowing to
+  // the SVG even if the finger drifts outside its bounds mid-drag on iPad.
+  function handlePointerDown(e) {
+    try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch {}
+    handleMouseDown(e);
+  }
+  function handlePointerUp(e) {
+    handleMouseUp(e);
+    try { e.currentTarget.releasePointerCapture?.(e.pointerId); } catch {}
+  }
 
   // ---- Keyboard ----
   useEffect(() => {
@@ -1116,8 +1128,8 @@ export default function PlaybookPage() {
           </div>
 
           {/* SVG Court */}
-          <div className="rounded-2xl overflow-hidden" style={{maxWidth:700, ...glassCard, boxShadow:'0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
-            <svg ref={svgRef} viewBox={`0 0 ${COURT_W} ${courtH}`} className="w-full block" style={{cursor}} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave}>
+          <div className="rounded-2xl overflow-hidden" style={{maxWidth:700, overscrollBehavior:'contain', ...glassCard, boxShadow:'0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
+            <svg ref={svgRef} viewBox={`0 0 ${COURT_W} ${courtH}`} className="w-full block" style={{cursor, touchAction:'none'}} onPointerDown={handlePointerDown} onPointerMove={handleMouseMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onMouseLeave={handleMouseLeave}>
               <CourtSVG courtType={settings.courtType} colors={settings.courtColor} showGrid={settings.showGrid} gridSpacing={settings.gridSpacing} fullCourt={settings.fullCourt}/>
 
               {/* Arrows */}
