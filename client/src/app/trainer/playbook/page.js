@@ -235,6 +235,24 @@ function hitArrow(px,py,objs) {
 
 function hitText(px,py,objs) { return objs.find(o=>o.type==='text'&&px>=o.x-5&&px<=o.x+(o.width||80)+5&&py>=o.y-(o.fontSize||14)-2&&py<=o.y+5); }
 
+// Group players that visually overlap (centers within PLAYER_R) so a stack
+// indicator can be shown for each group with more than one member.
+function getPlayerStacks(players) {
+  const groups = [];
+  const seen = new Set();
+  for (const p of players) {
+    if (seen.has(p.id)) continue;
+    const group = [p];
+    seen.add(p.id);
+    for (const q of players) {
+      if (seen.has(q.id)) continue;
+      if (dist(p.x, p.y, q.x, q.y) <= PLAYER_R) { group.push(q); seen.add(q.id); }
+    }
+    if (group.length > 1) groups.push(group);
+  }
+  return groups;
+}
+
 function hitControlPt(px,py,objs,selId) {
   const o=objs.find(x=>x.id===selId);
   if(!o||!ARROW_SUBTYPES.includes(o.type)) return null;
@@ -679,6 +697,21 @@ export default function PlaybookPage() {
   function updateObj(id, ch) { pushHist(); updateObjs(objects.map(o => o.id===id ? {...o,...ch} : o)); }
   function deleteObj(id) { pushHist(); updateObjs(objects.filter(o => o.id!==id)); if(selectedId===id) setSelectedId(null); }
   function addObj(obj) { pushHist(); updateObjs([...objects, obj]); }
+
+  // Rotate z-order of stacked players so the one hidden underneath becomes visible.
+  function cyclePlayerStack(stackIds) {
+    const idSet = new Set(stackIds);
+    const indices = [];
+    objects.forEach((o, i) => { if (idSet.has(o.id)) indices.push(i); });
+    if (indices.length < 2) return;
+    pushHist();
+    const topIdx = indices[indices.length - 1];
+    const bottomIdx = indices[0];
+    const next = objects.slice();
+    const [top] = next.splice(topIdx, 1);
+    next.splice(bottomIdx, 0, top);
+    updateObjs(next);
+  }
 
   // ---- Phase ops ----
   function addPhase() { pushHist(); const p={id:uid(),title:'',objects:[]}; setPhases(ps=>[...ps,p]); setActivePhaseId(p.id); setSelectedId(null); }
@@ -1138,6 +1171,21 @@ export default function PlaybookPage() {
               {displayObjects.filter(o=>o.type==='text').map(o=>renderTextObj(o,selectedId===o.id,handleObjMD))}
               {/* Players */}
               {displayObjects.filter(o=>o.type==='player').map(o=>renderPlayer(o,selectedId===o.id,handleObjMD,!animPlaying||!animBallPos))}
+
+              {/* Stack indicators: when players overlap, show a tappable badge to cycle z-order */}
+              {!animPlaying && getPlayerStacks(displayObjects.filter(o=>o.type==='player')).map((group, gi) => {
+                const top = group[group.length - 1];
+                const bx = top.x + PLAYER_R + 2;
+                const by = top.y - PLAYER_R - 2;
+                const ids = group.map(p => p.id);
+                return (
+                  <g key={`stack-${gi}-${top.id}`} style={{cursor:'pointer'}} onPointerDown={e=>{e.stopPropagation(); cyclePlayerStack(ids);}}>
+                    <circle cx={bx} cy={by} r={9} fill="#1e293b" stroke="#ffffff" strokeWidth={1.5}/>
+                    <text x={bx} y={by+0.5} textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontSize={9} fontWeight={800} style={{userSelect:'none', pointerEvents:'none'}}>{group.length}</text>
+                    <path d={`M ${bx-4} ${by+3.5} L ${bx} ${by+6} L ${bx+4} ${by+3.5}`} stroke="#ffffff" strokeWidth={1.2} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{pointerEvents:'none', opacity:0.75}}/>
+                  </g>
+                );
+              })}
 
               {/* Animated ball along pass */}
               {renderBallAnim(animBallPos)}
