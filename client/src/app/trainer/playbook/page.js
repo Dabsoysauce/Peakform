@@ -618,6 +618,7 @@ function PropertyPanel({ obj, onUpdate, onDelete }) {
 
 export default function PlaybookPage() {
   const svgRef = useRef(null);
+  const touchActiveRef = useRef(false);
 
   // Phases
   const [phases, setPhases] = useState([{ id: uid(), title: '', objects: [] }]);
@@ -697,10 +698,17 @@ export default function PlaybookPage() {
   function renamePhase(id,t) { setPhases(ps=>ps.map(p=>p.id===id?{...p,title:t}:p)); }
 
   // ---- SVG Handlers ----
-  function getPos(e) { return svgRef.current ? getSVGPoint(svgRef.current, e.clientX, e.clientY) : {x:0,y:0}; }
+  function getPos(e) {
+    if (!svgRef.current) return {x:0,y:0};
+    const t = e.touches?.[0] || e.changedTouches?.[0];
+    const cx = t ? t.clientX : e.clientX;
+    const cy = t ? t.clientY : e.clientY;
+    return getSVGPoint(svgRef.current, cx, cy);
+  }
 
   function handleMouseDown(e) {
     if (animPlaying) return;
+    if (touchActiveRef.current) return;
     const pos = getPos(e);
 
     if (tool === 'select') {
@@ -816,6 +824,23 @@ export default function PlaybookPage() {
   }
 
   function handleMouseLeave() { setMousePos(null); setDrawing(null); setDragging(null); setDragCP(null); setSnapPreview(null); }
+
+  // Touch handlers: mirror mouse logic. touchAction:'none' on the SVG prevents
+  // page scroll/zoom so dragging arrows works on iPad without moving the screen.
+  function handleTouchStart(e) {
+    if (e.touches.length > 1) return;
+    touchActiveRef.current = true;
+    handleMouseDown(e);
+  }
+  function handleTouchMove(e) {
+    if (e.touches.length > 1) return;
+    handleMouseMove(e);
+  }
+  function handleTouchEnd(e) {
+    handleMouseUp(e);
+    // Clear after the synthetic mouse events that iPad Safari fires post-touch.
+    setTimeout(() => { touchActiveRef.current = false; }, 350);
+  }
 
   // ---- Keyboard ----
   useEffect(() => {
@@ -1117,7 +1142,7 @@ export default function PlaybookPage() {
 
           {/* SVG Court */}
           <div className="rounded-2xl overflow-hidden" style={{maxWidth:700, ...glassCard, boxShadow:'0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)'}}>
-            <svg ref={svgRef} viewBox={`0 0 ${COURT_W} ${courtH}`} className="w-full block" style={{cursor}} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave}>
+            <svg ref={svgRef} viewBox={`0 0 ${COURT_W} ${courtH}`} className="w-full block" style={{cursor, touchAction:'none'}} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseLeave} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd}>
               <CourtSVG courtType={settings.courtType} colors={settings.courtColor} showGrid={settings.showGrid} gridSpacing={settings.gridSpacing} fullCourt={settings.fullCourt}/>
 
               {/* Arrows */}
